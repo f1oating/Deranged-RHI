@@ -4,6 +4,7 @@
 
 #include "Backend/Vulkan/VulkanSwapchain.h"
 #include "Backend/Vulkan/VulkanDevice.h"
+#include <vector>
 
 VulkanSwapchain::VulkanSwapchain(VulkanCommandQueue* queue, VulkanDevice* device) {
     m_Queue = queue;
