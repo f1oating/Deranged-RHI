@@ -65,8 +65,10 @@ target_link_libraries(RHI
         $<$<PLATFORM_ID:Windows>:d3dcompiler>
 )
 
-add_custom_command(TARGET RHI POST_BUILD
-    COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/D3D12
-    COMMAND ${CMAKE_COMMAND} -E copy_if_different ${CMAKE_BINARY_DIR}/agility/build/native/bin/x64/D3D12Core.dll ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/D3D12
-    COMMAND ${CMAKE_COMMAND} -E copy_if_different ${CMAKE_BINARY_DIR}/agility/build/native/bin/x64/d3d12SDKLayers.dll ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/D3D12
-)
+if(WIN32)
+    add_custom_command(TARGET RHI POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/D3D12
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different ${CMAKE_BINARY_DIR}/agility/build/native/bin/x64/D3D12Core.dll ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/D3D12
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different ${CMAKE_BINARY_DIR}/agility/build/native/bin/x64/d3d12SDKLayers.dll ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/D3D12
+    )
+endif()
