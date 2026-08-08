@@ -1,0 +1,132 @@
+//
+// Created by alan on 08/08/2026.
+//
+
+#include "Backend/Vulkan/VulkanDevice.h"
+#include <vector>
+#include "Backend/Vulkan/VulkanSwapchain.h"
+#include <GLFW/glfw3.h>
+
+VulkanDevice::VulkanDevice() {
+    glfwInit();
+    CreateInstance();
+    PickPhysicalDevice();
+    FindQueueFamilyIndex();
+    CreateLogicalDevice();
+    m_Queue = new VulkanCommandQueue(m_QueueFamily.value(), this);
+}
+
+VulkanDevice::~VulkanDevice() {
+    delete m_Queue;
+    DestroyLogicalDevice();
+    DestroyInstance();
+    glfwTerminate();
+}
+
+Swapchain* VulkanDevice::CreateSwapchain() {
+    return new VulkanSwapchain(m_Queue, this);
+}
+
+void VulkanDevice::CreateInstance() {
+    volkInitialize();
+    VkApplicationInfo appInfo = {
+        .sType = VK_STRUCTURE_TYPE_APPLICATION_INFO,
+        .pNext = nullptr,
+        .pApplicationName = "RHI",
+        .pEngineName = "Deranged",
+        .engineVersion = VK_MAKE_API_VERSION(1, 1, 0, 0),
+        .apiVersion = VK_MAKE_API_VERSION(1, 1, 0, 0)
+    };
+
+    std::vector<const char*> layers = {
+        "VK_LAYER_KHRONOS_validation"
+    };
+
+    uint32_t extensionCount;
+    const char** extensions = glfwGetRequiredInstanceExtensions(&extensionCount);
+
+    VkInstanceCreateInfo createInfo = {
+        .sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO,
+        .pNext = nullptr,
+        .pApplicationInfo = &appInfo,
+        .enabledLayerCount = (uint32_t)layers.size(),
+        .ppEnabledLayerNames = layers.data(),
+        .enabledExtensionCount = extensionCount,
+        .ppEnabledExtensionNames = extensions
+    };
+
+    VkResult res = vkCreateInstance(&createInfo, nullptr, &m_Instance);
+    volkLoadInstance(m_Instance);
+}
+
+void VulkanDevice::PickPhysicalDevice() {
+    uint32_t deviceCount = 0;
+    std::vector<VkPhysicalDevice> physicalDevices;
+    vkEnumeratePhysicalDevices(m_Instance, &deviceCount, nullptr);
+    physicalDevices.resize(deviceCount);
+    vkEnumeratePhysicalDevices(m_Instance, &deviceCount, physicalDevices.data());
+
+    for (uint32_t i = 0; i < deviceCount; i++) {
+        VkPhysicalDeviceProperties props;
+        vkGetPhysicalDeviceProperties(physicalDevices[i], &props);
+
+        if (props.deviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU) {
+            m_PhysicalDevice = physicalDevices[i];
+            break;
+        }
+    }
+}
+
+void VulkanDevice::FindQueueFamilyIndex() {
+    uint32_t familyCount = 0;
+    std::vector<VkQueueFamilyProperties> queueFamilies;
+    vkGetPhysicalDeviceQueueFamilyProperties(m_PhysicalDevice, &familyCount, nullptr);
+    queueFamilies.resize(familyCount);
+    vkGetPhysicalDeviceQueueFamilyProperties(m_PhysicalDevice, &familyCount, queueFamilies.data());
+
+    for (int i = 0; i < queueFamilies.size(); i++) {
+        if (queueFamilies[i].queueFlags & VK_QUEUE_GRAPHICS_BIT) {
+            m_QueueFamily = i;
+            break;
+        }
+    }
+}
+
+void VulkanDevice::CreateLogicalDevice() {
+    float priority = 1.0f;
+    VkDeviceQueueCreateInfo queueCreateInfo = {
+        .sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO,
+        .queueFamilyIndex = m_QueueFamily.value(),
+        .queueCount = 1,
+        .pQueuePriorities = &priority
+    };
+
+    std::vector<const char*> extensions = {
+        "VK_KHR_swapchain"
+    };
+
+    VkDeviceCreateInfo deviceInfo = {
+        .sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO,
+        .pNext = nullptr,
+        .queueCreateInfoCount = 1,
+        .pQueueCreateInfos = &queueCreateInfo,
+        .enabledLayerCount = 0,
+        .ppEnabledLayerNames = nullptr,
+        .enabledExtensionCount = (uint32_t)extensions.size(),
+        .ppEnabledExtensionNames = extensions.data()
+    };
+
+    VkResult res = vkCreateDevice(m_PhysicalDevice, &deviceInfo, nullptr, &m_Device);
+}
+
+void VulkanDevice::DestroyInstance() {
+    if (m_Instance) {
+        vkDestroyInstance(m_Instance, nullptr);
+    }
+}
+
+void VulkanDevice::DestroyLogicalDevice() {
+    if (m_Instance) {
+        vkDestroyDevice(m_Device, nullptr);
+    }
+}
