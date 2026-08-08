@@ -4,7 +4,8 @@
 
 #include "Device.h"
 #include "Backend/Vulkan/VulkanDevice.h"
+#include "Backend/DX12/DX12Device.h"
 
 Device* Device::Create() {
-    return new VulkanDevice();
+    return new DX12Device();
 }
