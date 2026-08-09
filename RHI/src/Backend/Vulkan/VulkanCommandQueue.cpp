@@ -66,6 +66,7 @@ void VulkanCommandQueue::Flush() {
     m_SignalSemaphoresValues.clear();
 
     m_CommandBufferPool.ReleaseCommandBuffer(m_CommandBuffer, m_FenceValue);
+    m_CommandBufferPool.Poll(m_FenceValue);
     AcquireCommandBuffer();
 }
 

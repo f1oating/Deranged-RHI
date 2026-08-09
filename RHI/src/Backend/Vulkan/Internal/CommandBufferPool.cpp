@@ -47,8 +47,9 @@ void CommandBufferPool::ReleaseCommandBuffer(VkCommandBuffer commandBuffer, uint
 }
 
 void CommandBufferPool::Poll(uint64_t value) {
-    while (m_ReleaseBuffers.empty()) {
+    while (!m_ReleaseBuffers.empty()) {
         if (m_ReleaseBuffers.front().second <= value) {
+            m_AcquireBuffers.push_back(m_ReleaseBuffers.front().first);
             m_ReleaseBuffers.pop_front();
             continue;
         }

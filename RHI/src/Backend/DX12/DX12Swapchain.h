@@ -8,6 +8,8 @@
 #include "Swapchain.h"
 #include <GLFW/glfw3.h>
 #include <dxgi1_4.h>
+#include "Backend/DX12/DX12Fence.h"
+#include <vector>
 
 class DX12Device;
 
@@ -24,6 +26,13 @@ private:
     DX12Device* m_Device = nullptr;
     GLFWwindow* m_Window = nullptr;
     IDXGISwapChain3* m_SwapChain = nullptr;
+    std::vector<ID3D12Resource*> m_Textures;
+    uint32_t m_CurrentWidth = 0;
+    uint32_t m_CurrentHeight = 0;
+    DX12Fence* m_Fence = nullptr;
+    uint64_t m_FenceValue = 0;
+    std::vector<uint64_t> m_FrameFenceValues;
+    uint64_t m_CurrentFrame = 0;
 
 };
 

@@ -4,12 +4,27 @@
 
 #include "Backend/DX12/DX12Device.h"
 #include "Backend/DX12/DX12Swapchain.h"
-#include <cstdint>
+#include <iostream>
+#include <ostream>
 #include <GLFW/glfw3.h>
+
+void DebugCallback(
+    D3D12_MESSAGE_CATEGORY Category,
+    D3D12_MESSAGE_SEVERITY Severity,
+    D3D12_MESSAGE_ID ID,
+    LPCSTR pDescription,
+    void* pContext) {
+    std::cout << "[" << pDescription << "]" << std::endl;
+}
 
 DX12Device::DX12Device() {
     glfwInit();
-    HRESULT hr = CreateDXGIFactory(IID_PPV_ARGS(&m_Factory));
+
+    HRESULT hr = D3D12GetDebugInterface(IID_PPV_ARGS(&m_Debug));
+    m_Debug->EnableDebugLayer();
+    m_Debug->SetEnableGPUBasedValidation(true);
+
+    hr = CreateDXGIFactory2(DXGI_CREATE_FACTORY_DEBUG, IID_PPV_ARGS(&m_Factory));
 
     uint32_t adapterIndex = 0;
     IDXGIAdapter1* adapter;
@@ -25,11 +40,15 @@ DX12Device::DX12Device() {
     }
 
     hr = D3D12CreateDevice(adapter, D3D_FEATURE_LEVEL_12_2, IID_PPV_ARGS(&m_Device));
+    m_Device->QueryInterface(IID_PPV_ARGS(&m_DebugQueue));
+
+    m_DebugQueue->RegisterMessageCallback(DebugCallback, D3D12_MESSAGE_CALLBACK_FLAG_NONE, nullptr, &m_CallbackCookie);
 
     m_CommandQueue = new DX12CommandQueue(this);
 }
 
 DX12Device::~DX12Device() {
+    m_DebugQueue->UnregisterMessageCallback(m_CallbackCookie);
     if (m_CommandQueue) {
         delete m_CommandQueue;
     }
@@ -39,7 +58,14 @@ DX12Device::~DX12Device() {
     if (m_Factory) {
         m_Factory->Release();
     }
+    if (m_Debug) {
+        m_Debug->Release();
+    }
     glfwTerminate();
+}
+
+CommandQueue* DX12Device::GetCommandQueue() {
+    return m_CommandQueue;
 }
 
 Swapchain* DX12Device::CreateSwapchain() {

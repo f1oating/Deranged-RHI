@@ -14,6 +14,9 @@ DX12Swapchain::DX12Swapchain(DX12Device* device) {
     glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
     m_Window = glfwCreateWindow(800, 600, "RHI", nullptr, nullptr);
 
+    m_CurrentWidth = 800;
+    m_CurrentHeight = 600;
+
     DXGI_MODE_DESC bufferMode = {
         .Format = DXGI_FORMAT_R8G8B8A8_UNORM
     };
@@ -34,11 +37,31 @@ DX12Swapchain::DX12Swapchain(DX12Device* device) {
     };
 
     IDXGISwapChain* tempSwapChain = nullptr;
-    HRESULT hr = m_Device->GetDXGIFactory()->CreateSwapChain(m_Device->GetCommandQueue()->GetDX12CommandQueue(), &swapChainDesc, &tempSwapChain);
+    DX12CommandQueue* dxCommandQueue = static_cast<DX12CommandQueue*>(m_Device->GetCommandQueue());
+    HRESULT hr = m_Device->GetDXGIFactory()->CreateSwapChain(dxCommandQueue->GetDX12CommandQueue(), &swapChainDesc, &tempSwapChain);
     m_SwapChain = static_cast<IDXGISwapChain3*>(tempSwapChain);
+
+    m_Textures.resize(3);
+    for (int i = 0; i < 3; i++) {
+        m_SwapChain->GetBuffer(i, IID_PPV_ARGS(&m_Textures[i]));
+        m_Textures[i]->SetName(L"fd");
+    }
+
+    m_Fence = new DX12Fence(m_Device);
+    m_FrameFenceValues.resize(3);
+    for (int i = 0; i < 3; i++) {
+        m_FrameFenceValues[i] = 0;
+    }
 }
 
 DX12Swapchain::~DX12Swapchain() {
+    m_FenceValue++;
+    DX12CommandQueue* dxCommandQueue = static_cast<DX12CommandQueue*>(m_Device->GetCommandQueue());
+    dxCommandQueue->GetDX12CommandQueue()->Signal(m_Fence->GetDX12Fence(), m_FenceValue);
+    m_Fence->Wait(m_FenceValue);
+    if (m_Fence) {
+        delete m_Fence;
+    }
     if (m_SwapChain) {
         m_SwapChain->Release();
     }
@@ -55,5 +78,32 @@ bool DX12Swapchain::WindowShouldClose() {
 }
 
 void DX12Swapchain::Present() {
+    DX12CommandQueue* dxCommandQueue = static_cast<DX12CommandQueue*>(m_Device->GetCommandQueue());
+    m_FrameFenceValues[m_CurrentFrame] = ++m_FenceValue;
+    dxCommandQueue->Flush();
+    dxCommandQueue->GetDX12CommandQueue()->Signal(m_Fence->GetDX12Fence(), m_FrameFenceValues[m_CurrentFrame]);
+    m_SwapChain->Present(1, 0);
+    m_CurrentFrame = (m_CurrentFrame + 1) % 3;
 
+    m_Fence->Wait(m_FrameFenceValues[m_CurrentFrame]);
+
+    int width, height;
+    glfwGetWindowSize(m_Window, &width, &height);
+    if (m_CurrentWidth != width || m_CurrentHeight != height) {
+        m_FenceValue++;
+        DX12CommandQueue* dxCommandQueue = static_cast<DX12CommandQueue*>(m_Device->GetCommandQueue());
+        dxCommandQueue->Flush();
+        dxCommandQueue->GetDX12CommandQueue()->Signal(m_Fence->GetDX12Fence(), m_FenceValue);
+        m_Fence->Wait(m_FenceValue);
+        for (int i = 0; i < 3; i++) {
+            m_Textures[i]->Release();
+        }
+        m_SwapChain->ResizeBuffers(3, width, height, DXGI_FORMAT_R8G8B8A8_UNORM, 0);
+        for (int i = 0; i < 3; i++) {
+            m_SwapChain->GetBuffer(i, IID_PPV_ARGS(&m_Textures[i]));
+            m_Textures[i]->SetName(L"fd");
+        }
+        m_CurrentWidth = width;
+        m_CurrentHeight = height;
+    }
 }

@@ -15,15 +15,18 @@ public:
     DX12Device();
     ~DX12Device() override;
 
+    CommandQueue* GetCommandQueue();
     Swapchain* CreateSwapchain() override;
 
     IDXGIFactory3* GetDXGIFactory() const { return m_Factory;}
-    ID3D12Device* GetDX12Device() const { return m_Device; }
-    DX12CommandQueue* GetCommandQueue() const { return m_CommandQueue; }
+    ID3D12Device4* GetDX12Device() const { return m_Device; }
 
 private:
+    ID3D12Debug3* m_Debug = nullptr;
     IDXGIFactory3* m_Factory = nullptr;
-    ID3D12Device* m_Device = nullptr;
+    ID3D12Device4* m_Device = nullptr;
+    DWORD m_CallbackCookie = 0;
+    ID3D12InfoQueue1* m_DebugQueue = nullptr;
     DX12CommandQueue* m_CommandQueue = nullptr;
 
 };
