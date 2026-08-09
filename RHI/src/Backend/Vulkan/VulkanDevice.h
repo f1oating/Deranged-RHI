@@ -15,6 +15,7 @@ public:
     VulkanDevice();
     ~VulkanDevice() override;
 
+    CommandQueue* GetCommandQueue() override;
     Swapchain* CreateSwapchain() override;
 
     VkInstance GetVkInstance() { return m_Instance; }

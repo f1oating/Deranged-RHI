@@ -8,10 +8,13 @@ extern "C" { __declspec(dllexport) extern const char* D3D12SDKPath = ".\\D3D12\\
 
 int main() {
     Device* device = Device::Create();
+    CommandQueue* queue = device->GetCommandQueue();
     Swapchain* swapchain = device->CreateSwapchain();
 
     while(!swapchain->WindowShouldClose()) {
         swapchain->UpdateWindow();
+
+        swapchain->Present();
     }
 
     delete swapchain;

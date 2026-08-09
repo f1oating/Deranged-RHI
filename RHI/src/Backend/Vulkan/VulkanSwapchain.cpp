@@ -13,9 +13,15 @@ VulkanSwapchain::VulkanSwapchain(VulkanCommandQueue* queue, VulkanDevice* device
     CreateSurface();
     CheckQueueSupport();
     CreateSwapchain();
+    CreateSync();
+
+    m_Fence->Wait(m_FrameFenceValues[m_CurrentFrame]);
+    AcquireImage();
 }
 
 VulkanSwapchain::~VulkanSwapchain() {
+    vkDeviceWaitIdle(m_Device->GetVkDevice());
+    DestroySync();
     DestroySwapchain();
     DestroySurface();
     DestroyWindow();
@@ -30,7 +36,49 @@ bool VulkanSwapchain::WindowShouldClose() {
 }
 
 void VulkanSwapchain::Present() {
+    m_FrameFenceValues[m_CurrentFrame] = ++m_FenceValue;
 
+    m_Queue->AddSignalSemaphore(m_RenderSemaphores[m_ImageIndex]);
+    m_Queue->Signal(m_Fence, m_FenceValue);
+    m_Queue->Flush();
+
+    VkPresentInfoKHR presentInfo = {
+        .sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR,
+        .waitSemaphoreCount = 1,
+        .pWaitSemaphores = &m_RenderSemaphores[m_ImageIndex],
+        .swapchainCount = 1,
+        .pSwapchains = &m_SwapChain,
+        .pImageIndices = &m_ImageIndex
+    };
+    VkResult res = vkQueuePresentKHR(m_Queue->GetVkQueue(), &presentInfo);
+
+    if (res == VK_ERROR_OUT_OF_DATE_KHR) {
+        vkDeviceWaitIdle(m_Device->GetVkDevice());
+        DestroySync();
+        DestroySwapchain();
+        CreateSwapchain();
+        CreateSync();
+    }
+
+    m_CurrentFrame = (m_CurrentFrame + 1) % 3;
+    m_Fence->Wait(m_FrameFenceValues[m_CurrentFrame]);
+    AcquireImage();
+}
+
+void VulkanSwapchain::AcquireImage() {
+    VkResult res = vkAcquireNextImageKHR(m_Device->GetVkDevice(), m_SwapChain,
+        UINT64_MAX, m_AcquireSemaphores[m_CurrentFrame], nullptr, &m_ImageIndex);
+
+    if (res == VK_ERROR_OUT_OF_DATE_KHR) {
+        vkDeviceWaitIdle(m_Device->GetVkDevice());
+        DestroySync();
+        DestroySwapchain();
+        CreateSwapchain();
+        CreateSync();
+        AcquireImage();
+    }
+
+    m_Queue->AddWaitSemaphore(m_AcquireSemaphores[m_CurrentFrame]);
 }
 
 void VulkanSwapchain::CreateWindow() {
@@ -75,9 +123,49 @@ void VulkanSwapchain::CreateSwapchain() {
     };
 
     VkResult res = vkCreateSwapchainKHR(m_Device->GetVkDevice(), &swapchainCreateInfo, nullptr, &m_SwapChain);
+
+    uint32_t imageCount;
+    vkGetSwapchainImagesKHR(m_Device->GetVkDevice(), m_SwapChain, &imageCount, nullptr);
+    m_SwapchainImages.resize(imageCount);
+    vkGetSwapchainImagesKHR(m_Device->GetVkDevice(), m_SwapChain, &imageCount, m_SwapchainImages.data());
+
+    VkSemaphoreCreateInfo semaphoreCreateInfo = {
+        .sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO
+    };
+    m_RenderSemaphores.resize(m_SwapchainImages.size());
+    for (size_t i = 0; i < m_RenderSemaphores.size(); i++) {
+        res = vkCreateSemaphore(m_Device->GetVkDevice(), &semaphoreCreateInfo, nullptr, &m_RenderSemaphores[i]);
+    }
+}
+
+void VulkanSwapchain::CreateSync() {
+    VkSemaphoreCreateInfo semaphoreCreateInfo = {
+        .sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO
+    };
+    m_AcquireSemaphores.resize(3);
+    m_FrameFenceValues.resize(3);
+    for (size_t i = 0; i < 3; i++) {
+        VkResult res = vkCreateSemaphore(m_Device->GetVkDevice(), &semaphoreCreateInfo, nullptr, &m_AcquireSemaphores[i]);
+        m_FrameFenceValues[i] = 0;
+    }
+
+    m_Fence = new VulkanFence(m_Device);
+}
+
+void VulkanSwapchain::DestroySync() {
+    if (m_Fence) {
+        delete m_Fence;
+    }
+    for (size_t i = 0; i < 3; i++) {
+        vkDestroySemaphore(m_Device->GetVkDevice(), m_AcquireSemaphores[i], nullptr);
+        m_FrameFenceValues[i] = 0;
+    }
 }
 
 void VulkanSwapchain::DestroySwapchain() {
+    for (size_t i = 0; i < m_RenderSemaphores.size(); i++) {
+        vkDestroySemaphore(m_Device->GetVkDevice(), m_RenderSemaphores[i], nullptr);
+    }
     if (m_SwapChain) {
         vkDestroySwapchainKHR(m_Device->GetVkDevice(), m_SwapChain, nullptr);
     }

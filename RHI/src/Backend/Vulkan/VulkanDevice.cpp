@@ -17,10 +17,15 @@ VulkanDevice::VulkanDevice() {
 }
 
 VulkanDevice::~VulkanDevice() {
+    vkDeviceWaitIdle(m_Device);
     delete m_Queue;
     DestroyLogicalDevice();
     DestroyInstance();
     glfwTerminate();
+}
+
+CommandQueue* VulkanDevice::GetCommandQueue() {
+    return m_Queue;
 }
 
 Swapchain* VulkanDevice::CreateSwapchain() {
@@ -33,9 +38,10 @@ void VulkanDevice::CreateInstance() {
         .sType = VK_STRUCTURE_TYPE_APPLICATION_INFO,
         .pNext = nullptr,
         .pApplicationName = "RHI",
+        .applicationVersion = VK_MAKE_API_VERSION(1, 1, 0, 0),
         .pEngineName = "Deranged",
         .engineVersion = VK_MAKE_API_VERSION(1, 1, 0, 0),
-        .apiVersion = VK_MAKE_API_VERSION(1, 1, 0, 0)
+        .apiVersion = VK_API_VERSION_1_3
     };
 
     std::vector<const char*> layers = {
@@ -105,9 +111,14 @@ void VulkanDevice::CreateLogicalDevice() {
         "VK_KHR_swapchain"
     };
 
+    VkPhysicalDeviceTimelineSemaphoreFeatures timelineSemaphoreFeatures = {
+        .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_TIMELINE_SEMAPHORE_FEATURES,
+        .timelineSemaphore = true
+    };
+
     VkDeviceCreateInfo deviceInfo = {
         .sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO,
-        .pNext = nullptr,
+        .pNext = &timelineSemaphoreFeatures,
         .queueCreateInfoCount = 1,
         .pQueueCreateInfos = &queueCreateInfo,
         .enabledLayerCount = 0,

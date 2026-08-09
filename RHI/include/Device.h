@@ -5,6 +5,7 @@
 #ifndef DERANGED_RHI_DEVICE_H
 #define DERANGED_RHI_DEVICE_H
 
+#include "CommandQueue.h"
 #include "Swapchain.h"
 
 class Device {
@@ -13,6 +14,7 @@ public:
 
     static Device* Create();
 
+    virtual CommandQueue* GetCommandQueue() = 0;
     virtual Swapchain* CreateSwapchain() = 0;
 
 };
