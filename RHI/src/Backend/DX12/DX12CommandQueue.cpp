@@ -43,6 +43,11 @@ void DX12CommandQueue::Signal(Fence* fence, uint64_t value) {
     m_SignalFences.emplace_back(dxFence->GetDX12Fence(), value);
 }
 
+void DX12CommandQueue::EndFrame() {
+    uint64_t completedValue = m_Fence->GetCompletedValue();
+    m_ReleaseManager.DiscardResources(completedValue);
+}
+
 void DX12CommandQueue::Flush() {
     m_CommandList->Close();
     m_FenceValue++;
@@ -64,10 +69,16 @@ void DX12CommandQueue::Flush() {
 
     m_CommandAllocatorPool.ReleaseCommandAllocator(m_CommandAllocator, m_FenceValue);
     m_CommandAllocatorPool.Poll(m_FenceValue);
+    m_ReleaseManager.DiscardStaleResources(m_CommandAllocatorNumber, m_FenceValue);
     AcquireCommandAllocator();
+}
+
+void DX12CommandQueue::ReleaseResource(ReleaseResourceWrapper* resource) {
+    m_ReleaseManager.ReleaseResource(resource, m_CommandAllocatorNumber);
 }
 
 void DX12CommandQueue::AcquireCommandAllocator() {
     m_CommandAllocator = m_CommandAllocatorPool.AcquireCommandAllocator();
     m_CommandList->Reset(m_CommandAllocator, nullptr);
+    m_CommandAllocatorNumber++;
 }

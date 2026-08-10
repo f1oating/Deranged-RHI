@@ -23,7 +23,6 @@ public:
 
 private:
     DX12Device* m_Device = nullptr;
-    HANDLE m_Event = nullptr;
     ID3D12Fence* m_Fence = nullptr;
 
 };

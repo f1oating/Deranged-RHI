@@ -15,6 +15,8 @@ public:
     VulkanDevice();
     ~VulkanDevice() override;
 
+    void EndFrame() override;
+
     CommandQueue* GetCommandQueue() override;
     Swapchain* CreateSwapchain() override;
 

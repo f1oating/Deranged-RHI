@@ -22,13 +22,13 @@ public:
     void Wait(Fence* fence, uint64_t value) override;
     void Signal(Fence* fence, uint64_t value) override;
 
-    void EndFrame() override;
     void Flush() override;
 
     void AddWaitSemaphore(VkSemaphore waitSemaphore, uint64_t value = 1);
     void AddSignalSemaphore(VkSemaphore signalSemaphore, uint64_t value = 1);
 
     void ReleaseResource(ReleaseResourceWrapper* releaseResourceWrapper);
+    void EndFrame();
 
     uint32_t GetQueueFamilyIndex() const { return m_QueueIndex; };
     VkQueue GetVkQueue() const { return m_Queue; };

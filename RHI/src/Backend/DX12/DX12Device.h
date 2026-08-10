@@ -15,8 +15,12 @@ public:
     DX12Device();
     ~DX12Device() override;
 
+    void EndFrame() override;
+
     CommandQueue* GetCommandQueue();
     Swapchain* CreateSwapchain() override;
+
+    void ReleaseResource(ReleaseResourceBase* resource);
 
     IDXGIFactory3* GetDXGIFactory() const { return m_Factory;}
     ID3D12Device4* GetDX12Device() const { return m_Device; }

@@ -10,6 +10,7 @@
 #include "Backend/DX12/Internal/CommandAllocatorPool.h"
 #include "Backend/DX12/DX12Fence.h"
 #include <vector>
+#include "ReleaseManager.h"
 
 class DX12Device;
 
@@ -22,6 +23,9 @@ public:
     void Signal(Fence* fence, uint64_t value) override;
 
     void Flush() override;
+
+    void ReleaseResource(ReleaseResourceWrapper* resource);
+    void EndFrame();
 
     ID3D12CommandQueue* GetDX12CommandQueue() const { return m_Queue; }
 
@@ -38,6 +42,8 @@ private:
     std::vector<std::pair<ID3D12Fence*, uint64_t>> m_SignalFences;
     ID3D12GraphicsCommandList* m_CommandList = nullptr;
     ID3D12CommandAllocator* m_CommandAllocator = nullptr;
+    uint64_t m_CommandAllocatorNumber = 0;
+    ReleaseManager m_ReleaseManager;
 
 };
 

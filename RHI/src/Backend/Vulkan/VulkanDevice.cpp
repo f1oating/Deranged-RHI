@@ -24,6 +24,10 @@ VulkanDevice::~VulkanDevice() {
     glfwTerminate();
 }
 
+void VulkanDevice::EndFrame() {
+    m_Queue->EndFrame();
+}
+
 CommandQueue* VulkanDevice::GetCommandQueue() {
     return m_Queue;
 }

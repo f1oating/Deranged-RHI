@@ -14,6 +14,8 @@ public:
 
     static Device* Create();
 
+    virtual void EndFrame() = 0;
+
     virtual CommandQueue* GetCommandQueue() = 0;
     virtual Swapchain* CreateSwapchain() = 0;
 

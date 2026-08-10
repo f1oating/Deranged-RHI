@@ -64,10 +64,18 @@ DX12Device::~DX12Device() {
     glfwTerminate();
 }
 
+void DX12Device::EndFrame() {
+    m_CommandQueue->EndFrame();
+}
+
 CommandQueue* DX12Device::GetCommandQueue() {
     return m_CommandQueue;
 }
 
 Swapchain* DX12Device::CreateSwapchain() {
     return new DX12Swapchain(this);
+}
+
+void DX12Device::ReleaseResource(ReleaseResourceBase* resource) {
+    m_CommandQueue->ReleaseResource(new ReleaseResourceWrapper(resource, 1));
 }

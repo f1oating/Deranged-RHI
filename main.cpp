@@ -14,7 +14,7 @@ int main() {
     while(!swapchain->WindowShouldClose()) {
         swapchain->UpdateWindow();
 
-        queue->EndFrame();
+        device->EndFrame();
         swapchain->Present();
     }
 
