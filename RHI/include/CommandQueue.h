@@ -14,6 +14,7 @@ public:
     virtual void Wait(Fence* fence, uint64_t value) = 0;
     virtual void Signal(Fence* fence, uint64_t value) = 0;
 
+    virtual void EndFrame() = 0;
     virtual void Flush() = 0;
 
 };

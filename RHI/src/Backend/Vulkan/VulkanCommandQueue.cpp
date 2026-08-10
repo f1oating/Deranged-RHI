@@ -32,6 +32,11 @@ void VulkanCommandQueue::Signal(Fence* fence, uint64_t value) {
     AddSignalSemaphore(vulkanFence->GetVkSemaphore(), value);
 }
 
+void VulkanCommandQueue::EndFrame() {
+    uint64_t completedFenceValue = m_Fence->GetCompletedValue();
+    m_ReleaseManager.DiscardResources(completedFenceValue);
+}
+
 void VulkanCommandQueue::Flush() {
     vkEndCommandBuffer(m_CommandBuffer);
 
@@ -67,6 +72,7 @@ void VulkanCommandQueue::Flush() {
 
     m_CommandBufferPool.ReleaseCommandBuffer(m_CommandBuffer, m_FenceValue);
     m_CommandBufferPool.Poll(m_FenceValue);
+    m_ReleaseManager.DiscardStaleResources(m_CommandBufferNumber, m_FenceValue);
     AcquireCommandBuffer();
 }
 
@@ -80,6 +86,10 @@ void VulkanCommandQueue::AddSignalSemaphore(VkSemaphore signalSemaphore, uint64_
     m_SignalSemaphoresValues.push_back(value);
 }
 
+void VulkanCommandQueue::ReleaseResource(ReleaseResourceWrapper* releaseResourceWrapper) {
+    m_ReleaseManager.ReleaseResource(releaseResourceWrapper, m_CommandBufferNumber);
+}
+
 void VulkanCommandQueue::AcquireCommandBuffer() {
     m_CommandBuffer = m_CommandBufferPool.AcquireCommandBuffer();
     vkResetCommandBuffer(m_CommandBuffer, 0);
@@ -88,4 +98,5 @@ void VulkanCommandQueue::AcquireCommandBuffer() {
         .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
     };
     vkBeginCommandBuffer(m_CommandBuffer, &commandBufferBeginInfo);
+    m_CommandBufferNumber++;
 }

@@ -32,6 +32,10 @@ Swapchain* VulkanDevice::CreateSwapchain() {
     return new VulkanSwapchain(m_Queue, this);
 }
 
+void VulkanDevice::ReleaseResource(ReleaseResourceBase *resource) {
+    m_Queue->ReleaseResource(new ReleaseResourceWrapper(resource, 1));
+}
+
 void VulkanDevice::CreateInstance() {
     volkInitialize();
     VkApplicationInfo appInfo = {

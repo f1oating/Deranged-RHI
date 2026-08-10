@@ -18,6 +18,8 @@ public:
     CommandQueue* GetCommandQueue() override;
     Swapchain* CreateSwapchain() override;
 
+    void ReleaseResource(ReleaseResourceBase* resource);
+
     VkInstance GetVkInstance() { return m_Instance; }
     VkDevice GetVkDevice() const { return m_Device; }
     VkPhysicalDevice GetVkPhysicalDevice() const { return m_PhysicalDevice; }
