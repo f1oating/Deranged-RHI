@@ -27,5 +27,16 @@ private:
 
 };
 
+struct FenceReleaseResource : ReleaseResourceBase {
+    ID3D12Fence* Fence;
+
+    FenceReleaseResource(ID3D12Fence* fence)
+        : Fence(fence) {}
+
+    void Destroy() override {
+        Fence->Release();
+    }
+
+};
 
 #endif //DERANGED_RHI_DX12FENCE_H

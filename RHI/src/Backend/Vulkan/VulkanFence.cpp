@@ -40,6 +40,6 @@ void VulkanFence::Wait(uint64_t value) {
 
 VulkanFence::~VulkanFence() {
     if (m_TimelineSemaphore) {
-        vkDestroySemaphore(m_Device->GetVkDevice(), m_TimelineSemaphore, nullptr);
+        m_Device->ReleaseResource(new FenceReleaseResource(m_Device->GetVkDevice(), m_TimelineSemaphore));
     }
 }

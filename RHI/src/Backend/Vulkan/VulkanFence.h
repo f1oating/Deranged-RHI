@@ -8,6 +8,8 @@
 #include "Fence.h"
 #include <volk.h>
 
+#include "ReleaseManager.h"
+
 class VulkanDevice;
 
 class VulkanFence : public Fence {
@@ -24,6 +26,19 @@ public:
 private:
     VulkanDevice* m_Device = nullptr;
     VkSemaphore m_TimelineSemaphore = nullptr;
+
+};
+
+struct FenceReleaseResource : ReleaseResourceBase {
+    VkDevice Device;
+    VkSemaphore TimelineSemaphore;
+
+    FenceReleaseResource(VkDevice device, VkSemaphore timelineSemaphore)
+        : Device(device), TimelineSemaphore(timelineSemaphore) {}
+
+    void Destroy() override {
+        vkDestroySemaphore(Device, TimelineSemaphore, nullptr);
+    }
 
 };
 

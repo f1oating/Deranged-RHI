@@ -14,7 +14,7 @@ DX12Fence::DX12Fence(DX12Device* device) {
 
 DX12Fence::~DX12Fence() {
     if (m_Fence) {
-        m_Fence->Release();
+        m_Device->ReleaseResource(new FenceReleaseResource(m_Fence));
     }
 }
 
