@@ -7,6 +7,7 @@
 
 #include "Fence.h"
 #include "d3d12.h"
+#include "ReleaseManager.h"
 
 class DX12Device;
 
