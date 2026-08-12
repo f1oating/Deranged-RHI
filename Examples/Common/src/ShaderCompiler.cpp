@@ -7,6 +7,14 @@
 #include <cstdio>
 #include <cstring>
 
+#ifdef WIN32
+#define PROFILE "sm_6_0"
+#define FORMAT SLANG_DXIL
+#else
+#define PROFILE "spirv_1_5"
+#define FORMAT SLANG_SPIRV
+#endif
+
 slang::IGlobalSession* ShaderCompiler::m_GlobalSession = nullptr;
 
 void ShaderCompiler::Init() {
@@ -21,8 +29,8 @@ void ShaderCompiler::Shutdown() {
 
 std::vector<uint8_t> ShaderCompiler::CompileShader(const char* path) {
     slang::TargetDesc targetDesc = {
-        .format = SLANG_SPIRV,
-        .profile = m_GlobalSession->findProfile("spirv_1_5")
+        .format = FORMAT,
+        .profile = m_GlobalSession->findProfile(PROFILE)
     };
 
     slang::SessionDesc sessionDesc = {

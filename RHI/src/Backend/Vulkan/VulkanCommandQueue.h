@@ -11,6 +11,7 @@
 #include <vector>
 #include "Backend/Vulkan/VulkanFence.h"
 #include "ReleaseManager.h"
+#include "Backend/Vulkan/VulkanPipeline.h"
 
 class VulkanDevice;
 
@@ -21,6 +22,14 @@ public:
 
     void Wait(Fence* fence, uint64_t value) override;
     void Signal(Fence* fence, uint64_t value) override;
+
+    void SetGraphicsPipelineState(GraphicsPipelineState* graphicsPipelineState) override;
+
+    void SetViewport(Viewport viewport) override;
+    void SetScissor(Scissor scissor) override;
+
+    void DrawInstaned(uint32_t VertexCountPerInstance, uint32_t InstanceCount = 1,
+        uint32_t StartVertexLocation = 0, uint32_t StartInstanceLocation = 0) override;
 
     void Flush() override;
 

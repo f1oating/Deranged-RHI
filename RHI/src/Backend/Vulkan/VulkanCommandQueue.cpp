@@ -32,9 +32,37 @@ void VulkanCommandQueue::Signal(Fence* fence, uint64_t value) {
     AddSignalSemaphore(vulkanFence->GetVkSemaphore(), value);
 }
 
-void VulkanCommandQueue::EndFrame() {
-    uint64_t completedFenceValue = m_Fence->GetCompletedValue();
-    m_ReleaseManager.DiscardResources(completedFenceValue);
+void VulkanCommandQueue::SetGraphicsPipelineState(GraphicsPipelineState* graphicsPipelineState) {
+    VulkanGraphicsPipelineState* vkGraphicsPipelineState = static_cast<VulkanGraphicsPipelineState*>(graphicsPipelineState);
+
+    vkCmdBindPipeline(m_CommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, vkGraphicsPipelineState->GetPipeline());
+}
+
+void VulkanCommandQueue::SetViewport(Viewport viewport) {
+    VkViewport vkViewport = {
+        .x = viewport.TopLeftX,
+        .y = viewport.TopLeftY,
+        .width = viewport.Width,
+        .height = viewport.Height,
+        .minDepth = viewport.MinDepth,
+        .maxDepth = viewport.MaxDepth
+    };
+
+    vkCmdSetViewport(m_CommandBuffer, 0, 1, &vkViewport);
+}
+
+void VulkanCommandQueue::SetScissor(Scissor scissor) {
+    VkRect2D vkScissor = {
+        .offset = { scissor.Left, scissor.Top },
+        .extent = { (uint32_t)scissor.Right, (uint32_t)scissor.Bottom },
+    };
+
+    vkCmdSetScissor(m_CommandBuffer, 0, 1, &vkScissor);
+}
+
+void VulkanCommandQueue::DrawInstaned(uint32_t VertexCountPerInstance, uint32_t InstanceCount,
+    uint32_t StartVertexLocation, uint32_t StartInstanceLocation) {
+    vkCmdDraw(m_CommandBuffer, VertexCountPerInstance, InstanceCount, StartVertexLocation, StartInstanceLocation);
 }
 
 void VulkanCommandQueue::Flush() {
@@ -88,6 +116,11 @@ void VulkanCommandQueue::AddSignalSemaphore(VkSemaphore signalSemaphore, uint64_
 
 void VulkanCommandQueue::ReleaseResource(ReleaseResourceWrapper* releaseResourceWrapper) {
     m_ReleaseManager.ReleaseResource(releaseResourceWrapper, m_CommandBufferNumber);
+}
+
+void VulkanCommandQueue::EndFrame() {
+    uint64_t completedFenceValue = m_Fence->GetCompletedValue();
+    m_ReleaseManager.DiscardResources(completedFenceValue);
 }
 
 void VulkanCommandQueue::AcquireCommandBuffer() {

@@ -16,6 +16,8 @@ public:
     VulkanGraphicsPipelineState(GraphicsPipelineDesc desc, VulkanDevice* device);
     ~VulkanGraphicsPipelineState() override;
 
+    VkPipeline GetPipeline() const { return m_Pipeline; }
+
 private:
     void CreatePipelineLayout();
     void CreatePipeline();

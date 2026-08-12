@@ -43,9 +43,39 @@ void DX12CommandQueue::Signal(Fence* fence, uint64_t value) {
     m_SignalFences.emplace_back(dxFence->GetDX12Fence(), value);
 }
 
-void DX12CommandQueue::EndFrame() {
-    uint64_t completedValue = m_Fence->GetCompletedValue();
-    m_ReleaseManager.DiscardResources(completedValue);
+void DX12CommandQueue::SetGraphicsPipelineState(GraphicsPipelineState* graphicsPipelineState) {
+    DX12GraphicsPipelineState* dxGraphicsPipelineState = static_cast<DX12GraphicsPipelineState*>(graphicsPipelineState);
+
+    m_CommandList->SetGraphicsRootSignature(dxGraphicsPipelineState->GetRootSignature());
+    m_CommandList->SetPipelineState(dxGraphicsPipelineState->GetPipelineState());
+}
+
+void DX12CommandQueue::SetViewport(Viewport viewport) {
+    D3D12_VIEWPORT dxViewport = {
+        .TopLeftX = viewport.TopLeftX,
+        .TopLeftY = viewport.TopLeftY,
+        .Width = viewport.Width,
+        .Height = viewport.Height,
+        .MinDepth = viewport.MinDepth,
+        .MaxDepth = viewport.MaxDepth
+    };
+    m_CommandList->RSSetViewports(1, &dxViewport);
+}
+
+void DX12CommandQueue::SetScissor(Scissor scissor) {
+    D3D12_RECT dxScissor = {
+        .left = scissor.Left,
+        .top = scissor.Top,
+        .right = scissor.Right,
+        .bottom = scissor.Bottom
+    };
+
+    m_CommandList->RSSetScissorRects(1, &dxScissor);
+}
+
+void DX12CommandQueue::DrawInstaned(uint32_t VertexCountPerInstance, uint32_t InstanceCount,
+        uint32_t StartVertexLocation, uint32_t StartInstanceLocation) {
+    m_CommandList->DrawInstanced(VertexCountPerInstance, InstanceCount, StartVertexLocation, StartInstanceLocation);
 }
 
 void DX12CommandQueue::Flush() {
@@ -75,6 +105,11 @@ void DX12CommandQueue::Flush() {
 
 void DX12CommandQueue::ReleaseResource(ReleaseResourceWrapper* resource) {
     m_ReleaseManager.ReleaseResource(resource, m_CommandAllocatorNumber);
+}
+
+void DX12CommandQueue::EndFrame() {
+    uint64_t completedValue = m_Fence->GetCompletedValue();
+    m_ReleaseManager.DiscardResources(completedValue);
 }
 
 void DX12CommandQueue::AcquireCommandAllocator() {

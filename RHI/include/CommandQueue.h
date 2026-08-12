@@ -6,6 +6,23 @@
 #define DERANGED_RHI_COMMANDQUEUE_H
 
 #include "Fence.h"
+#include "Pipeline.h"
+
+struct Viewport {
+    float TopLeftX;
+    float TopLeftY;
+    float Width;
+    float Height;
+    float MinDepth;
+    float MaxDepth;
+};
+
+struct Scissor {
+    int Left;
+    int Top;
+    int Right;
+    int Bottom;
+};
 
 class CommandQueue {
 public:
@@ -13,6 +30,14 @@ public:
 
     virtual void Wait(Fence* fence, uint64_t value) = 0;
     virtual void Signal(Fence* fence, uint64_t value) = 0;
+
+    virtual void SetGraphicsPipelineState(GraphicsPipelineState* graphicsPipelineState) = 0;
+
+    virtual void SetViewport(Viewport viewport) = 0;
+    virtual void SetScissor(Scissor scissor) = 0;
+
+    virtual void DrawInstaned(uint32_t VertexCountPerInstance, uint32_t InstanceCount = 1,
+        uint32_t StartVertexLocation = 0, uint32_t StartInstanceLocation = 0) = 0;
 
     virtual void Flush() = 0;
 
