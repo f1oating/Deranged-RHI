@@ -9,11 +9,18 @@
 VulkanSwapchain::VulkanSwapchain(VulkanCommandQueue* queue, VulkanDevice* device) {
     m_Queue = queue;
     m_Device = device;
+
     CreateWindow();
     CreateSurface();
     CheckQueueSupport();
     CreateSwapchain();
     CreateSync();
+
+    m_Fence = new VulkanFence(m_Device);
+    m_FrameFenceValues.resize(3);
+    for (uint32_t i = 0; i < 3; i++) {
+        m_FrameFenceValues[i] = 0;
+    }
 
     m_Fence->Wait(m_FrameFenceValues[m_CurrentFrame]);
     AcquireImage();
@@ -21,6 +28,9 @@ VulkanSwapchain::VulkanSwapchain(VulkanCommandQueue* queue, VulkanDevice* device
 
 VulkanSwapchain::~VulkanSwapchain() {
     vkDeviceWaitIdle(m_Device->GetVkDevice());
+    if (m_Fence) {
+        delete m_Fence;
+    }
     DestroySync();
     DestroySwapchain();
     DestroySurface();
@@ -128,14 +138,6 @@ void VulkanSwapchain::CreateSwapchain() {
     vkGetSwapchainImagesKHR(m_Device->GetVkDevice(), m_SwapChain, &imageCount, nullptr);
     m_SwapchainImages.resize(imageCount);
     vkGetSwapchainImagesKHR(m_Device->GetVkDevice(), m_SwapChain, &imageCount, m_SwapchainImages.data());
-
-    VkSemaphoreCreateInfo semaphoreCreateInfo = {
-        .sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO
-    };
-    m_RenderSemaphores.resize(m_SwapchainImages.size());
-    for (size_t i = 0; i < m_RenderSemaphores.size(); i++) {
-        res = vkCreateSemaphore(m_Device->GetVkDevice(), &semaphoreCreateInfo, nullptr, &m_RenderSemaphores[i]);
-    }
 }
 
 void VulkanSwapchain::CreateSync() {
@@ -143,29 +145,25 @@ void VulkanSwapchain::CreateSync() {
         .sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO
     };
     m_AcquireSemaphores.resize(3);
-    m_FrameFenceValues.resize(3);
     for (size_t i = 0; i < 3; i++) {
         VkResult res = vkCreateSemaphore(m_Device->GetVkDevice(), &semaphoreCreateInfo, nullptr, &m_AcquireSemaphores[i]);
-        m_FrameFenceValues[i] = 0;
     }
-
-    m_Fence = new VulkanFence(m_Device);
+    m_RenderSemaphores.resize(m_SwapchainImages.size());
+    for (size_t i = 0; i < m_RenderSemaphores.size(); i++) {
+        VkResult res = vkCreateSemaphore(m_Device->GetVkDevice(), &semaphoreCreateInfo, nullptr, &m_RenderSemaphores[i]);
+    }
 }
 
 void VulkanSwapchain::DestroySync() {
-    if (m_Fence) {
-        delete m_Fence;
-    }
     for (size_t i = 0; i < 3; i++) {
         vkDestroySemaphore(m_Device->GetVkDevice(), m_AcquireSemaphores[i], nullptr);
-        m_FrameFenceValues[i] = 0;
+    }
+    for (size_t i = 0; i < m_RenderSemaphores.size(); i++) {
+        vkDestroySemaphore(m_Device->GetVkDevice(), m_RenderSemaphores[i], nullptr);
     }
 }
 
 void VulkanSwapchain::DestroySwapchain() {
-    for (size_t i = 0; i < m_RenderSemaphores.size(); i++) {
-        vkDestroySemaphore(m_Device->GetVkDevice(), m_RenderSemaphores[i], nullptr);
-    }
     if (m_SwapChain) {
         vkDestroySwapchainKHR(m_Device->GetVkDevice(), m_SwapChain, nullptr);
     }

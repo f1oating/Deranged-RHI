@@ -4,6 +4,8 @@
 
 #include "ReleaseManager.h"
 
+#include <cstdio>
+
 void ReleaseManager::ReleaseResource(ReleaseResourceWrapper* wrapper, uint64_t cmdValue) {
     m_ReleaseResources.emplace_back(wrapper, cmdValue);
 }
@@ -22,8 +24,8 @@ void ReleaseManager::DiscardStaleResources(uint64_t cmdValue, uint64_t fenceValu
 void ReleaseManager::DiscardResources(uint64_t fenceValue) {
     while (!m_ReleaseResources.empty()) {
         if (m_ReleaseResources.front().second <= fenceValue) {
-            m_StaleResources.front().first->Release();
-            m_StaleResources.pop_front();
+            m_ReleaseResources.front().first->Release();
+            m_ReleaseResources.pop_front();
             continue;
         }
         break;

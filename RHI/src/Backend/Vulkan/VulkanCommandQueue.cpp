@@ -20,6 +20,7 @@ VulkanCommandQueue::~VulkanCommandQueue() {
         delete m_Fence;
     }
     m_CommandBufferPool.Shutdown();
+    m_ReleaseManager.Clear();
 }
 
 void VulkanCommandQueue::Wait(Fence* fence, uint64_t value) {
@@ -99,7 +100,6 @@ void VulkanCommandQueue::Flush() {
     m_SignalSemaphoresValues.clear();
 
     m_CommandBufferPool.ReleaseCommandBuffer(m_CommandBuffer, m_FenceValue);
-    m_CommandBufferPool.Poll(m_FenceValue);
     m_ReleaseManager.DiscardStaleResources(m_CommandBufferNumber, m_FenceValue);
     AcquireCommandBuffer();
 }
@@ -120,6 +120,7 @@ void VulkanCommandQueue::ReleaseResource(ReleaseResourceWrapper* releaseResource
 
 void VulkanCommandQueue::EndFrame() {
     uint64_t completedFenceValue = m_Fence->GetCompletedValue();
+    m_CommandBufferPool.Poll(completedFenceValue);
     m_ReleaseManager.DiscardResources(completedFenceValue);
 }
 

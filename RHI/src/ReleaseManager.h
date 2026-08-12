@@ -22,12 +22,12 @@ public:
         : m_RefCount(refCount), m_Res(res) {}
 
     void Release() {
-        if (m_RefCount <= 1) {
+        m_RefCount--;
+        if (m_RefCount <= 0) {
             m_Res->Destroy();
             delete m_Res;
             delete this;
         }
-        m_RefCount--;
     }
 
 private:
