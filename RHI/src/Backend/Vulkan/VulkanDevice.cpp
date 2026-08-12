@@ -7,6 +7,8 @@
 #include "Backend/Vulkan/VulkanSwapchain.h"
 #include <GLFW/glfw3.h>
 
+#include "VulkanPipeline.h"
+
 VulkanDevice::VulkanDevice() {
     glfwInit();
     CreateInstance();
@@ -34,6 +36,10 @@ CommandQueue* VulkanDevice::GetCommandQueue() {
 
 Swapchain* VulkanDevice::CreateSwapchain() {
     return new VulkanSwapchain(m_Queue, this);
+}
+
+GraphicsPipelineState* VulkanDevice::CreateGraphicsPipelineState(GraphicsPipelineDesc desc) {
+    return new VulkanGraphicsPipelineState(desc, this);
 }
 
 void VulkanDevice::ReleaseResource(ReleaseResourceBase *resource) {
@@ -119,8 +125,14 @@ void VulkanDevice::CreateLogicalDevice() {
         "VK_KHR_swapchain"
     };
 
+    VkPhysicalDeviceDynamicRenderingFeatures dynamicRenderingFeatures = {
+        .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DYNAMIC_RENDERING_FEATURES,
+        .dynamicRendering = true
+    };
+
     VkPhysicalDeviceTimelineSemaphoreFeatures timelineSemaphoreFeatures = {
         .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_TIMELINE_SEMAPHORE_FEATURES,
+        .pNext = &dynamicRenderingFeatures,
         .timelineSemaphore = true
     };
 

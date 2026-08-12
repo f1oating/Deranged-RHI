@@ -9,10 +9,4 @@ if(WIN32)
 endif()
 
 add_subdirectory(RHI)
-
-add_executable(Deranged_RHI main.cpp)
-
-target_link_libraries(Deranged_RHI
-    PRIVATE
-        RHI
-)
+add_subdirectory(Examples)

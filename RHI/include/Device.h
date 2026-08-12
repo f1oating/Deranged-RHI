@@ -6,6 +6,7 @@
 #define DERANGED_RHI_DEVICE_H
 
 #include "CommandQueue.h"
+#include "Pipeline.h"
 #include "Swapchain.h"
 
 class Device {
@@ -18,6 +19,7 @@ public:
 
     virtual CommandQueue* GetCommandQueue() = 0;
     virtual Swapchain* CreateSwapchain() = 0;
+    virtual GraphicsPipelineState* CreateGraphicsPipelineState(GraphicsPipelineDesc desc) = 0;
 
 };
 
