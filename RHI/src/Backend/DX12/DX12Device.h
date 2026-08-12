@@ -19,6 +19,7 @@ public:
 
     CommandQueue* GetCommandQueue();
     Swapchain* CreateSwapchain() override;
+    GraphicsPipelineState* CreateGraphicsPipelineState(GraphicsPipelineDesc desc) override;
 
     void ReleaseResource(ReleaseResourceBase* resource);
 

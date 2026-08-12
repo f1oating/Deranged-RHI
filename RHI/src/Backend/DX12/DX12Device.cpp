@@ -8,6 +8,8 @@
 #include <ostream>
 #include <GLFW/glfw3.h>
 
+#include "DX12Pipeline.h"
+
 void DebugCallback(
     D3D12_MESSAGE_CATEGORY Category,
     D3D12_MESSAGE_SEVERITY Severity,
@@ -74,6 +76,10 @@ CommandQueue* DX12Device::GetCommandQueue() {
 
 Swapchain* DX12Device::CreateSwapchain() {
     return new DX12Swapchain(this);
+}
+
+GraphicsPipelineState* DX12Device::CreateGraphicsPipelineState(GraphicsPipelineDesc desc) {
+    return new DX12GraphicsPipelineState(desc, this);
 }
 
 void DX12Device::ReleaseResource(ReleaseResourceBase* resource) {
