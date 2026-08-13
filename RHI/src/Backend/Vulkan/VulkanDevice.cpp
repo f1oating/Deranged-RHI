@@ -6,8 +6,8 @@
 #include <vector>
 #include "Backend/Vulkan/VulkanSwapchain.h"
 #include <GLFW/glfw3.h>
-
-#include "VulkanPipeline.h"
+#include "Backend/Vulkan/VulkanResource.h"
+#include "Backend/Vulkan/VulkanPipeline.h"
 
 VulkanDevice::VulkanDevice() {
     glfwInit();
@@ -40,6 +40,14 @@ Swapchain* VulkanDevice::CreateSwapchain() {
 
 GraphicsPipelineState* VulkanDevice::CreateGraphicsPipelineState(GraphicsPipelineDesc desc) {
     return new VulkanGraphicsPipelineState(desc, this);
+}
+
+Texture* VulkanDevice::CreateTexture(TextureDesc desc) {
+    return new VulkanTexture(desc, this);
+}
+
+TextureView* VulkanDevice::CreateTextureView(TextureViewDesc desc) {
+    return new VulkanTextureView(desc, this);
 }
 
 void VulkanDevice::ReleaseResource(ReleaseResourceBase *resource) {

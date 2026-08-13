@@ -2,6 +2,8 @@
 // Created by alan on 12/08/2026.
 //
 
+#include <vulkan/vulkan_core.h>
+
 #include "Device.h"
 #include "ShaderCompiler.h"
 
@@ -18,6 +20,25 @@ int main() {
     CommandQueue* queue = device->GetCommandQueue();
     Swapchain* swapchain = device->CreateSwapchain();
     GraphicsPipelineState* pipelineState;
+
+    TextureDesc textureDesc = {
+        .Width = 512,
+        .Height = 512,
+        .MipLevels = 1,
+        .ArrayLayers = 1,
+        .Samples = 1,
+        .Format = TextureFormat::TEXTURE_FORMAT_B8G8R8A8_UNORM,
+        .Type = TextureType::Texture2D
+    };
+
+    Texture* texture = device->CreateTexture(textureDesc);
+
+    TextureViewDesc textureViewDesc = {
+        .Tex = texture,
+        .Format = TextureFormat::TEXTURE_FORMAT_B8G8R8A8_UNORM
+    };
+
+    TextureView* textureView = device->CreateTextureView(textureViewDesc);
 
     auto vertexSource = ShaderCompiler::CompileShader("shaders/vertex.slang");
     Shader vertexShader{
@@ -43,6 +64,8 @@ int main() {
         swapchain->Present();
     }
 
+    delete textureView;
+    delete texture;
     delete pipelineState;
     delete swapchain;
     delete device;

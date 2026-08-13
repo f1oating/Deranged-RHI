@@ -8,6 +8,7 @@
 #include "CommandQueue.h"
 #include "Pipeline.h"
 #include "Swapchain.h"
+#include "Resource.h"
 
 class Device {
 public:
@@ -20,6 +21,8 @@ public:
     virtual CommandQueue* GetCommandQueue() = 0;
     virtual Swapchain* CreateSwapchain() = 0;
     virtual GraphicsPipelineState* CreateGraphicsPipelineState(GraphicsPipelineDesc desc) = 0;
+    virtual Texture* CreateTexture(TextureDesc desc) = 0;
+    virtual TextureView* CreateTextureView(TextureViewDesc desc) = 0;
 
 };
 
