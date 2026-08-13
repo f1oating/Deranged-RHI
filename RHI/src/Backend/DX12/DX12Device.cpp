@@ -7,8 +7,8 @@
 #include <iostream>
 #include <ostream>
 #include <GLFW/glfw3.h>
-
-#include "DX12Pipeline.h"
+#include "Backend/DX12/DX12Resource.h"
+#include "Backend/DX12/DX12Pipeline.h"
 
 void DebugCallback(
     D3D12_MESSAGE_CATEGORY Category,
@@ -80,6 +80,14 @@ Swapchain* DX12Device::CreateSwapchain() {
 
 GraphicsPipelineState* DX12Device::CreateGraphicsPipelineState(GraphicsPipelineDesc desc) {
     return new DX12GraphicsPipelineState(desc, this);
+}
+
+Texture* DX12Device::CreateTexture(TextureDesc desc) {
+    return new DX12Texture(desc, this);
+}
+
+TextureView* DX12Device::CreateTextureView(TextureViewDesc desc) {
+    return new DX12TextureView(desc, this);
 }
 
 void DX12Device::ReleaseResource(ReleaseResourceBase* resource) {

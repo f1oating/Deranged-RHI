@@ -2,8 +2,6 @@
 // Created by alan on 12/08/2026.
 //
 
-#include <vulkan/vulkan_core.h>
-
 #include "Device.h"
 #include "ShaderCompiler.h"
 

@@ -20,6 +20,8 @@ public:
     CommandQueue* GetCommandQueue();
     Swapchain* CreateSwapchain() override;
     GraphicsPipelineState* CreateGraphicsPipelineState(GraphicsPipelineDesc desc) override;
+    Texture* CreateTexture(TextureDesc desc) override;
+    TextureView* CreateTextureView(TextureViewDesc desc) override;
 
     void ReleaseResource(ReleaseResourceBase* resource);
 
