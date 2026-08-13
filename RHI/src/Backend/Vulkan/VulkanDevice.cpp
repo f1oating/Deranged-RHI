@@ -15,12 +15,14 @@ VulkanDevice::VulkanDevice() {
     PickPhysicalDevice();
     FindQueueFamilyIndex();
     CreateLogicalDevice();
+    m_RingBuffer.Init(m_Device, m_PhysicalDevice);
     m_Queue = new VulkanCommandQueue(m_QueueFamily.value(), this);
 }
 
 VulkanDevice::~VulkanDevice() {
     vkDeviceWaitIdle(m_Device);
     delete m_Queue;
+    m_RingBuffer.Shutdown();
     DestroyLogicalDevice();
     DestroyInstance();
     glfwTerminate();

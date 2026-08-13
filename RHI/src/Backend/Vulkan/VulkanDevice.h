@@ -9,6 +9,7 @@
 #include <optional>
 #include "Device.h"
 #include "Backend/Vulkan/VulkanCommandQueue.h"
+#include "Backend/Vulkan/Internal/RingBuffer.h"
 
 class VulkanDevice : public Device {
 public:
@@ -44,6 +45,7 @@ private:
     std::optional<uint32_t> m_QueueFamily;
     VkDevice m_Device = nullptr;
     VulkanCommandQueue* m_Queue = nullptr;
+    RingBuffer m_RingBuffer;
 
 };
 
