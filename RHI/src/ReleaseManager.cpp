@@ -6,24 +6,20 @@
 
 #include <cstdio>
 
-void ReleaseManager::ReleaseResource(ReleaseResourceWrapper* wrapper, uint64_t cmdValue) {
-    m_ReleaseResources.emplace_back(wrapper, cmdValue);
+void ReleaseManager::ReleaseResource(ReleaseResourceWrapper* wrapper) {
+    m_StaleResources.push_back(wrapper);
 }
 
-void ReleaseManager::DiscardStaleResources(uint64_t cmdValue, uint64_t fenceValue) {
+void ReleaseManager::DiscardStaleResources(uint64_t value) {
     while (!m_StaleResources.empty()) {
-        if (m_StaleResources.front().second <= cmdValue) {
-            m_ReleaseResources.emplace_back(m_StaleResources.front().first, fenceValue);
-            m_StaleResources.pop_front();
-            continue;
-        }
-        break;
+        m_ReleaseResources.emplace_back(m_StaleResources.front(), value);
+        m_StaleResources.pop_front();
     }
 }
 
-void ReleaseManager::DiscardResources(uint64_t fenceValue) {
+void ReleaseManager::DiscardResources(uint64_t value) {
     while (!m_ReleaseResources.empty()) {
-        if (m_ReleaseResources.front().second <= fenceValue) {
+        if (m_ReleaseResources.front().second <= value) {
             m_ReleaseResources.front().first->Release();
             m_ReleaseResources.pop_front();
             continue;
@@ -33,6 +29,6 @@ void ReleaseManager::DiscardResources(uint64_t fenceValue) {
 }
 
 void ReleaseManager::Clear() {
-    DiscardStaleResources(UINT64_MAX, UINT64_MAX);
+    DiscardStaleResources(UINT64_MAX);
     DiscardResources(UINT64_MAX);
 }

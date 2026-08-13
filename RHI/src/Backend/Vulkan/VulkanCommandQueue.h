@@ -44,6 +44,7 @@ public:
 
 private:
     void AcquireCommandBuffer();
+    void SubmitCommandBuffer();
 
 private:
     uint32_t m_QueueIndex = 0;
@@ -57,7 +58,6 @@ private:
     std::vector<VkSemaphore> m_SignalSemaphores;
     std::vector<uint64_t> m_SignalSemaphoresValues;
     VulkanFence* m_Fence = nullptr;
-    uint64_t m_FenceValue = 0;
     ReleaseManager m_ReleaseManager;
 
 };

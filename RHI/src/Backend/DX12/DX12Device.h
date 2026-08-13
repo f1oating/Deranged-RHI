@@ -9,6 +9,7 @@
 #include <dxgi1_3.h>
 #include <d3d12.h>
 #include "Backend/DX12/DX12CommandQueue.h"
+#include "Backend/DX12/Internal/RingBuffer.h"
 
 class DX12Device : public Device {
 public:
@@ -35,6 +36,7 @@ private:
     DWORD m_CallbackCookie = 0;
     ID3D12InfoQueue1* m_DebugQueue = nullptr;
     DX12CommandQueue* m_CommandQueue = nullptr;
+    RingBuffer m_RingBuffer;
 
 };
 

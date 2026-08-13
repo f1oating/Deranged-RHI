@@ -46,14 +46,17 @@ DX12Device::DX12Device() {
 
     m_DebugQueue->RegisterMessageCallback(DebugCallback, D3D12_MESSAGE_CALLBACK_FLAG_NONE, nullptr, &m_CallbackCookie);
 
+    m_RingBuffer.Init(m_Device);
+
     m_CommandQueue = new DX12CommandQueue(this);
 }
 
 DX12Device::~DX12Device() {
-    m_DebugQueue->UnregisterMessageCallback(m_CallbackCookie);
     if (m_CommandQueue) {
         delete m_CommandQueue;
     }
+    m_RingBuffer.Shutdown();
+    m_DebugQueue->UnregisterMessageCallback(m_CallbackCookie);
     if (m_Device) {
         m_Device->Release();
     }

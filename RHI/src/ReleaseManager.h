@@ -38,15 +38,15 @@ private:
 
 class ReleaseManager {
 public:
-    void ReleaseResource(ReleaseResourceWrapper* wrapper, uint64_t cmdValue);
+    void ReleaseResource(ReleaseResourceWrapper* wrapper);
 
-    void DiscardStaleResources(uint64_t cmdValue, uint64_t fenceValue);
-    void DiscardResources(uint64_t fenceValue);
+    void DiscardStaleResources(uint64_t value);
+    void DiscardResources(uint64_t value);
 
     void Clear();
 
 private:
-    std::deque<std::pair<ReleaseResourceWrapper*, uint64_t>> m_StaleResources;
+    std::deque<ReleaseResourceWrapper*> m_StaleResources;
     std::deque<std::pair<ReleaseResourceWrapper*, uint64_t>> m_ReleaseResources;
 
 };

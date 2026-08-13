@@ -3,6 +3,9 @@
 //
 
 #include "Backend/DX12/DX12CommandQueue.h"
+
+#include <iso646.h>
+
 #include "Backend/DX12/DX12Device.h"
 
 DX12CommandQueue::DX12CommandQueue(DX12Device* device) {
@@ -20,7 +23,8 @@ DX12CommandQueue::DX12CommandQueue(DX12Device* device) {
 }
 
 DX12CommandQueue::~DX12CommandQueue() {
-    m_Fence->Wait(m_FenceValue);
+    SubmitCommandList();
+    m_Fence->Wait(m_CommandAllocatorNumber);
     if (m_Fence) {
         delete m_Fence;
     }
@@ -79,9 +83,29 @@ void DX12CommandQueue::DrawInstaned(uint32_t VertexCountPerInstance, uint32_t In
 }
 
 void DX12CommandQueue::Flush() {
+    SubmitCommandList();
+    AcquireCommandAllocator();
+}
+
+void DX12CommandQueue::ReleaseResource(ReleaseResourceWrapper* resource) {
+    m_ReleaseManager.ReleaseResource(resource);
+}
+
+void DX12CommandQueue::EndFrame() {
+    uint64_t completedValue = m_Fence->GetCompletedValue();
+    m_CommandAllocatorPool.Poll(completedValue);
+    m_ReleaseManager.DiscardResources(completedValue);
+}
+
+void DX12CommandQueue::AcquireCommandAllocator() {
+    m_CommandAllocator = m_CommandAllocatorPool.AcquireCommandAllocator();
+    m_CommandList->Reset(m_CommandAllocator, nullptr);
+    m_CommandAllocatorNumber++;
+}
+
+void DX12CommandQueue::SubmitCommandList() {
     m_CommandList->Close();
-    m_FenceValue++;
-    Signal(m_Fence, m_FenceValue);
+    Signal(m_Fence, m_CommandAllocatorNumber);
 
     for (auto pair : m_WaitFences) {
         m_Queue->Wait(pair.first, pair.second);
@@ -97,23 +121,6 @@ void DX12CommandQueue::Flush() {
     m_WaitFences.clear();
     m_SignalFences.clear();
 
-    m_CommandAllocatorPool.ReleaseCommandAllocator(m_CommandAllocator, m_FenceValue);
-    m_CommandAllocatorPool.Poll(m_FenceValue);
-    m_ReleaseManager.DiscardStaleResources(m_CommandAllocatorNumber, m_FenceValue);
-    AcquireCommandAllocator();
-}
-
-void DX12CommandQueue::ReleaseResource(ReleaseResourceWrapper* resource) {
-    m_ReleaseManager.ReleaseResource(resource, m_CommandAllocatorNumber);
-}
-
-void DX12CommandQueue::EndFrame() {
-    uint64_t completedValue = m_Fence->GetCompletedValue();
-    m_ReleaseManager.DiscardResources(completedValue);
-}
-
-void DX12CommandQueue::AcquireCommandAllocator() {
-    m_CommandAllocator = m_CommandAllocatorPool.AcquireCommandAllocator();
-    m_CommandList->Reset(m_CommandAllocator, nullptr);
-    m_CommandAllocatorNumber++;
+    m_CommandAllocatorPool.ReleaseCommandAllocator(m_CommandAllocator, m_CommandAllocatorNumber);
+    m_ReleaseManager.DiscardStaleResources(m_CommandAllocatorNumber);
 }
