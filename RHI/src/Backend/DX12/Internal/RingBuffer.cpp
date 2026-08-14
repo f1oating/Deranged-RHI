@@ -4,6 +4,8 @@
 
 #include "Backend/DX12/Internal/RingBuffer.h"
 
+namespace dx {
+
 void RingBuffer::Init(ID3D12Device* device) {
     m_Device = device;
 
@@ -42,4 +44,6 @@ void RingBuffer::Shutdown() {
     if (m_Resource) {
         m_Resource->Release();
     }
+}
+
 }

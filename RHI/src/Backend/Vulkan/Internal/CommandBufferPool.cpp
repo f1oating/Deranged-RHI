@@ -4,6 +4,8 @@
 
 #include "Backend/Vulkan/Internal/CommandBufferPool.h"
 
+namespace vk {
+
 void CommandBufferPool::Init(VkDevice device, uint32_t queueFamily) {
     m_Device = device;
 
@@ -17,9 +19,9 @@ void CommandBufferPool::Init(VkDevice device, uint32_t queueFamily) {
 }
 
 void CommandBufferPool::Shutdown() {
-   if (m_CommandPool) {
-       vkDestroyCommandPool(m_Device, m_CommandPool, nullptr);
-   }
+    if (m_CommandPool) {
+        vkDestroyCommandPool(m_Device, m_CommandPool, nullptr);
+    }
 }
 
 VkCommandBuffer CommandBufferPool::AcquireCommandBuffer() {
@@ -55,4 +57,6 @@ void CommandBufferPool::Poll(uint64_t value) {
         }
         break;
     }
+}
+
 }

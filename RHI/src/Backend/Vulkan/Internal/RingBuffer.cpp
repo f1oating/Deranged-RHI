@@ -4,6 +4,8 @@
 
 #include "Backend/Vulkan/Internal/RingBuffer.h"
 
+namespace vk {
+
 void RingBuffer::Init(VkDevice device, VkPhysicalDevice physDevice) {
     m_Device = device;
     m_PhysDevice = physDevice;
@@ -60,4 +62,6 @@ uint64_t RingBuffer::Allocate(uint64_t size) {
     m_Head += alignedSize;
 
     return offset;
+}
+
 }

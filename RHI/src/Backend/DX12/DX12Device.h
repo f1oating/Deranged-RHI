@@ -36,7 +36,7 @@ private:
     DWORD m_CallbackCookie = 0;
     ID3D12InfoQueue1* m_DebugQueue = nullptr;
     DX12CommandQueue* m_CommandQueue = nullptr;
-    RingBuffer m_RingBuffer;
+    dx::RingBuffer m_RingBuffer;
 
 };
 

@@ -8,6 +8,8 @@
 #include <deque>
 #include <volk.h>
 
+namespace vk {
+
 class CommandBufferPool {
 public:
     void Init(VkDevice device, uint32_t queueFamily);
@@ -25,5 +27,7 @@ private:
     std::deque<std::pair<VkCommandBuffer, uint64_t>> m_ReleaseBuffers;
 
 };
+
+}
 
 #endif //DERANGED_RHI_COMMANDBUFFERPOOL_H

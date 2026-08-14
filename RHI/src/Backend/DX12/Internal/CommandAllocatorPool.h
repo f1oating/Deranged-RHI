@@ -9,6 +9,8 @@
 #include <d3d12.h>
 #include <deque>
 
+namespace dx {
+
 class CommandAllocatorPool {
 public:
     void Init(ID3D12Device* device);
@@ -25,5 +27,7 @@ private:
     std::deque<std::pair<ID3D12CommandAllocator*, uint64_t>> m_ReleaseQueue;
 
 };
+
+}
 
 #endif //DERANGED_RHI_COMMANDALLOCATORPOOL_H

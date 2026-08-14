@@ -7,6 +7,8 @@
 
 #include <volk.h>
 
+namespace vk {
+
 template<typename T> inline T AlignUp(T size, T alignment) {
     return (size + alignment - (T)1) & ~(alignment - (T)1);
 }
@@ -30,5 +32,7 @@ private:
     uint64_t m_Tail = 0;
 
 };
+
+}
 
 #endif //DERANGED_RHI_RINGBUFFER_H

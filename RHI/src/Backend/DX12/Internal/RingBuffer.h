@@ -8,6 +8,8 @@
 #include <cstdint>
 #include <d3d12.h>
 
+namespace dx {
+
 template<typename T> inline T AlignUp(T val, T alignment)
 {
     return (val + alignment - (T)1) & ~(alignment - (T)1);
@@ -30,5 +32,7 @@ private:
     uint64_t m_Head = 0;
 
 };
+
+}
 
 #endif //DERANGED_RHI_RINGBUFFER_H

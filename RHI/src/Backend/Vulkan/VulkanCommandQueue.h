@@ -50,7 +50,7 @@ private:
     uint32_t m_QueueIndex = 0;
     VulkanDevice* m_Device;
     VkQueue m_Queue = nullptr;
-    CommandBufferPool m_CommandBufferPool;
+    vk::CommandBufferPool m_CommandBufferPool;
     VkCommandBuffer m_CommandBuffer = nullptr;
     uint64_t m_CommandBufferNumber = 0;
     std::vector<VkSemaphore> m_WaitSemaphores;

@@ -4,6 +4,8 @@
 
 #include "Backend/DX12/Internal/CommandAllocatorPool.h"
 
+namespace dx {
+
 void CommandAllocatorPool::Init(ID3D12Device* device) {
     m_Device = device;
 }
@@ -41,4 +43,6 @@ void CommandAllocatorPool::Poll(uint64_t value) {
         }
         break;
     }
+}
+
 }

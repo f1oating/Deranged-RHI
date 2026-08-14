@@ -45,7 +45,7 @@ private:
 private:
     DX12Device* m_Device = nullptr;
     ID3D12CommandQueue* m_Queue = nullptr;
-    CommandAllocatorPool m_CommandAllocatorPool;
+    dx::CommandAllocatorPool m_CommandAllocatorPool;
     DX12Fence* m_Fence = nullptr;
     std::vector<std::pair<ID3D12Fence*, uint64_t>> m_WaitFences;
     std::vector<std::pair<ID3D12Fence*, uint64_t>> m_SignalFences;

@@ -45,7 +45,7 @@ private:
     std::optional<uint32_t> m_QueueFamily;
     VkDevice m_Device = nullptr;
     VulkanCommandQueue* m_Queue = nullptr;
-    RingBuffer m_RingBuffer;
+    vk::RingBuffer m_RingBuffer;
 
 };
 
