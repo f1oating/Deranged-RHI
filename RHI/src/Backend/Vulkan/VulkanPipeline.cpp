@@ -147,8 +147,17 @@ void VulkanGraphicsPipelineState::CreatePipeline() {
         .pAttachments = &colorBlendAttachmentState
     };
 
+    VkFormat colorAttachmentFormat = VK_FORMAT_B8G8R8A8_UNORM;
+
+    VkPipelineRenderingCreateInfo renderingCreateInfo = {
+        .sType = VK_STRUCTURE_TYPE_PIPELINE_RENDERING_CREATE_INFO,
+        .colorAttachmentCount = 1,
+        .pColorAttachmentFormats = &colorAttachmentFormat
+    };
+
     VkGraphicsPipelineCreateInfo graphicsPipelineCreateInfo = {
         .sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO,
+        .pNext = &renderingCreateInfo,
         .stageCount = (uint32_t)shaderStages.size(),
         .pStages = shaderStages.data(),
         .pVertexInputState = &vertexInputStateCreateInfo,
