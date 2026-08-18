@@ -10,6 +10,8 @@
 #include "Backend/DX12/DX12Resource.h"
 #include "Backend/DX12/DX12Pipeline.h"
 
+namespace dx {
+
 void DebugCallback(
     D3D12_MESSAGE_CATEGORY Category,
     D3D12_MESSAGE_SEVERITY Severity,
@@ -47,6 +49,8 @@ DX12Device::DX12Device() {
     m_DebugQueue->RegisterMessageCallback(DebugCallback, D3D12_MESSAGE_CALLBACK_FLAG_NONE, nullptr, &m_CallbackCookie);
 
     m_RingBuffer.Init(m_Device);
+    m_RTVAllocator.Init(m_Device, D3D12_DESCRIPTOR_HEAP_TYPE_RTV, 32);
+    m_DSVAllocator.Init(m_Device, D3D12_DESCRIPTOR_HEAP_TYPE_DSV, 32);
 
     m_CommandQueue = new DX12CommandQueue(this);
 }
@@ -55,6 +59,8 @@ DX12Device::~DX12Device() {
     if (m_CommandQueue) {
         delete m_CommandQueue;
     }
+    m_DSVAllocator.Shutdown();
+    m_RTVAllocator.Shutdown();
     m_RingBuffer.Shutdown();
     m_DebugQueue->UnregisterMessageCallback(m_CallbackCookie);
     if (m_Device) {
@@ -96,3 +102,5 @@ TextureView* DX12Device::CreateTextureView(TextureViewDesc desc) {
 void DX12Device::ReleaseResource(ReleaseResourceBase* resource) {
     m_CommandQueue->ReleaseResource(new ReleaseResourceWrapper(resource, 1));
 }
+
+} // dx

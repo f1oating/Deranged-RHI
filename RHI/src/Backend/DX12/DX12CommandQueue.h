@@ -13,6 +13,8 @@
 #include "ReleaseManager.h"
 #include "Backend/DX12/DX12Pipeline.h"
 
+namespace dx {
+
 class DX12Device;
 
 class DX12CommandQueue : public CommandQueue {
@@ -55,5 +57,7 @@ private:
     ReleaseManager m_ReleaseManager;
 
 };
+
+} // dx
 
 #endif //DERANGED_RHI_DX12COMMANDQUEUE_H

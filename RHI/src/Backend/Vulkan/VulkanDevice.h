@@ -11,6 +11,8 @@
 #include "Backend/Vulkan/VulkanCommandQueue.h"
 #include "Backend/Vulkan/Internal/RingBuffer.h"
 
+namespace vk {
+
 class VulkanDevice : public Device {
 public:
     VulkanDevice();
@@ -48,5 +50,7 @@ private:
     vk::RingBuffer m_RingBuffer;
 
 };
+
+} // vk
 
 #endif //DERANGED_RHI_VULKANDEVICE_H

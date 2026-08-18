@@ -4,7 +4,7 @@
 
 #include "VariableSizeAllocationManager.h"
 
-VariableSizeAllocationManager::VariableSizeAllocationManager(Size size) {
+void VariableSizeAllocationManager::Init(Size size) {
     m_FreeSize = size;
     AddNewBlock(0, size);
 }
@@ -37,7 +37,9 @@ void VariableSizeAllocationManager::Free(Offset offset, Size size) {
     auto nextOffsetBlockIt = m_FreeBlocksByOffset.upper_bound(size);
     auto prevOffsetBlockIt = nextOffsetBlockIt;
 
-    if (nextOffsetBlockIt != m_FreeBlocksByOffset.begin()) {
+    if (nextOffsetBlockIt == m_FreeBlocksByOffset.end()) {
+        --nextOffsetBlockIt;
+    } else if (prevOffsetBlockIt != m_FreeBlocksByOffset.begin()) {
         --prevOffsetBlockIt;
     } else {
         prevOffsetBlockIt = m_FreeBlocksByOffset.end();
@@ -46,25 +48,25 @@ void VariableSizeAllocationManager::Free(Offset offset, Size size) {
     Offset newOffset;
     Size newSize;
 
-    if (prevOffsetBlockIt != m_FreeBlocksByOffset.end() && offset == prevOffsetBlockIt->first + prevOffsetBlockIt->second) {
-        newSize = prevOffsetBlockIt->second + size;
+    if (prevOffsetBlockIt != m_FreeBlocksByOffset.end() && offset == prevOffsetBlockIt->first + prevOffsetBlockIt->second.BlockSize) {
+        newSize = prevOffsetBlockIt->second.BlockSize + size;
         newOffset = prevOffsetBlockIt->first;
 
         if (nextOffsetBlockIt != m_FreeBlocksByOffset.end() && offset + size == nextOffsetBlockIt->first) {
-            newSize += nextOffsetBlockIt->second;
+            newSize += nextOffsetBlockIt->second.BlockSize;
 
-            m_FreeBlocksBySize.erase(m_FreeBlocksBySize.find(prevOffsetBlockIt->second));
-            m_FreeBlocksBySize.erase(m_FreeBlocksBySize.find(nextOffsetBlockIt->second));
+            m_FreeBlocksBySize.erase(prevOffsetBlockIt->second.OrderBySize);
+            m_FreeBlocksBySize.erase(nextOffsetBlockIt->second.OrderBySize);
             m_FreeBlocksByOffset.erase(prevOffsetBlockIt);
             m_FreeBlocksByOffset.erase(nextOffsetBlockIt);
         } else {
-            m_FreeBlocksBySize.erase(m_FreeBlocksBySize.find(prevOffsetBlockIt->second));
+            m_FreeBlocksBySize.erase(prevOffsetBlockIt->second.OrderBySize);
             m_FreeBlocksByOffset.erase(prevOffsetBlockIt);
         }
     } else if (nextOffsetBlockIt != m_FreeBlocksByOffset.end() && offset + size == nextOffsetBlockIt->first) {
-        newSize = size + nextOffsetBlockIt->second;
+        newSize = size + nextOffsetBlockIt->second.BlockSize;
         newOffset = offset;
-        m_FreeBlocksBySize.erase(m_FreeBlocksBySize.find(nextOffsetBlockIt->second));
+        m_FreeBlocksBySize.erase(nextOffsetBlockIt->second.OrderBySize);
         m_FreeBlocksByOffset.erase(nextOffsetBlockIt);
     } else {
         newSize = size;
@@ -77,6 +79,7 @@ void VariableSizeAllocationManager::Free(Offset offset, Size size) {
 }
 
 void VariableSizeAllocationManager::AddNewBlock(Offset offset, Size size) {
-    auto newBlockIt = m_FreeBlocksByOffset.emplace(offset, size);
-    m_FreeBlocksBySize.emplace(size, newBlockIt.first);
+    auto newBlockByOffsetIt = m_FreeBlocksByOffset.emplace(offset, size);
+    auto newBlockBySizeIt = m_FreeBlocksBySize.emplace(size, newBlockByOffsetIt.first);
+    newBlockByOffsetIt.first->second.OrderBySize = newBlockBySizeIt.first;
 }

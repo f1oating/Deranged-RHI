@@ -9,6 +9,8 @@
 #include <d3d12.h>
 #include "ReleaseManager.h"
 
+namespace dx {
+
 class DX12Device;
 
 class DX12GraphicsPipelineState : public GraphicsPipelineState {
@@ -43,5 +45,7 @@ struct PipelineStateReleaseResource : ReleaseResourceBase {
         PipelineState->Release();
     }
 };
+
+} // dx
 
 #endif //DERANGED_RHI_DX12PIPELINE_H

@@ -12,8 +12,8 @@
 
 Device* Device::Create() {
 #ifdef WIN32
-    return new DX12Device();
+    return new dx::DX12Device();
 #else
-    return new VulkanDevice();
+    return new vk::VulkanDevice();
 #endif
 }

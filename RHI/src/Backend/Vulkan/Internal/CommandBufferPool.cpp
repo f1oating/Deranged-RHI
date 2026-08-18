@@ -59,4 +59,4 @@ void CommandBufferPool::Poll(uint64_t value) {
     }
 }
 
-}
+} // vk

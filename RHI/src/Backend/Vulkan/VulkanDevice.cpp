@@ -9,6 +9,8 @@
 #include "Backend/Vulkan/VulkanResource.h"
 #include "Backend/Vulkan/VulkanPipeline.h"
 
+namespace vk {
+
 VulkanDevice::VulkanDevice() {
     glfwInit();
     CreateInstance();
@@ -171,3 +173,5 @@ void VulkanDevice::DestroyLogicalDevice() {
         vkDestroyDevice(m_Device, nullptr);
     }
 }
+
+} // vk

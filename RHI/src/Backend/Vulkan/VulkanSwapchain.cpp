@@ -6,6 +6,8 @@
 #include "Backend/Vulkan/VulkanDevice.h"
 #include <vector>
 
+namespace vk {
+
 VulkanSwapchain::VulkanSwapchain(VulkanCommandQueue* queue, VulkanDevice* device) {
     m_Queue = queue;
     m_Device = device;
@@ -178,3 +180,5 @@ void VulkanSwapchain::DestroySurface() {
 void VulkanSwapchain::DestroyWindow() {
     glfwDestroyWindow(m_Window);
 }
+
+} // vk

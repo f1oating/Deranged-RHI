@@ -10,6 +10,8 @@
 
 #include "ReleaseManager.h"
 
+namespace vk {
+
 class VulkanDevice;
 
 class VulkanFence : public Fence {
@@ -41,5 +43,7 @@ struct FenceReleaseResource : ReleaseResourceBase {
     }
 
 };
+
+} // vk
 
 #endif //DERANGED_RHI_VULKANFENCE_H

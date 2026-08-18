@@ -6,6 +6,8 @@
 
 #include "DX12Device.h"
 
+namespace dx {
+
 DX12Fence::DX12Fence(DX12Device* device) {
     m_Device = device;
 
@@ -25,3 +27,5 @@ uint64_t DX12Fence::GetCompletedValue() {
 void DX12Fence::Wait(uint64_t value) {
     m_Fence->SetEventOnCompletion(value, nullptr);
 }
+
+} // dx

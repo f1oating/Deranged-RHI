@@ -33,6 +33,6 @@ private:
 
 };
 
-}
+} // vk
 
 #endif //DERANGED_RHI_RINGBUFFER_H

@@ -46,4 +46,4 @@ void RingBuffer::Shutdown() {
     }
 }
 
-}
+} // dx

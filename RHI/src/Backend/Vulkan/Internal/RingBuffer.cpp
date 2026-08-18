@@ -64,4 +64,4 @@ uint64_t RingBuffer::Allocate(uint64_t size) {
     return offset;
 }
 
-}
+} // vk

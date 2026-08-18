@@ -5,6 +5,8 @@
 #include "Backend/Vulkan/VulkanCommandQueue.h"
 #include "Backend/Vulkan/VulkanDevice.h"
 
+namespace vk {
+
 VulkanCommandQueue::VulkanCommandQueue(uint32_t queueIndex, VulkanDevice* device) {
     m_QueueIndex = queueIndex;
     m_Device = device;
@@ -137,3 +139,5 @@ void VulkanCommandQueue::SubmitCommandBuffer() {
     m_CommandBufferPool.ReleaseCommandBuffer(m_CommandBuffer, m_CommandBufferNumber);
     m_ReleaseManager.DiscardStaleResources(m_CommandBufferNumber);
 }
+
+} // vk

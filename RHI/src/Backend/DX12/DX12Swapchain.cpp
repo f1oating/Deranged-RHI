@@ -5,8 +5,9 @@
 #include "Backend/DX12/DX12Swapchain.h"
 #define GLFW_EXPOSE_NATIVE_WIN32
 #include <GLFW/glfw3native.h>
+#include "Backend/DX12/DX12Device.h"
 
-#include "DX12Device.h"
+namespace dx {
 
 DX12Swapchain::DX12Swapchain(DX12Device* device) {
     m_Device = device;
@@ -107,3 +108,5 @@ void DX12Swapchain::Present() {
         m_CurrentHeight = height;
     }
 }
+
+} // dx

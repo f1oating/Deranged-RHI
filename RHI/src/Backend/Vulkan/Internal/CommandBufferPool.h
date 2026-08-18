@@ -28,6 +28,6 @@ private:
 
 };
 
-}
+} // vk
 
 #endif //DERANGED_RHI_COMMANDBUFFERPOOL_H

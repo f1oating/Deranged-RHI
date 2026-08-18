@@ -10,13 +10,18 @@
 
 using Offset = uint64_t;
 using Size = uint64_t;
-using FreeBlocksByOffset = std::map<Offset, Size>;
+struct FreeBlock;
+using FreeBlocksByOffset = std::map<Offset, FreeBlock>;
 using FreeBlocksBySize = std::map<Size, FreeBlocksByOffset::iterator>;
+struct FreeBlock {
+    Size BlockSize;
+    FreeBlocksBySize::iterator OrderBySize;
+};
 constexpr uint64_t InvalidOffset = UINT64_MAX;
 
 class VariableSizeAllocationManager {
 public:
-    VariableSizeAllocationManager(Size size);
+    void Init(Size size);
 
     Size Allocate(Size size);
     void Free(Offset offset, Size size);

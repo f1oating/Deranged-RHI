@@ -45,4 +45,4 @@ void CommandAllocatorPool::Poll(uint64_t value) {
     }
 }
 
-}
+} // dx

@@ -6,6 +6,8 @@
 
 #include "VulkanDevice.h"
 
+namespace vk {
+
 VulkanFence::VulkanFence(VulkanDevice* device) {
     m_Device = device;
 
@@ -43,3 +45,5 @@ VulkanFence::~VulkanFence() {
         m_Device->ReleaseResource(new FenceReleaseResource(m_Device->GetVkDevice(), m_TimelineSemaphore));
     }
 }
+
+} // vk

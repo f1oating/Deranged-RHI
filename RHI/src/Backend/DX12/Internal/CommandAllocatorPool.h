@@ -28,6 +28,6 @@ private:
 
 };
 
-}
+} // dx
 
 #endif //DERANGED_RHI_COMMANDALLOCATORPOOL_H

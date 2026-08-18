@@ -9,6 +9,8 @@
 #include <volk.h>
 #include "ReleaseManager.h"
 
+namespace vk {
+
 class VulkanDevice;
 
 class VulkanGraphicsPipelineState : public GraphicsPipelineState {
@@ -44,5 +46,7 @@ struct PipelineStateReleaseResource : ReleaseResourceBase {
     }
 
 };
+
+} // vk
 
 #endif //DERANGED_RHI_VULKANPIPELINE_H

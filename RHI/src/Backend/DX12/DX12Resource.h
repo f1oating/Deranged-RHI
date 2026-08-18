@@ -8,6 +8,9 @@
 #include "Resource.h"
 #include <d3d12.h>
 #include "ReleaseManager.h"
+#include "Backend/DX12/Internal/DescriptorHeapAllocator.h"
+
+namespace dx {
 
 class DX12Device;
 
@@ -16,6 +19,8 @@ public:
     DX12Texture(TextureDesc desc, DX12Device* device);
     DX12Texture(TextureDesc desc, ID3D12Resource* res, DX12Device* device);
     ~DX12Texture() override;
+
+    ID3D12Resource* GetDX12Resource() const { return m_Resource; }
 
 private:
     TextureDesc m_Desc;
@@ -30,8 +35,12 @@ public:
     ~DX12TextureView() override;
 
 private:
+    void CreateRTV();
+
+private:
     TextureViewDesc m_Desc;
     DX12Device* m_Device = nullptr;
+    dx::DescriptorHeapAllocation m_Allocation;
 
 };
 
@@ -43,6 +52,19 @@ struct TextureReleaseResource : ReleaseResourceBase {
 
     void Destroy() override {
         Resource->Release();
+    }
+
+};
+
+struct DescriptorAllocationReleaseResource : ReleaseResourceBase {
+    dx::DescriptorHeapAllocator* Allocator;
+    dx::DescriptorHeapAllocation Allocation;
+
+    DescriptorAllocationReleaseResource(dx::DescriptorHeapAllocator* allocator, dx::DescriptorHeapAllocation allocation)
+        : Allocator(allocator), Allocation(allocation) {}
+
+    void Destroy() override {
+        Allocator->Free(Allocation);
     }
 
 };
@@ -90,5 +112,7 @@ inline TextureType FromD3D12ResourceDimension(D3D12_RESOURCE_DIMENSION dimension
             return TextureType::Texture2D;
     }
 }
+
+} // dx
 
 #endif //DERANGED_RHI_DX12RESOURCE_H

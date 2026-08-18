@@ -5,6 +5,8 @@
 #include "Backend/Vulkan/VulkanResource.h"
 #include "Backend/Vulkan/VulkanDevice.h"
 
+namespace vk {
+
 VulkanTexture::VulkanTexture(TextureDesc desc, VulkanDevice* device) {
     m_Desc = desc;
     m_Device = device;
@@ -92,3 +94,5 @@ VulkanTextureView::~VulkanTextureView() {
         m_Device->ReleaseResource(new ImageViewReleaseResource(m_Device->GetVkDevice(), m_ImageView));
     }
 }
+
+} // vk

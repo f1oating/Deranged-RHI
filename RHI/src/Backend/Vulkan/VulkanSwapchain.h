@@ -11,6 +11,8 @@
 #include "Backend/Vulkan/VulkanCommandQueue.h"
 #include "Backend/Vulkan/VulkanFence.h"
 
+namespace vk {
+
 class VulkanDevice;
 
 class VulkanSwapchain : public Swapchain {
@@ -52,5 +54,7 @@ private:
     uint32_t m_ImageIndex = 0;
 
 };
+
+} // vk
 
 #endif //DERANGED_RHI_VULKANSWAPCHAIN_H

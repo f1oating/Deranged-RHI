@@ -8,6 +8,8 @@
 
 #include "Backend/DX12/DX12Device.h"
 
+namespace dx {
+
 DX12CommandQueue::DX12CommandQueue(DX12Device* device) {
     m_Device = device;
 
@@ -25,6 +27,7 @@ DX12CommandQueue::DX12CommandQueue(DX12Device* device) {
 DX12CommandQueue::~DX12CommandQueue() {
     SubmitCommandList();
     m_Fence->Wait(m_CommandAllocatorNumber);
+    m_ReleaseManager.Clear();
     if (m_Fence) {
         delete m_Fence;
     }
@@ -124,3 +127,5 @@ void DX12CommandQueue::SubmitCommandList() {
     m_CommandAllocatorPool.ReleaseCommandAllocator(m_CommandAllocator, m_CommandAllocatorNumber);
     m_ReleaseManager.DiscardStaleResources(m_CommandAllocatorNumber);
 }
+
+} // dx

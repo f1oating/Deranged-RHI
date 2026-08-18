@@ -6,6 +6,8 @@
 #include "Backend/Vulkan/VulkanDevice.h"
 #include <vector>
 
+namespace vk {
+
 VulkanGraphicsPipelineState::VulkanGraphicsPipelineState(GraphicsPipelineDesc desc, VulkanDevice* device) {
     m_Device = device;
     m_Desc = desc;
@@ -182,3 +184,5 @@ void VulkanGraphicsPipelineState::CreatePipeline() {
         vkDestroyShaderModule(m_Device->GetVkDevice(), fragmentShader, nullptr);
     }
 }
+
+} // vk

@@ -5,6 +5,8 @@
 #include "Backend/DX12/DX12Pipeline.h"
 #include "Backend/DX12/DX12Device.h"
 
+namespace dx {
+
 DX12GraphicsPipelineState::DX12GraphicsPipelineState(GraphicsPipelineDesc desc, DX12Device* device) {
     m_Device = device;
     m_Desc = desc;
@@ -92,3 +94,5 @@ void DX12GraphicsPipelineState::CreatePipeline() {
 
     HRESULT hr = m_Device->GetDX12Device()->CreateGraphicsPipelineState(&graphicsPipelineStateDesc, IID_PPV_ARGS(&m_PipelineState));
 }
+
+} // dx

@@ -9,6 +9,8 @@
 #include <volk.h>
 #include "ReleaseManager.h"
 
+namespace vk {
+
 class VulkanDevice;
 
 class VulkanTexture : public Texture {
@@ -131,5 +133,7 @@ inline VkSampleCountFlagBits ToVkSampleCountFlagBits(uint32_t sampleCount) {
             return VK_SAMPLE_COUNT_1_BIT;
     }
 }
+
+} // vk
 
 #endif //DERANGED_RHI_VULKANRESOURCE_H

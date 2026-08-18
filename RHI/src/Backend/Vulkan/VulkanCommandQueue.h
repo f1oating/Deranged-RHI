@@ -13,6 +13,8 @@
 #include "ReleaseManager.h"
 #include "Backend/Vulkan/VulkanPipeline.h"
 
+namespace vk {
+
 class VulkanDevice;
 
 class VulkanCommandQueue : public CommandQueue {
@@ -61,5 +63,7 @@ private:
     ReleaseManager m_ReleaseManager;
 
 };
+
+} // vk
 
 #endif //DERANGED_RHI_VULKANCOMMANDQUEUE_H

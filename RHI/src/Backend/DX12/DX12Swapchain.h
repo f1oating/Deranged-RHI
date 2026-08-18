@@ -11,6 +11,8 @@
 #include "Backend/DX12/DX12Fence.h"
 #include <vector>
 
+namespace dx {
+
 class DX12Device;
 
 class DX12Swapchain : public Swapchain {
@@ -35,5 +37,7 @@ private:
     uint64_t m_CurrentFrame = 0;
 
 };
+
+} // dx
 
 #endif //DERANGED_RHI_DX12SWAPCHAIN_H
