@@ -3,6 +3,8 @@
 //
 
 #include "Backend/Vulkan/VulkanCommandQueue.h"
+
+#include "VulkanResource.h"
 #include "Backend/Vulkan/VulkanDevice.h"
 
 namespace vk {
@@ -64,15 +66,50 @@ void VulkanCommandQueue::SetScissor(Scissor scissor) {
 }
 
 void VulkanCommandQueue::Barrier(std::vector<TextureBarrier> barriers) {
+    if (m_InsideRendering) {
+        EndRendering();
+    }
 
+    std::vector<VkImageMemoryBarrier> imageBarriers;
+    for (auto barrier : barriers) {
+        VulkanTexture* vkTexture = static_cast<VulkanTexture*>(barrier.Tex);
+        VkImageSubresourceRange range = {
+            .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
+            .baseMipLevel = 0,
+            .levelCount = 1,
+            .baseArrayLayer = 0,
+            .layerCount = 1
+        };
+        VkImageMemoryBarrier imageBarrier = {
+            .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER,
+            .srcAccessMask = ToSrcVkAccessFlags(barrier.Layout),
+            .dstAccessMask = ToDstVkAccessFlags(barrier.Layout),
+            .oldLayout = ToVkImageLayout(vkTexture->GetLayout()),
+            .newLayout = ToVkImageLayout(barrier.Layout),
+            .image = vkTexture->GetVkImage(),
+            .subresourceRange = range
+        };
+        imageBarriers.push_back(imageBarrier);
+        vkTexture->SetLayout(barrier.Layout);
+    }
+
+    vkCmdPipelineBarrier(m_CommandBuffer, VK_PIPELINE_STAGE_ALL_COMMANDS_BIT, VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
+        VK_DEPENDENCY_BY_REGION_BIT, 0, nullptr, 0, nullptr, imageBarriers.size(), imageBarriers.data());
 }
 
 void VulkanCommandQueue::SetRenderTargets(std::vector<TextureView*> rtvs) {
-
+    m_RTVs.resize(rtvs.size());
+    for (int i = 0; i < m_RTVs.size(); i++) {
+        m_RTVs[i] = static_cast<VulkanTextureView*>(rtvs[i]);
+    }
+    BeginRendering();
 }
 
 void VulkanCommandQueue::DrawInstansed(uint32_t VertexCountPerInstance, uint32_t InstanceCount,
     uint32_t StartVertexLocation, uint32_t StartInstanceLocation) {
+    if (!m_InsideRendering) {
+        BeginRendering();
+    }
     vkCmdDraw(m_CommandBuffer, VertexCountPerInstance, InstanceCount, StartVertexLocation, StartInstanceLocation);
 }
 
@@ -113,6 +150,7 @@ void VulkanCommandQueue::AcquireCommandBuffer() {
 }
 
 void VulkanCommandQueue::SubmitCommandBuffer() {
+    EndRendering();
     vkEndCommandBuffer(m_CommandBuffer);
 
     AddSignalSemaphore(m_Fence->GetVkSemaphore(), m_CommandBufferNumber);
@@ -143,9 +181,55 @@ void VulkanCommandQueue::SubmitCommandBuffer() {
     m_WaitSemaphoresValues.clear();
     m_SignalSemaphores.clear();
     m_SignalSemaphoresValues.clear();
+    m_RTVs.clear();
 
     m_CommandBufferPool.ReleaseCommandBuffer(m_CommandBuffer, m_CommandBufferNumber);
     m_ReleaseManager.DiscardStaleResources(m_CommandBufferNumber);
+}
+
+void VulkanCommandQueue::BeginRendering() {
+    if (m_InsideRendering) {
+        EndRendering();
+    }
+
+    VkRect2D renderArea{};
+    renderArea.offset = { 0, 0 };
+    renderArea.extent = { 800, 600 };
+
+    std::vector<VkRenderingAttachmentInfo> attachments;
+
+    for (auto rtv : m_RTVs) {
+        VkClearValue clearValue = { 0.1f, 0.2f, 0.3f, 1.0f };
+        VkRenderingAttachmentInfo attachmentInfo = {
+            .sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO,
+            .imageView = rtv->GetVkImageView(),
+            .imageLayout = ToVkImageLayout(rtv->GetTexture()->GetLayout()),
+            .loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
+            .storeOp = VK_ATTACHMENT_STORE_OP_STORE,
+            .clearValue = clearValue
+        };
+        attachments.push_back(attachmentInfo);
+    }
+
+    VkRenderingInfo renderingInfo = {
+        .sType = VK_STRUCTURE_TYPE_RENDERING_INFO,
+        .renderArea = renderArea,
+        .layerCount = 1,
+        .colorAttachmentCount = (uint32_t)attachments.size(),
+        .pColorAttachments = attachments.data(),
+        .pDepthAttachment = nullptr,
+        .pStencilAttachment = nullptr,
+    };
+    vkCmdBeginRendering(m_CommandBuffer, &renderingInfo);
+    m_InsideRendering = true;
+}
+
+void VulkanCommandQueue::EndRendering() {
+    if (!m_InsideRendering) {
+        return;
+    }
+    vkCmdEndRendering(m_CommandBuffer);
+    m_InsideRendering = false;
 }
 
 } // vk

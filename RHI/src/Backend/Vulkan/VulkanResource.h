@@ -22,12 +22,17 @@ public:
     TextureView* GetRTV() override;
 
     VkImage GetVkImage() const { return m_Image; }
+    ResourceLayout GetLayout() const { return m_Layout; }
+
+    void SetLayout(ResourceLayout layout) { m_Layout = layout; }
 
 private:
     VulkanDevice* m_Device = nullptr;
     TextureDesc m_Desc;
     VkImage m_Image = nullptr;
     VkDeviceMemory m_Memory = nullptr;
+    TextureView* m_RTV = nullptr;
+    ResourceLayout m_Layout = ResourceLayout::Present;
 
 };
 
@@ -36,10 +41,14 @@ public:
     VulkanTextureView(TextureViewDesc desc, VulkanDevice* device);
     ~VulkanTextureView() override;
 
+    VkImageView GetVkImageView() const { return m_ImageView; }
+    VulkanTexture* GetTexture() const { return m_Texture; }
+
 private:
     VulkanDevice* m_Device = nullptr;
     TextureViewDesc m_Desc;
     VkImageView m_ImageView = nullptr;
+    VulkanTexture* m_Texture = nullptr;
 
 };
 
@@ -133,6 +142,50 @@ inline VkSampleCountFlagBits ToVkSampleCountFlagBits(uint32_t sampleCount) {
             return VK_SAMPLE_COUNT_64_BIT;
         default:
             return VK_SAMPLE_COUNT_1_BIT;
+    }
+}
+
+inline VkImageLayout ToVkImageLayout(ResourceLayout layout) {
+    switch (layout) {
+        case ResourceLayout::RenderTarget:
+            return VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+        case ResourceLayout::Present:
+            return VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+        default:
+            return VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+    }
+}
+
+inline ResourceLayout FromVkImageLayout(VkImageLayout layout) {
+    switch (layout) {
+        case VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL:
+            return ResourceLayout::RenderTarget;
+        case VK_IMAGE_LAYOUT_PRESENT_SRC_KHR:
+            return ResourceLayout::Present;
+        default:
+            return ResourceLayout::Present;
+    }
+}
+
+inline VkAccessFlags ToSrcVkAccessFlags(ResourceLayout newLayout) {
+    switch (newLayout) {
+        case ResourceLayout::RenderTarget:
+            return VK_ACCESS_NONE;
+        case ResourceLayout::Present:
+            return VK_ACCESS_COLOR_ATTACHMENT_READ_BIT;
+        default:
+            return VK_ACCESS_COLOR_ATTACHMENT_READ_BIT;
+    }
+}
+
+inline VkAccessFlags ToDstVkAccessFlags(ResourceLayout newLayout) {
+    switch (newLayout) {
+        case ResourceLayout::RenderTarget:
+            return VK_ACCESS_COLOR_ATTACHMENT_READ_BIT;
+        case ResourceLayout::Present:
+            return VK_ACCESS_NONE;
+        default:
+            return VK_ACCESS_NONE;
     }
 }
 

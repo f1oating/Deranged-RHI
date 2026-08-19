@@ -58,13 +58,23 @@ VulkanTexture::VulkanTexture(TextureDesc desc, VulkanDevice* device, VkImage ima
 }
 
 VulkanTexture::~VulkanTexture() {
+    if (m_RTV) {
+        delete m_RTV;
+    }
     if (m_Memory) {
         m_Device->ReleaseResource(new ImageReleaseResource(m_Device->GetVkDevice(), m_Image, m_Memory));
     }
 }
 
 TextureView* VulkanTexture::GetRTV() {
-    return nullptr;
+    if (!m_RTV) {
+        TextureViewDesc desc = {
+            .Tex = this,
+            .Format = TextureFormat::TEXTURE_FORMAT_B8G8R8A8_UNORM
+        };
+        m_RTV = new VulkanTextureView(desc, m_Device);
+    }
+    return m_RTV;
 }
 
 VulkanTextureView::VulkanTextureView(TextureViewDesc desc, VulkanDevice* device) {
@@ -72,6 +82,7 @@ VulkanTextureView::VulkanTextureView(TextureViewDesc desc, VulkanDevice* device)
     m_Device = device;
 
     VulkanTexture* texture = static_cast<VulkanTexture*>(m_Desc.Tex);
+    m_Texture = texture;
 
     VkImageSubresourceRange imageSubresourceRange = {
         .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
@@ -83,7 +94,7 @@ VulkanTextureView::VulkanTextureView(TextureViewDesc desc, VulkanDevice* device)
 
     VkImageViewCreateInfo imageViewCreateInfo = {
         .sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
-        .image = texture->GetVkImage(),
+        .image = m_Texture->GetVkImage(),
         .viewType = VK_IMAGE_VIEW_TYPE_2D,
         .format = VK_FORMAT_B8G8R8A8_UNORM,
         .components = VK_COMPONENT_SWIZZLE_IDENTITY,

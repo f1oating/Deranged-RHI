@@ -40,7 +40,7 @@ VulkanSwapchain::~VulkanSwapchain() {
 }
 
 Texture* VulkanSwapchain::GetCurrentBackBuffer() {
-    return nullptr;
+    return m_Textures[m_ImageIndex];
 }
 
 void VulkanSwapchain::UpdateWindow() {
@@ -141,9 +141,24 @@ void VulkanSwapchain::CreateSwapchain() {
     VkResult res = vkCreateSwapchainKHR(m_Device->GetVkDevice(), &swapchainCreateInfo, nullptr, &m_SwapChain);
 
     uint32_t imageCount;
+    std::vector<VkImage> swapchainImages;
     vkGetSwapchainImagesKHR(m_Device->GetVkDevice(), m_SwapChain, &imageCount, nullptr);
-    m_SwapchainImages.resize(imageCount);
-    vkGetSwapchainImagesKHR(m_Device->GetVkDevice(), m_SwapChain, &imageCount, m_SwapchainImages.data());
+    swapchainImages.resize(imageCount);
+    vkGetSwapchainImagesKHR(m_Device->GetVkDevice(), m_SwapChain, &imageCount, swapchainImages.data());
+
+    m_Textures.resize(imageCount);
+    for (int i = 0; i < imageCount; i++) {
+        TextureDesc desc = {
+            .Width = 800,
+            .Height = 600,
+            .MipLevels = 1,
+            .ArrayLayers = 1,
+            .Samples = 1,
+            .Format = TextureFormat::TEXTURE_FORMAT_B8G8R8A8_UNORM,
+            .Type = TextureType::Texture2D
+        };
+        m_Textures[i] = new VulkanTexture(desc, m_Device, swapchainImages[i]);
+    }
 }
 
 void VulkanSwapchain::CreateSync() {
@@ -154,7 +169,7 @@ void VulkanSwapchain::CreateSync() {
     for (size_t i = 0; i < 3; i++) {
         VkResult res = vkCreateSemaphore(m_Device->GetVkDevice(), &semaphoreCreateInfo, nullptr, &m_AcquireSemaphores[i]);
     }
-    m_RenderSemaphores.resize(m_SwapchainImages.size());
+    m_RenderSemaphores.resize(m_Textures.size());
     for (size_t i = 0; i < m_RenderSemaphores.size(); i++) {
         VkResult res = vkCreateSemaphore(m_Device->GetVkDevice(), &semaphoreCreateInfo, nullptr, &m_RenderSemaphores[i]);
     }
@@ -170,6 +185,9 @@ void VulkanSwapchain::DestroySync() {
 }
 
 void VulkanSwapchain::DestroySwapchain() {
+    for (auto texture : m_Textures) {
+        delete texture;
+    }
     if (m_SwapChain) {
         vkDestroySwapchainKHR(m_Device->GetVkDevice(), m_SwapChain, nullptr);
     }

@@ -10,6 +10,7 @@
 #include <GLFW/glfw3.h>
 #include "Backend/Vulkan/VulkanCommandQueue.h"
 #include "Backend/Vulkan/VulkanFence.h"
+#include "Backend/Vulkan/VulkanResource.h"
 
 namespace vk {
 
@@ -45,7 +46,7 @@ private:
     VulkanCommandQueue* m_Queue = nullptr;
     VkSurfaceKHR m_Surface = nullptr;
     VkSwapchainKHR m_SwapChain = nullptr;
-    std::vector<VkImage> m_SwapchainImages;
+    std::vector<VulkanTexture*> m_Textures;
 
     std::vector<VkSemaphore> m_AcquireSemaphores;
     std::vector<VkSemaphore> m_RenderSemaphores;

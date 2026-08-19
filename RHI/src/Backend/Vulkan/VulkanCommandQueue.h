@@ -12,6 +12,7 @@
 #include "Backend/Vulkan/VulkanFence.h"
 #include "ReleaseManager.h"
 #include "Backend/Vulkan/VulkanPipeline.h"
+#include "Backend/Vulkan/VulkanResource.h"
 
 namespace vk {
 
@@ -52,6 +53,9 @@ private:
     void AcquireCommandBuffer();
     void SubmitCommandBuffer();
 
+    void BeginRendering();
+    void EndRendering();
+
 private:
     uint32_t m_QueueIndex = 0;
     VulkanDevice* m_Device;
@@ -65,6 +69,8 @@ private:
     std::vector<uint64_t> m_SignalSemaphoresValues;
     VulkanFence* m_Fence = nullptr;
     ReleaseManager m_ReleaseManager;
+    std::vector<VulkanTextureView*> m_RTVs;
+    bool m_InsideRendering = false;
 
 };
 
