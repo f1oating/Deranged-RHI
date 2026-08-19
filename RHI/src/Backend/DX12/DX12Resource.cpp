@@ -39,7 +39,21 @@ DX12Texture::DX12Texture(TextureDesc desc, ID3D12Resource* res, DX12Device* devi
 }
 
 DX12Texture::~DX12Texture() {
+    if (m_RTV) {
+        delete m_RTV;
+    }
     m_Device->ReleaseResource(new TextureReleaseResource(m_Resource));
+}
+
+TextureView* DX12Texture::GetRTV() {
+    if (!m_RTV) {
+        TextureViewDesc desc = {
+            .Tex = this,
+            .Format = TextureFormat::TEXTURE_FORMAT_B8G8R8A8_UNORM
+        };
+        m_RTV = new DX12TextureView(desc, m_Device);
+    }
+    return m_RTV;
 }
 
 DX12TextureView::DX12TextureView(TextureViewDesc desc, DX12Device* device) {

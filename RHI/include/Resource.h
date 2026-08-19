@@ -25,9 +25,13 @@ struct TextureDesc {
     TextureType Type;
 };
 
+class TextureView;
+
 class Texture {
 public:
     virtual ~Texture() = default;
+
+    virtual TextureView* GetRTV() = 0;
 
 };
 

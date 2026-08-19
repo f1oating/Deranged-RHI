@@ -19,6 +19,8 @@ public:
     VulkanTexture(TextureDesc desc, VulkanDevice* device, VkImage image);
     ~VulkanTexture() override;
 
+    TextureView* GetRTV() override;
+
     VkImage GetVkImage() const { return m_Image; }
 
 private:

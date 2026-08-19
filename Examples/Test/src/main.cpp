@@ -59,6 +59,10 @@ int main() {
         swapchain->UpdateWindow();
 
         queue->Barrier({ { swapchain->GetCurrentBackBuffer(), ResourceLayout::RenderTarget } });
+
+        queue->SetGraphicsPipelineState(pipelineState);
+        queue->SetRenderTargets({ swapchain->GetCurrentBackBuffer()->GetRTV() });
+
         queue->Barrier({ { swapchain->GetCurrentBackBuffer(), ResourceLayout::Present } });
 
         device->EndFrame();

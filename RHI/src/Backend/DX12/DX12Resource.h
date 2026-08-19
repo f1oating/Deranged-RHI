@@ -20,6 +20,8 @@ public:
     DX12Texture(TextureDesc desc, ID3D12Resource* res, DX12Device* device);
     ~DX12Texture() override;
 
+    TextureView* GetRTV() override;
+
     ID3D12Resource* GetDX12Resource() const { return m_Resource; }
     ResourceLayout GetResourceLayout() const { return m_Layout; }
 
@@ -30,6 +32,7 @@ private:
     DX12Device* m_Device = nullptr;
     ID3D12Resource* m_Resource = nullptr;
     ResourceLayout m_Layout = ResourceLayout::Present;
+    TextureView* m_RTV = nullptr;
 
 };
 
@@ -38,13 +41,15 @@ public:
     DX12TextureView(TextureViewDesc desc, DX12Device* device);
     ~DX12TextureView() override;
 
+    DescriptorHeapAllocation GetDescriptor() const { return m_Allocation; }
+
 private:
     void CreateRTV();
 
 private:
     TextureViewDesc m_Desc;
     DX12Device* m_Device = nullptr;
-    dx::DescriptorHeapAllocation m_Allocation;
+    DescriptorHeapAllocation m_Allocation;
 
 };
 
@@ -61,10 +66,10 @@ struct TextureReleaseResource : ReleaseResourceBase {
 };
 
 struct DescriptorAllocationReleaseResource : ReleaseResourceBase {
-    dx::DescriptorHeapAllocator* Allocator;
-    dx::DescriptorHeapAllocation Allocation;
+    DescriptorHeapAllocator* Allocator;
+    DescriptorHeapAllocation Allocation;
 
-    DescriptorAllocationReleaseResource(dx::DescriptorHeapAllocator* allocator, dx::DescriptorHeapAllocation allocation)
+    DescriptorAllocationReleaseResource(DescriptorHeapAllocator* allocator, DescriptorHeapAllocation allocation)
         : Allocator(allocator), Allocation(allocation) {}
 
     void Destroy() override {

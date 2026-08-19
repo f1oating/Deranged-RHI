@@ -63,6 +63,10 @@ VulkanTexture::~VulkanTexture() {
     }
 }
 
+TextureView* VulkanTexture::GetRTV() {
+    return nullptr;
+}
+
 VulkanTextureView::VulkanTextureView(TextureViewDesc desc, VulkanDevice* device) {
     m_Desc = desc;
     m_Device = device;

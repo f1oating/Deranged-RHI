@@ -103,6 +103,19 @@ void DX12CommandQueue::Barrier(std::vector<TextureBarrier> barriers) {
     m_CommandList->ResourceBarrier(resourceBarriers.size(), resourceBarriers.data());
 }
 
+void DX12CommandQueue::SetRenderTargets(std::vector<TextureView*> rtvs) {
+    std::vector<D3D12_CPU_DESCRIPTOR_HANDLE> rtvDescriptors;
+    for (auto rtv : rtvs) {
+        DX12TextureView* dxRTV = static_cast<DX12TextureView*>(rtv);
+        rtvDescriptors.push_back(dxRTV->GetDescriptor().GetCPUHandle(0));
+    }
+
+    m_CommandList->OMSetRenderTargets(rtvDescriptors.size(),
+        rtvDescriptors.data(), false, nullptr);
+    const float clear[] = { 0.1f, 0.2f, 0.3f, 1.0f };
+    m_CommandList->ClearRenderTargetView(rtvDescriptors[0], clear, 0, nullptr);
+}
+
 void DX12CommandQueue::DrawInstaned(uint32_t VertexCountPerInstance, uint32_t InstanceCount,
         uint32_t StartVertexLocation, uint32_t StartInstanceLocation) {
     m_CommandList->DrawInstanced(VertexCountPerInstance, InstanceCount, StartVertexLocation, StartInstanceLocation);

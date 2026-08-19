@@ -19,7 +19,7 @@ DX12Swapchain::DX12Swapchain(DX12Device* device) {
     m_CurrentHeight = 600;
 
     DXGI_MODE_DESC bufferMode = {
-        .Format = DXGI_FORMAT_R8G8B8A8_UNORM
+        .Format = DXGI_FORMAT_B8G8R8A8_UNORM
     };
 
     DXGI_SAMPLE_DESC sampleDesc = {
