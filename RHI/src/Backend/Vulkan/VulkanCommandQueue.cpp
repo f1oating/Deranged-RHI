@@ -71,7 +71,7 @@ void VulkanCommandQueue::SetRenderTargets(std::vector<TextureView*> rtvs) {
 
 }
 
-void VulkanCommandQueue::DrawInstaned(uint32_t VertexCountPerInstance, uint32_t InstanceCount,
+void VulkanCommandQueue::DrawInstansed(uint32_t VertexCountPerInstance, uint32_t InstanceCount,
     uint32_t StartVertexLocation, uint32_t StartInstanceLocation) {
     vkCmdDraw(m_CommandBuffer, VertexCountPerInstance, InstanceCount, StartVertexLocation, StartInstanceLocation);
 }

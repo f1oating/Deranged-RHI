@@ -62,6 +62,9 @@ int main() {
 
         queue->SetGraphicsPipelineState(pipelineState);
         queue->SetRenderTargets({ swapchain->GetCurrentBackBuffer()->GetRTV() });
+        queue->SetViewport({ 0, 0, 800, 600, 0.0f, 1.0f });
+        queue->SetScissor({ 0, 0, 800, 600 });
+        queue->DrawInstansed(3);
 
         queue->Barrier({ { swapchain->GetCurrentBackBuffer(), ResourceLayout::Present } });
 

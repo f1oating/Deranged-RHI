@@ -53,6 +53,7 @@ void DX12CommandQueue::SetGraphicsPipelineState(GraphicsPipelineState* graphicsP
 
     m_CommandList->SetGraphicsRootSignature(dxGraphicsPipelineState->GetRootSignature());
     m_CommandList->SetPipelineState(dxGraphicsPipelineState->GetPipelineState());
+    m_CommandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 }
 
 void DX12CommandQueue::SetViewport(Viewport viewport) {
@@ -116,7 +117,7 @@ void DX12CommandQueue::SetRenderTargets(std::vector<TextureView*> rtvs) {
     m_CommandList->ClearRenderTargetView(rtvDescriptors[0], clear, 0, nullptr);
 }
 
-void DX12CommandQueue::DrawInstaned(uint32_t VertexCountPerInstance, uint32_t InstanceCount,
+void DX12CommandQueue::DrawInstansed(uint32_t VertexCountPerInstance, uint32_t InstanceCount,
         uint32_t StartVertexLocation, uint32_t StartInstanceLocation) {
     m_CommandList->DrawInstanced(VertexCountPerInstance, InstanceCount, StartVertexLocation, StartInstanceLocation);
 }
