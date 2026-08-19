@@ -41,11 +41,22 @@ DX12Swapchain::DX12Swapchain(DX12Device* device) {
     DX12CommandQueue* dxCommandQueue = static_cast<DX12CommandQueue*>(m_Device->GetCommandQueue());
     HRESULT hr = m_Device->GetDXGIFactory()->CreateSwapChain(dxCommandQueue->GetDX12CommandQueue(), &swapChainDesc, &tempSwapChain);
     m_SwapChain = static_cast<IDXGISwapChain3*>(tempSwapChain);
+    m_CurrentImage = m_SwapChain->GetCurrentBackBufferIndex();
 
     m_Textures.resize(3);
     for (int i = 0; i < 3; i++) {
-        m_SwapChain->GetBuffer(i, IID_PPV_ARGS(&m_Textures[i]));
-        m_Textures[i]->SetName(L"fd");
+        ID3D12Resource* resource = nullptr;
+        m_SwapChain->GetBuffer(i, IID_PPV_ARGS(&resource));
+        TextureDesc desc = {
+            .Width = 800,
+            .Height = 600,
+            .MipLevels = 1,
+            .ArrayLayers = 1,
+            .Samples = 1,
+            .Format = TextureFormat::TEXTURE_FORMAT_B8G8R8A8_UNORM,
+            .Type = TextureType::Texture2D
+        };
+        m_Textures[i] = new DX12Texture(desc, resource, m_Device);
     }
 
     m_Fence = new DX12Fence(m_Device);
@@ -64,11 +75,18 @@ DX12Swapchain::~DX12Swapchain() {
         delete m_Fence;
     }
     if (m_SwapChain) {
+        for (int i = 0; i < m_Textures.size(); i++) {
+            delete m_Textures[i];
+        }
         m_SwapChain->Release();
     }
     if (m_Window) {
         glfwDestroyWindow(m_Window);
     }
+}
+
+Texture* DX12Swapchain::GetCurrentBackBuffer() {
+    return m_Textures[m_CurrentImage];
 }
 
 void DX12Swapchain::UpdateWindow() {
@@ -85,6 +103,7 @@ void DX12Swapchain::Present() {
     dxCommandQueue->GetDX12CommandQueue()->Signal(m_Fence->GetDX12Fence(), m_FrameFenceValues[m_CurrentFrame]);
     m_SwapChain->Present(1, 0);
     m_CurrentFrame = (m_CurrentFrame + 1) % 3;
+    m_CurrentImage = m_SwapChain->GetCurrentBackBufferIndex();
 
     m_Fence->Wait(m_FrameFenceValues[m_CurrentFrame]);
 
@@ -97,15 +116,26 @@ void DX12Swapchain::Present() {
         dxCommandQueue->GetDX12CommandQueue()->Signal(m_Fence->GetDX12Fence(), m_FenceValue);
         m_Fence->Wait(m_FenceValue);
         for (int i = 0; i < 3; i++) {
-            m_Textures[i]->Release();
+            delete m_Textures[i];
         }
         m_SwapChain->ResizeBuffers(3, width, height, DXGI_FORMAT_R8G8B8A8_UNORM, 0);
         for (int i = 0; i < 3; i++) {
-            m_SwapChain->GetBuffer(i, IID_PPV_ARGS(&m_Textures[i]));
-            m_Textures[i]->SetName(L"fd");
+            ID3D12Resource* resource = nullptr;
+            m_SwapChain->GetBuffer(i, IID_PPV_ARGS(&resource));
+            TextureDesc desc = {
+                .Width = (uint32_t)width,
+                .Height = (uint32_t)height,
+                .MipLevels = 1,
+                .ArrayLayers = 1,
+                .Samples = 1,
+                .Format = TextureFormat::TEXTURE_FORMAT_B8G8R8A8_UNORM,
+                .Type = TextureType::Texture2D
+            };
+            m_Textures[i] = new DX12Texture(desc, resource, m_Device);
         }
         m_CurrentWidth = width;
         m_CurrentHeight = height;
+        m_CurrentImage = m_SwapChain->GetCurrentBackBufferIndex();
     }
 }
 

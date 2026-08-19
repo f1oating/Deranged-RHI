@@ -3,10 +3,8 @@
 //
 
 #include "Backend/DX12/DX12CommandQueue.h"
-
-#include <iso646.h>
-
 #include "Backend/DX12/DX12Device.h"
+#include "Backend/DX12/DX12Resource.h"
 
 namespace dx {
 
@@ -78,6 +76,31 @@ void DX12CommandQueue::SetScissor(Scissor scissor) {
     };
 
     m_CommandList->RSSetScissorRects(1, &dxScissor);
+}
+
+void DX12CommandQueue::Barrier(std::vector<TextureBarrier> barriers) {
+    std::vector<D3D12_RESOURCE_BARRIER> resourceBarriers;
+
+    for (int i = 0; i < barriers.size(); i++) {
+        DX12Texture* dxTexture = static_cast<DX12Texture*>(barriers[i].Tex);
+
+        D3D12_RESOURCE_TRANSITION_BARRIER transitionBarrier = {
+            .pResource = dxTexture->GetDX12Resource(),
+            .Subresource = 0,
+            .StateBefore = ToD3D12ResourceState(dxTexture->GetResourceLayout()),
+            .StateAfter = ToD3D12ResourceState(barriers[i].Layout)
+        };
+
+        D3D12_RESOURCE_BARRIER resourceBarrier = {
+            .Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION,
+            .Transition = transitionBarrier
+        };
+
+        resourceBarriers.push_back(resourceBarrier);
+        dxTexture->SetResourceLayout(barriers[i].Layout);
+    }
+
+    m_CommandList->ResourceBarrier(resourceBarriers.size(), resourceBarriers.data());
 }
 
 void DX12CommandQueue::DrawInstaned(uint32_t VertexCountPerInstance, uint32_t InstanceCount,

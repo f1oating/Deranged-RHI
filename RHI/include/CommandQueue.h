@@ -7,6 +7,8 @@
 
 #include "Fence.h"
 #include "Pipeline.h"
+#include "Resource.h"
+#include <vector>
 
 struct Viewport {
     float TopLeftX;
@@ -35,6 +37,8 @@ public:
 
     virtual void SetViewport(Viewport viewport) = 0;
     virtual void SetScissor(Scissor scissor) = 0;
+
+    virtual void Barrier(std::vector<TextureBarrier> barriers) = 0;
 
     virtual void DrawInstaned(uint32_t VertexCountPerInstance, uint32_t InstanceCount = 1,
         uint32_t StartVertexLocation = 0, uint32_t StartInstanceLocation = 0) = 0;

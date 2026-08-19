@@ -63,6 +63,10 @@ void VulkanCommandQueue::SetScissor(Scissor scissor) {
     vkCmdSetScissor(m_CommandBuffer, 0, 1, &vkScissor);
 }
 
+void VulkanCommandQueue::Barrier(std::vector<TextureBarrier> barriers) {
+
+}
+
 void VulkanCommandQueue::DrawInstaned(uint32_t VertexCountPerInstance, uint32_t InstanceCount,
     uint32_t StartVertexLocation, uint32_t StartInstanceLocation) {
     vkCmdDraw(m_CommandBuffer, VertexCountPerInstance, InstanceCount, StartVertexLocation, StartInstanceLocation);

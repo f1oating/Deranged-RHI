@@ -39,6 +39,10 @@ VulkanSwapchain::~VulkanSwapchain() {
     DestroyWindow();
 }
 
+Texture* VulkanSwapchain::GetCurrentBackBuffer() {
+    return nullptr;
+}
+
 void VulkanSwapchain::UpdateWindow() {
     glfwPollEvents();
 }

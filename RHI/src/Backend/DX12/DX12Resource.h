@@ -21,11 +21,15 @@ public:
     ~DX12Texture() override;
 
     ID3D12Resource* GetDX12Resource() const { return m_Resource; }
+    ResourceLayout GetResourceLayout() const { return m_Layout; }
+
+    void SetResourceLayout(ResourceLayout layout) { m_Layout = layout; }
 
 private:
     TextureDesc m_Desc;
     DX12Device* m_Device = nullptr;
     ID3D12Resource* m_Resource = nullptr;
+    ResourceLayout m_Layout = ResourceLayout::Present;
 
 };
 
@@ -110,6 +114,28 @@ inline TextureType FromD3D12ResourceDimension(D3D12_RESOURCE_DIMENSION dimension
             return TextureType::Texture3D;
         default:
             return TextureType::Texture2D;
+    }
+}
+
+inline D3D12_RESOURCE_STATES ToD3D12ResourceState(ResourceLayout layout) {
+    switch (layout) {
+        case ResourceLayout::RenderTarget:
+            return D3D12_RESOURCE_STATE_RENDER_TARGET;
+        case ResourceLayout::Present:
+            return D3D12_RESOURCE_STATE_PRESENT;
+        default:
+            return D3D12_RESOURCE_STATE_PRESENT;
+    }
+}
+
+inline ResourceLayout FromD3D12ResourceState(D3D12_RESOURCE_STATES state) {
+    switch (state) {
+        case D3D12_RESOURCE_STATE_RENDER_TARGET:
+            return ResourceLayout::RenderTarget;
+        case D3D12_RESOURCE_STATE_PRESENT:
+            return ResourceLayout::Present;
+        default:
+            return ResourceLayout::Present;
     }
 }
 

@@ -20,6 +20,8 @@ public:
     VulkanSwapchain(VulkanCommandQueue* queue, VulkanDevice* device);
     ~VulkanSwapchain() override;
 
+    Texture* GetCurrentBackBuffer() override;
+
     void UpdateWindow() override;
     bool WindowShouldClose() override;
     void Present() override;

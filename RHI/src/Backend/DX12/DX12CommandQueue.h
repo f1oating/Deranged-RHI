@@ -30,6 +30,8 @@ public:
     void SetViewport(Viewport viewport) override;
     void SetScissor(Scissor scissor) override;
 
+    void Barrier(std::vector<TextureBarrier> barriers) override;
+
     void DrawInstaned(uint32_t VertexCountPerInstance, uint32_t InstanceCount = 1,
         uint32_t StartVertexLocation = 0, uint32_t StartInstanceLocation = 0) override;
 

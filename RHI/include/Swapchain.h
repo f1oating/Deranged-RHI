@@ -5,9 +5,13 @@
 #ifndef DERANGED_RHI_SWAPCHAIN_H
 #define DERANGED_RHI_SWAPCHAIN_H
 
+#include "Resource.h"
+
 class Swapchain {
 public:
     virtual ~Swapchain() = default;
+
+    virtual Texture* GetCurrentBackBuffer() = 0;
 
     virtual void UpdateWindow() = 0;
     virtual bool WindowShouldClose() = 0;

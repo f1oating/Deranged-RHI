@@ -58,6 +58,9 @@ int main() {
     while(!swapchain->WindowShouldClose()) {
         swapchain->UpdateWindow();
 
+        queue->Barrier({ { swapchain->GetCurrentBackBuffer(), ResourceLayout::RenderTarget } });
+        queue->Barrier({ { swapchain->GetCurrentBackBuffer(), ResourceLayout::Present } });
+
         device->EndFrame();
         swapchain->Present();
     }

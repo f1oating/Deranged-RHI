@@ -42,4 +42,14 @@ public:
 
 };
 
+enum class ResourceLayout {
+    RenderTarget,
+    Present
+};
+
+struct TextureBarrier {
+    Texture* Tex;
+    ResourceLayout Layout;
+};
+
 #endif //DERANGED_RHI_RESOURCE_H
