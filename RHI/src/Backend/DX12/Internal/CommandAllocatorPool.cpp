@@ -6,7 +6,7 @@
 
 namespace dx {
 
-void CommandAllocatorPool::Init(ID3D12Device* device) {
+void CommandAllocatorPool::Init(ID3D12Device10* device) {
     m_Device = device;
 }
 

@@ -22,6 +22,8 @@ public:
 
     TextureView* GetRTV() override;
 
+    TextureDesc GetDesc() override;
+
     ID3D12Resource* GetDX12Resource() const { return m_Resource; }
     ResourceLayout GetResourceLayout() const { return m_Layout; }
 
@@ -31,7 +33,7 @@ private:
     TextureDesc m_Desc;
     DX12Device* m_Device = nullptr;
     ID3D12Resource* m_Resource = nullptr;
-    ResourceLayout m_Layout = ResourceLayout::Present;
+    ResourceLayout m_Layout = ResourceLayout::Undefined;
     TextureView* m_RTV = nullptr;
 
 };
@@ -40,6 +42,8 @@ class DX12TextureView : public TextureView {
 public:
     DX12TextureView(TextureViewDesc desc, DX12Device* device);
     ~DX12TextureView() override;
+
+    TextureViewDesc GetDesc() override;
 
     DescriptorHeapAllocation GetDescriptor() const { return m_Allocation; }
 
@@ -122,25 +126,51 @@ inline TextureType FromD3D12ResourceDimension(D3D12_RESOURCE_DIMENSION dimension
     }
 }
 
-inline D3D12_RESOURCE_STATES ToD3D12ResourceState(ResourceLayout layout) {
+inline D3D12_BARRIER_LAYOUT ToD3D12BarrierLayout(ResourceLayout layout) {
     switch (layout) {
+        case ResourceLayout::Undefined:
+            return  D3D12_BARRIER_LAYOUT_UNDEFINED;
         case ResourceLayout::RenderTarget:
-            return D3D12_RESOURCE_STATE_RENDER_TARGET;
+            return D3D12_BARRIER_LAYOUT_RENDER_TARGET;
         case ResourceLayout::Present:
-            return D3D12_RESOURCE_STATE_PRESENT;
+            return D3D12_BARRIER_LAYOUT_PRESENT;
         default:
-            return D3D12_RESOURCE_STATE_PRESENT;
+            return D3D12_BARRIER_LAYOUT_UNDEFINED;
     }
 }
 
-inline ResourceLayout FromD3D12ResourceState(D3D12_RESOURCE_STATES state) {
-    switch (state) {
-        case D3D12_RESOURCE_STATE_RENDER_TARGET:
+inline ResourceLayout FromD3D12BarrierLayout(D3D12_BARRIER_LAYOUT layout) {
+    switch (layout) {
+        case D3D12_BARRIER_LAYOUT_UNDEFINED:
+            return ResourceLayout::Undefined;
+        case D3D12_BARRIER_LAYOUT_RENDER_TARGET:
             return ResourceLayout::RenderTarget;
-        case D3D12_RESOURCE_STATE_PRESENT:
+        case D3D12_BARRIER_LAYOUT_PRESENT:
             return ResourceLayout::Present;
         default:
-            return ResourceLayout::Present;
+            return ResourceLayout::Undefined;
+    }
+}
+
+inline D3D12_BARRIER_ACCESS ToSrcD3D12BarrierAccess(ResourceLayout newLayout) {
+    switch (newLayout) {
+        case ResourceLayout::RenderTarget:
+            return D3D12_BARRIER_ACCESS_COMMON;
+        case ResourceLayout::Present:
+            return D3D12_BARRIER_ACCESS_RENDER_TARGET;
+        default:
+            return D3D12_BARRIER_ACCESS_NO_ACCESS;
+    }
+}
+
+inline D3D12_BARRIER_ACCESS ToDstD3D12BarrierAccess(ResourceLayout newLayout) {
+    switch (newLayout) {
+        case ResourceLayout::RenderTarget:
+            return D3D12_BARRIER_ACCESS_RENDER_TARGET;
+        case ResourceLayout::Present:
+            return D3D12_BARRIER_ACCESS_COMMON;
+        default:
+            return D3D12_BARRIER_ACCESS_NO_ACCESS;
     }
 }
 

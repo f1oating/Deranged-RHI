@@ -33,6 +33,7 @@ public:
     void Barrier(std::vector<TextureBarrier> barriers) override;
 
     void SetRenderTargets(std::vector<TextureView*> rtvs) override;
+    void ClearRenderTargets(float r, float g, float b, float a) override;
 
     void DrawInstansed(uint32_t VertexCountPerInstance, uint32_t InstanceCount = 1,
         uint32_t StartVertexLocation = 0, uint32_t StartInstanceLocation = 0) override;
@@ -55,10 +56,11 @@ private:
     DX12Fence* m_Fence = nullptr;
     std::vector<std::pair<ID3D12Fence*, uint64_t>> m_WaitFences;
     std::vector<std::pair<ID3D12Fence*, uint64_t>> m_SignalFences;
-    ID3D12GraphicsCommandList* m_CommandList = nullptr;
+    ID3D12GraphicsCommandList7* m_CommandList = nullptr;
     ID3D12CommandAllocator* m_CommandAllocator = nullptr;
     uint64_t m_CommandAllocatorNumber = 0;
     ReleaseManager m_ReleaseManager;
+    std::vector<D3D12_CPU_DESCRIPTOR_HANDLE> m_RTVs;
 
 };
 

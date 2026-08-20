@@ -118,7 +118,9 @@ void DX12Swapchain::Present() {
         for (int i = 0; i < 3; i++) {
             delete m_Textures[i];
         }
-        m_SwapChain->ResizeBuffers(3, width, height, DXGI_FORMAT_R8G8B8A8_UNORM, 0);
+        dxCommandQueue->Flush();
+        dxCommandQueue->EndFrame();
+        m_SwapChain->ResizeBuffers(3, width, height, DXGI_FORMAT_B8G8R8A8_UNORM, 0);
         for (int i = 0; i < 3; i++) {
             ID3D12Resource* resource = nullptr;
             m_SwapChain->GetBuffer(i, IID_PPV_ARGS(&resource));

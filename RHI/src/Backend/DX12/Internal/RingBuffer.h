@@ -17,7 +17,7 @@ template<typename T> inline T AlignUp(T val, T alignment)
 
 class RingBuffer {
 public:
-    void Init(ID3D12Device* device);
+    void Init(ID3D12Device10* device);
     void Shutdown();
 
     uint64_t Allocate(uint64_t size);
@@ -26,7 +26,7 @@ public:
     ID3D12Resource* GetDX12Resource() { return m_Resource; }
 
 private:
-    ID3D12Device* m_Device = nullptr;
+    ID3D12Device10* m_Device = nullptr;
     ID3D12Resource* m_Resource = nullptr;
     uint64_t m_Tail = 0;
     uint64_t m_Head = 0;

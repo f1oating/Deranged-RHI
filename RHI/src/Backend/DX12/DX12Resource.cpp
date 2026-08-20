@@ -16,7 +16,7 @@ DX12Texture::DX12Texture(TextureDesc desc, DX12Device* device) {
         .Type = D3D12_HEAP_TYPE_DEFAULT
     };
 
-    D3D12_RESOURCE_DESC resourceDesc = {
+    D3D12_RESOURCE_DESC1 resourceDesc = {
         .Dimension = ToD3D12ResourceDimension(m_Desc.Type),
         .Width = m_Desc.Width,
         .Height = m_Desc.Height,
@@ -28,14 +28,16 @@ DX12Texture::DX12Texture(TextureDesc desc, DX12Device* device) {
         .Flags = D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET
     };
 
-    HRESULT hr = m_Device->GetDX12Device()->CreateCommittedResource(&heapProps, D3D12_HEAP_FLAG_NONE,
-        &resourceDesc, D3D12_RESOURCE_STATE_COMMON, nullptr, IID_PPV_ARGS(&m_Resource));
+    HRESULT hr = m_Device->GetDX12Device()->CreateCommittedResource3(&heapProps, D3D12_HEAP_FLAG_NONE,
+        &resourceDesc, D3D12_BARRIER_LAYOUT_UNDEFINED, nullptr,
+        nullptr, 0, nullptr, IID_PPV_ARGS(&m_Resource));
 }
 
 DX12Texture::DX12Texture(TextureDesc desc, ID3D12Resource* res, DX12Device* device) {
     m_Desc = desc;
     m_Resource = res;
     m_Device = device;
+    m_Layout = ResourceLayout::Present;
 }
 
 DX12Texture::~DX12Texture() {
@@ -56,6 +58,10 @@ TextureView* DX12Texture::GetRTV() {
     return m_RTV;
 }
 
+TextureDesc DX12Texture::GetDesc() {
+    return m_Desc;
+}
+
 DX12TextureView::DX12TextureView(TextureViewDesc desc, DX12Device* device) {
     m_Desc = desc;
     m_Device = device;
@@ -68,6 +74,10 @@ DX12TextureView::~DX12TextureView() {
     if (!m_Allocation.IsNull()) {
         m_Device->ReleaseResource(new DescriptorAllocationReleaseResource(m_Device->GetRTVAllocator(), m_Allocation));
     }
+}
+
+TextureViewDesc DX12TextureView::GetDesc() {
+    return m_Desc;
 }
 
 void DX12TextureView::CreateRTV() {

@@ -30,14 +30,14 @@ public:
     void ReleaseResource(ReleaseResourceBase* resource);
 
     IDXGIFactory3* GetDXGIFactory() const { return m_Factory;}
-    ID3D12Device4* GetDX12Device() const { return m_Device; }
+    ID3D12Device10* GetDX12Device() const { return m_Device; }
     dx::DescriptorHeapAllocator* GetRTVAllocator() { return &m_RTVAllocator; }
     dx::DescriptorHeapAllocator* GetDSVAllocator() { return &m_DSVAllocator; }
 
 private:
     ID3D12Debug3* m_Debug = nullptr;
     IDXGIFactory3* m_Factory = nullptr;
-    ID3D12Device4* m_Device = nullptr;
+    ID3D12Device10* m_Device = nullptr;
     DWORD m_CallbackCookie = 0;
     ID3D12InfoQueue1* m_DebugQueue = nullptr;
     DX12CommandQueue* m_CommandQueue = nullptr;

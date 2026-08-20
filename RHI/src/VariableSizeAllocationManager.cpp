@@ -34,12 +34,10 @@ Size VariableSizeAllocationManager::Allocate(Size size) {
 }
 
 void VariableSizeAllocationManager::Free(Offset offset, Size size) {
-    auto nextOffsetBlockIt = m_FreeBlocksByOffset.upper_bound(size);
+    auto nextOffsetBlockIt = m_FreeBlocksByOffset.upper_bound(offset);
     auto prevOffsetBlockIt = nextOffsetBlockIt;
 
-    if (nextOffsetBlockIt == m_FreeBlocksByOffset.end()) {
-        --nextOffsetBlockIt;
-    } else if (prevOffsetBlockIt != m_FreeBlocksByOffset.begin()) {
+    if (prevOffsetBlockIt != m_FreeBlocksByOffset.begin()) {
         --prevOffsetBlockIt;
     } else {
         prevOffsetBlockIt = m_FreeBlocksByOffset.end();

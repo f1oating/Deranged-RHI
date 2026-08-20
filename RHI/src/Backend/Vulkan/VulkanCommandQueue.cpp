@@ -229,7 +229,7 @@ void VulkanCommandQueue::BeginRendering() {
             .sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO,
             .imageView = rtv->GetVkImageView(),
             .imageLayout = ToVkImageLayout(rtv->GetTexture()->GetLayout()),
-            .loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
+            .loadOp = VK_ATTACHMENT_LOAD_OP_LOAD,
             .storeOp = VK_ATTACHMENT_STORE_OP_STORE,
             .clearValue = clearValue
         };

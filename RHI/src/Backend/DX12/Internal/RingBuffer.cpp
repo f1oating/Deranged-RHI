@@ -6,7 +6,7 @@
 
 namespace dx {
 
-void RingBuffer::Init(ID3D12Device* device) {
+void RingBuffer::Init(ID3D12Device10* device) {
     m_Device = device;
 
     D3D12_HEAP_PROPERTIES heapProps = {

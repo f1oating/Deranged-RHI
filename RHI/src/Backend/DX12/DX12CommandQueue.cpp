@@ -16,7 +16,7 @@ DX12CommandQueue::DX12CommandQueue(DX12Device* device) {
     m_CommandAllocatorPool.Init(m_Device->GetDX12Device());
 
     m_Fence = new DX12Fence(m_Device);
-    m_Device->GetDX12Device()->CreateCommandList1(0, D3D12_COMMAND_LIST_TYPE_DIRECT,
+    hr = m_Device->GetDX12Device()->CreateCommandList1(0, D3D12_COMMAND_LIST_TYPE_DIRECT,
         D3D12_COMMAND_LIST_FLAG_NONE, IID_PPV_ARGS(&m_CommandList));
 
     AcquireCommandAllocator();
@@ -80,41 +80,59 @@ void DX12CommandQueue::SetScissor(Scissor scissor) {
 }
 
 void DX12CommandQueue::Barrier(std::vector<TextureBarrier> barriers) {
-    std::vector<D3D12_RESOURCE_BARRIER> resourceBarriers;
+    std::vector<D3D12_TEXTURE_BARRIER> resourceBarriers;
 
     for (int i = 0; i < barriers.size(); i++) {
         DX12Texture* dxTexture = static_cast<DX12Texture*>(barriers[i].Tex);
 
-        D3D12_RESOURCE_TRANSITION_BARRIER transitionBarrier = {
+        D3D12_BARRIER_SUBRESOURCE_RANGE range = {
+            .IndexOrFirstMipLevel = 0,
+            .NumMipLevels = 1,
+            .FirstArraySlice = 0,
+            .NumArraySlices = 1,
+            .FirstPlane = 0,
+            .NumPlanes = 1
+        };
+
+        D3D12_TEXTURE_BARRIER textureBarrier = {
+            .SyncBefore = D3D12_BARRIER_SYNC_ALL,
+            .SyncAfter = D3D12_BARRIER_SYNC_ALL,
+            .AccessBefore = ToSrcD3D12BarrierAccess(barriers[i].Layout),
+            .AccessAfter = ToDstD3D12BarrierAccess(barriers[i].Layout),
+            .LayoutBefore = ToD3D12BarrierLayout(dxTexture->GetResourceLayout()),
+            .LayoutAfter = ToD3D12BarrierLayout(barriers[i].Layout),
             .pResource = dxTexture->GetDX12Resource(),
-            .Subresource = 0,
-            .StateBefore = ToD3D12ResourceState(dxTexture->GetResourceLayout()),
-            .StateAfter = ToD3D12ResourceState(barriers[i].Layout)
+            .Subresources = range
         };
 
-        D3D12_RESOURCE_BARRIER resourceBarrier = {
-            .Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION,
-            .Transition = transitionBarrier
-        };
-
-        resourceBarriers.push_back(resourceBarrier);
+        resourceBarriers.push_back(textureBarrier);
         dxTexture->SetResourceLayout(barriers[i].Layout);
     }
 
-    m_CommandList->ResourceBarrier(resourceBarriers.size(), resourceBarriers.data());
+    D3D12_BARRIER_GROUP barrierGroup = {
+        .Type = D3D12_BARRIER_TYPE_TEXTURE,
+        .NumBarriers = (uint32_t)resourceBarriers.size(),
+        .pTextureBarriers = resourceBarriers.data()
+    };
+
+    m_CommandList->Barrier(1, &barrierGroup);
 }
 
 void DX12CommandQueue::SetRenderTargets(std::vector<TextureView*> rtvs) {
-    std::vector<D3D12_CPU_DESCRIPTOR_HANDLE> rtvDescriptors;
     for (auto rtv : rtvs) {
         DX12TextureView* dxRTV = static_cast<DX12TextureView*>(rtv);
-        rtvDescriptors.push_back(dxRTV->GetDescriptor().GetCPUHandle(0));
+        m_RTVs.push_back(dxRTV->GetDescriptor().GetCPUHandle(0));
     }
 
-    m_CommandList->OMSetRenderTargets(rtvDescriptors.size(),
-        rtvDescriptors.data(), false, nullptr);
-    const float clear[] = { 0.1f, 0.2f, 0.3f, 1.0f };
-    m_CommandList->ClearRenderTargetView(rtvDescriptors[0], clear, 0, nullptr);
+    m_CommandList->OMSetRenderTargets(m_RTVs.size(),
+        m_RTVs.data(), false, nullptr);
+}
+
+void DX12CommandQueue::ClearRenderTargets(float r, float g, float b, float a) {
+    const float clear[] = { r, g, b, a };
+    for (auto rtv : m_RTVs) {
+        m_CommandList->ClearRenderTargetView(rtv, clear, 0, nullptr);
+    }
 }
 
 void DX12CommandQueue::DrawInstansed(uint32_t VertexCountPerInstance, uint32_t InstanceCount,
@@ -144,7 +162,7 @@ void DX12CommandQueue::AcquireCommandAllocator() {
 }
 
 void DX12CommandQueue::SubmitCommandList() {
-    m_CommandList->Close();
+    HRESULT hr = m_CommandList->Close();
     Signal(m_Fence, m_CommandAllocatorNumber);
 
     for (auto pair : m_WaitFences) {
@@ -160,6 +178,7 @@ void DX12CommandQueue::SubmitCommandList() {
 
     m_WaitFences.clear();
     m_SignalFences.clear();
+    m_RTVs.clear();
 
     m_CommandAllocatorPool.ReleaseCommandAllocator(m_CommandAllocator, m_CommandAllocatorNumber);
     m_ReleaseManager.DiscardStaleResources(m_CommandAllocatorNumber);

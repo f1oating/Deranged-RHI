@@ -13,7 +13,7 @@ namespace dx {
 
 class CommandAllocatorPool {
 public:
-    void Init(ID3D12Device* device);
+    void Init(ID3D12Device10* device);
     void Shutdown();
 
     ID3D12CommandAllocator* AcquireCommandAllocator();
@@ -22,7 +22,7 @@ public:
     void Poll(uint64_t value);
 
 private:
-    ID3D12Device* m_Device = nullptr;
+    ID3D12Device10* m_Device = nullptr;
     std::deque<ID3D12CommandAllocator*> m_AcquireQueue;
     std::deque<std::pair<ID3D12CommandAllocator*, uint64_t>> m_ReleaseQueue;
 

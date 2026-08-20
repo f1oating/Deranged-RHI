@@ -183,7 +183,7 @@ inline VkAccessFlags ToSrcVkAccessFlags(ResourceLayout newLayout) {
         case ResourceLayout::Present:
             return VK_ACCESS_COLOR_ATTACHMENT_READ_BIT;
         default:
-            return VK_ACCESS_COLOR_ATTACHMENT_READ_BIT;
+            return VK_ACCESS_NONE;
     }
 }
 

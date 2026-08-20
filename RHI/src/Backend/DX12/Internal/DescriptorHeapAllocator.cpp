@@ -7,7 +7,7 @@
 namespace dx {
 
 DescriptorHeapAllocation::DescriptorHeapAllocation()
-    : m_Heap(nullptr), m_CPUHandle(), m_GPUHandle(), m_NumHandles(0), m_DescriptorSize(0) {}
+    : m_Heap(nullptr), m_CPUHandle(0), m_GPUHandle(0), m_NumHandles(0), m_DescriptorSize(0) {}
 
 DescriptorHeapAllocation::DescriptorHeapAllocation(ID3D12DescriptorHeap* heap, D3D12_CPU_DESCRIPTOR_HANDLE cpuHandle,
     D3D12_GPU_DESCRIPTOR_HANDLE gpuHandle, uint32_t handlesCount, uint32_t descriptorSize) {
@@ -34,7 +34,7 @@ D3D12_GPU_DESCRIPTOR_HANDLE DescriptorHeapAllocation::GetGPUHandle(uint32_t offs
     return gpuHandle;
 }
 
-void DescriptorHeapAllocator::Init(ID3D12Device4* device,D3D12_DESCRIPTOR_HEAP_TYPE type, uint32_t numDescriptors){
+void DescriptorHeapAllocator::Init(ID3D12Device10* device,D3D12_DESCRIPTOR_HEAP_TYPE type, uint32_t numDescriptors){
     m_Device = device;
     m_NumDescriptors = numDescriptors;
 

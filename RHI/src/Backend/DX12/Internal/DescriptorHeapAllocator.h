@@ -38,7 +38,7 @@ private:
 
 class DescriptorHeapAllocator {
 public:
-    void Init(ID3D12Device4* device, D3D12_DESCRIPTOR_HEAP_TYPE type,
+    void Init(ID3D12Device10* device, D3D12_DESCRIPTOR_HEAP_TYPE type,
         uint32_t numDescriptors);
     void Shutdown();
 
@@ -48,7 +48,7 @@ public:
     ID3D12DescriptorHeap* GetDX12Heap() const { return m_Heap; }
 
 private:
-    ID3D12Device4* m_Device = nullptr;
+    ID3D12Device10* m_Device = nullptr;
     ID3D12DescriptorHeap* m_Heap = nullptr;
     uint64_t m_NumDescriptors = 0;
     uint32_t m_DescriptorSize = 0;
