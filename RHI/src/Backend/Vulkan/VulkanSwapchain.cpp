@@ -149,8 +149,8 @@ void VulkanSwapchain::CreateSwapchain() {
     m_Textures.resize(imageCount);
     for (int i = 0; i < imageCount; i++) {
         TextureDesc desc = {
-            .Width = 800,
-            .Height = 600,
+            .Width = surfaceCapabilities.currentExtent.width,
+            .Height = surfaceCapabilities.currentExtent.height,
             .MipLevels = 1,
             .ArrayLayers = 1,
             .Samples = 1,

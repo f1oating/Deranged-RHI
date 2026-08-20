@@ -77,6 +77,10 @@ TextureView* VulkanTexture::GetRTV() {
     return m_RTV;
 }
 
+TextureDesc VulkanTexture::GetDesc() {
+    return m_Desc;
+}
+
 VulkanTextureView::VulkanTextureView(TextureViewDesc desc, VulkanDevice* device) {
     m_Desc = desc;
     m_Device = device;
@@ -108,6 +112,10 @@ VulkanTextureView::~VulkanTextureView() {
     if (m_ImageView) {
         m_Device->ReleaseResource(new ImageViewReleaseResource(m_Device->GetVkDevice(), m_ImageView));
     }
+}
+
+TextureViewDesc VulkanTextureView::GetDesc() {
+    return m_Desc;
 }
 
 } // vk

@@ -105,6 +105,34 @@ void VulkanCommandQueue::SetRenderTargets(std::vector<TextureView*> rtvs) {
     BeginRendering();
 }
 
+void VulkanCommandQueue::ClearRenderTargets(float r, float g, float b, float a) {
+    if (!m_InsideRendering) {
+        BeginRendering();
+    }
+
+    std::vector<VkClearAttachment> attachments;
+    VkRect2D rect{};
+
+    for (int i = 0; i < m_RTVs.size(); i++) {
+        VkClearAttachment attachment = {
+            .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
+            .colorAttachment = (uint32_t)i,
+            .clearValue = { r, g, b, a }
+        };
+        attachments.push_back(attachment);
+        TextureDesc texDesc = m_RTVs[i]->GetTexture()->GetDesc();
+        rect.extent = { texDesc.Width, texDesc.Height };
+    }
+
+    VkClearRect clearRect = {
+        .rect = rect,
+        .baseArrayLayer = 0,
+        .layerCount = 1
+    };
+    vkCmdClearAttachments(m_CommandBuffer, attachments.size(),
+        attachments.data(), 1, &clearRect);
+}
+
 void VulkanCommandQueue::DrawInstansed(uint32_t VertexCountPerInstance, uint32_t InstanceCount,
     uint32_t StartVertexLocation, uint32_t StartInstanceLocation) {
     if (!m_InsideRendering) {
@@ -193,13 +221,10 @@ void VulkanCommandQueue::BeginRendering() {
     }
 
     VkRect2D renderArea{};
-    renderArea.offset = { 0, 0 };
-    renderArea.extent = { 800, 600 };
-
     std::vector<VkRenderingAttachmentInfo> attachments;
 
     for (auto rtv : m_RTVs) {
-        VkClearValue clearValue = { 0.1f, 0.2f, 0.3f, 1.0f };
+        VkClearValue clearValue = { 0.0f, 0.0f, 0.0f, 1.0f };
         VkRenderingAttachmentInfo attachmentInfo = {
             .sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO,
             .imageView = rtv->GetVkImageView(),
@@ -209,6 +234,8 @@ void VulkanCommandQueue::BeginRendering() {
             .clearValue = clearValue
         };
         attachments.push_back(attachmentInfo);
+        renderArea.extent.width = rtv->GetTexture()->GetDesc().Width;
+        renderArea.extent.height = rtv->GetTexture()->GetDesc().Height;
     }
 
     VkRenderingInfo renderingInfo = {

@@ -33,6 +33,8 @@ public:
 
     virtual TextureView* GetRTV() = 0;
 
+    virtual TextureDesc GetDesc() = 0;
+
 };
 
 struct TextureViewDesc {
@@ -44,9 +46,12 @@ class TextureView {
 public:
     virtual ~TextureView() = default;
 
+    virtual TextureViewDesc GetDesc() = 0;
+
 };
 
 enum class ResourceLayout {
+    Undefined,
     RenderTarget,
     Present
 };

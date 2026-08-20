@@ -58,12 +58,19 @@ int main() {
     while(!swapchain->WindowShouldClose()) {
         swapchain->UpdateWindow();
 
-        queue->Barrier({ { swapchain->GetCurrentBackBuffer(), ResourceLayout::RenderTarget } });
+        Texture* currentBackBuffer = swapchain->GetCurrentBackBuffer();
+        TextureDesc backBufferDesc = currentBackBuffer->GetDesc();
+
+        queue->Barrier({ { currentBackBuffer, ResourceLayout::RenderTarget } });
 
         queue->SetGraphicsPipelineState(pipelineState);
         queue->SetRenderTargets({ swapchain->GetCurrentBackBuffer()->GetRTV() });
-        queue->SetViewport({ 0, 0, 800, 600, 0.0f, 1.0f });
-        queue->SetScissor({ 0, 0, 800, 600 });
+        queue->ClearRenderTargets(0.1f, 0.2f, 0.3f, 1.0f);
+
+        queue->SetViewport({ 0, 0, (float)backBufferDesc.Width,
+            (float)backBufferDesc.Height, 0.0f, 1.0f });
+        queue->SetScissor({ 0, 0, (int)backBufferDesc.Width, (int)backBufferDesc.Height });
+
         queue->DrawInstansed(3);
 
         queue->Barrier({ { swapchain->GetCurrentBackBuffer(), ResourceLayout::Present } });

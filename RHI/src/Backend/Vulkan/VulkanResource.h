@@ -21,6 +21,8 @@ public:
 
     TextureView* GetRTV() override;
 
+    TextureDesc GetDesc() override;
+
     VkImage GetVkImage() const { return m_Image; }
     ResourceLayout GetLayout() const { return m_Layout; }
 
@@ -32,7 +34,7 @@ private:
     VkImage m_Image = nullptr;
     VkDeviceMemory m_Memory = nullptr;
     TextureView* m_RTV = nullptr;
-    ResourceLayout m_Layout = ResourceLayout::Present;
+    ResourceLayout m_Layout = ResourceLayout::Undefined;
 
 };
 
@@ -40,6 +42,8 @@ class VulkanTextureView : public TextureView {
 public:
     VulkanTextureView(TextureViewDesc desc, VulkanDevice* device);
     ~VulkanTextureView() override;
+
+    TextureViewDesc GetDesc() override;
 
     VkImageView GetVkImageView() const { return m_ImageView; }
     VulkanTexture* GetTexture() const { return m_Texture; }
@@ -147,28 +151,33 @@ inline VkSampleCountFlagBits ToVkSampleCountFlagBits(uint32_t sampleCount) {
 
 inline VkImageLayout ToVkImageLayout(ResourceLayout layout) {
     switch (layout) {
+        case ResourceLayout::Undefined:
+            return VK_IMAGE_LAYOUT_UNDEFINED;
         case ResourceLayout::RenderTarget:
             return VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
         case ResourceLayout::Present:
             return VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
         default:
-            return VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+            return VK_IMAGE_LAYOUT_UNDEFINED;
     }
 }
 
 inline ResourceLayout FromVkImageLayout(VkImageLayout layout) {
     switch (layout) {
+        case VK_IMAGE_LAYOUT_UNDEFINED:
+            return ResourceLayout::Undefined;
         case VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL:
             return ResourceLayout::RenderTarget;
         case VK_IMAGE_LAYOUT_PRESENT_SRC_KHR:
             return ResourceLayout::Present;
         default:
-            return ResourceLayout::Present;
+            return ResourceLayout::Undefined;
     }
 }
 
 inline VkAccessFlags ToSrcVkAccessFlags(ResourceLayout newLayout) {
     switch (newLayout) {
+        case ResourceLayout::Undefined:
         case ResourceLayout::RenderTarget:
             return VK_ACCESS_NONE;
         case ResourceLayout::Present:
@@ -180,6 +189,8 @@ inline VkAccessFlags ToSrcVkAccessFlags(ResourceLayout newLayout) {
 
 inline VkAccessFlags ToDstVkAccessFlags(ResourceLayout newLayout) {
     switch (newLayout) {
+        case ResourceLayout::Undefined:
+            return VK_ACCESS_NONE;
         case ResourceLayout::RenderTarget:
             return VK_ACCESS_COLOR_ATTACHMENT_READ_BIT;
         case ResourceLayout::Present:
