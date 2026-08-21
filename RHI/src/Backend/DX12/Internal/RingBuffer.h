@@ -23,6 +23,8 @@ public:
     uint64_t Allocate(uint64_t size);
 
     void SetTail(uint64_t tail) { m_Tail = tail; }
+
+    uint64_t GetHead() const { return m_Head; }
     ID3D12Resource* GetDX12Resource() { return m_Resource; }
 
 private:

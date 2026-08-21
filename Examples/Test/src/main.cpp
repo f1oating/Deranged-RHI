@@ -25,7 +25,7 @@ int main() {
         .MipLevels = 1,
         .ArrayLayers = 1,
         .Samples = 1,
-        .Format = TextureFormat::TEXTURE_FORMAT_B8G8R8A8_UNORM,
+        .Format = TextureFormat::B8G8R8A8_UNORM,
         .Type = TextureType::Texture2D
     };
 
@@ -33,7 +33,7 @@ int main() {
 
     TextureViewDesc textureViewDesc = {
         .Tex = texture,
-        .Format = TextureFormat::TEXTURE_FORMAT_B8G8R8A8_UNORM
+        .Format = TextureFormat::B8G8R8A8_UNORM
     };
 
     TextureView* textureView = device->CreateTextureView(textureViewDesc);

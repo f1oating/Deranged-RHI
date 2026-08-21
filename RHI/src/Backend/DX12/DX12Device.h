@@ -31,8 +31,9 @@ public:
 
     IDXGIFactory3* GetDXGIFactory() const { return m_Factory;}
     ID3D12Device10* GetDX12Device() const { return m_Device; }
-    dx::DescriptorHeapAllocator* GetRTVAllocator() { return &m_RTVAllocator; }
-    dx::DescriptorHeapAllocator* GetDSVAllocator() { return &m_DSVAllocator; }
+    DescriptorHeapAllocator* GetRTVAllocator() { return &m_RTVAllocator; }
+    DescriptorHeapAllocator* GetDSVAllocator() { return &m_DSVAllocator; }
+    RingBuffer* GetRingBuffer() { return &m_RingBuffer; }
 
 private:
     ID3D12Debug3* m_Debug = nullptr;
@@ -41,10 +42,22 @@ private:
     DWORD m_CallbackCookie = 0;
     ID3D12InfoQueue1* m_DebugQueue = nullptr;
     DX12CommandQueue* m_CommandQueue = nullptr;
-    dx::RingBuffer m_RingBuffer;
-    dx::DescriptorHeapAllocator m_RTVAllocator;
-    dx::DescriptorHeapAllocator m_DSVAllocator;
+    RingBuffer m_RingBuffer;
+    DescriptorHeapAllocator m_RTVAllocator;
+    DescriptorHeapAllocator m_DSVAllocator;
 
+};
+
+struct RingBufferReleaseResource : ReleaseResourceBase {
+    RingBuffer* Buffer;
+    uint64_t Tail;
+
+    RingBufferReleaseResource(RingBuffer* buffer, uint64_t tail)
+        : Buffer(buffer), Tail(tail) {}
+
+    void Destroy() override {
+        Buffer->SetTail(Tail);
+    }
 };
 
 } // dx

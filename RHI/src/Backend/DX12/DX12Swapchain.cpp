@@ -53,7 +53,7 @@ DX12Swapchain::DX12Swapchain(DX12Device* device) {
             .MipLevels = 1,
             .ArrayLayers = 1,
             .Samples = 1,
-            .Format = TextureFormat::TEXTURE_FORMAT_B8G8R8A8_UNORM,
+            .Format = TextureFormat::B8G8R8A8_UNORM,
             .Type = TextureType::Texture2D
         };
         m_Textures[i] = new DX12Texture(desc, resource, m_Device);
@@ -130,7 +130,7 @@ void DX12Swapchain::Present() {
                 .MipLevels = 1,
                 .ArrayLayers = 1,
                 .Samples = 1,
-                .Format = TextureFormat::TEXTURE_FORMAT_B8G8R8A8_UNORM,
+                .Format = TextureFormat::B8G8R8A8_UNORM,
                 .Type = TextureType::Texture2D
             };
             m_Textures[i] = new DX12Texture(desc, resource, m_Device);

@@ -76,6 +76,7 @@ DX12Device::~DX12Device() {
 }
 
 void DX12Device::EndFrame() {
+    ReleaseResource(new RingBufferReleaseResource(&m_RingBuffer, m_RingBuffer.GetHead()));
     m_CommandQueue->EndFrame();
 }
 

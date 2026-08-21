@@ -70,7 +70,7 @@ TextureView* VulkanTexture::GetRTV() {
     if (!m_RTV) {
         TextureViewDesc desc = {
             .Tex = this,
-            .Format = TextureFormat::TEXTURE_FORMAT_B8G8R8A8_UNORM
+            .Format = TextureFormat::B8G8R8A8_UNORM
         };
         m_RTV = new VulkanTextureView(desc, m_Device);
     }
