@@ -25,7 +25,7 @@ DX12Texture::DX12Texture(TextureDesc desc, DX12Device* device) {
         .Format = ToDXGIFormat(m_Desc.Format),
         .SampleDesc = { 1, 0 },
         .Layout = D3D12_TEXTURE_LAYOUT_UNKNOWN,
-        .Flags = ToD3D12ResourceFlags(desc.Bind)
+        .Flags = ToD3D12TexResourceFlags(desc.BindFlags)
     };
 
     HRESULT hr = m_Device->GetDX12Device()->CreateCommittedResource3(&heapProps, D3D12_HEAP_FLAG_NONE,
@@ -95,29 +95,52 @@ DX12Buffer::DX12Buffer(BufferDesc desc, DX12Device* device) {
     m_Desc = desc;
     m_Device = device;
 
-    D3D12_HEAP_PROPERTIES heapProps = {
-        .Type = D3D12_HEAP_TYPE_DEFAULT
-    };
+    CreateResource();
+}
 
+DX12Buffer::~DX12Buffer() {
+    if (m_Desc.Usage == BufferUsage::Dynamic) {
+        m_Resource->Unmap(0, nullptr);
+    }
+    m_Device->ReleaseResource(new BufferReleaseResource(m_Resource));
+}
+
+void* DX12Buffer::Map() {
+    return (uint8_t*)m_Mapped + m_Offset;
+}
+
+BufferDesc DX12Buffer::GetDesc() {
+    return m_Desc;
+}
+
+void DX12Buffer::CreateResource() {
     D3D12_RESOURCE_DESC1 resourceDesc = {
         .Dimension = D3D12_RESOURCE_DIMENSION_BUFFER,
-        .Width = m_Desc.Width,
-        .Height = m_Desc.Height,
+        .Width = m_Desc.Size,
+        .Height = 1,
         .DepthOrArraySize = 1,
         .MipLevels = 1,
         .Format = DXGI_FORMAT_UNKNOWN,
         .SampleDesc = { 1, 0 },
         .Layout = D3D12_TEXTURE_LAYOUT_ROW_MAJOR,
-        .Flags = ToD3D12ResourceFlags(desc.Bind)
+        .Flags = ToD3D12BufResourceFlags(m_Desc.BindFlags)
     };
 
-    HRESULT hr = m_Device->GetDX12Device()->CreateCommittedResource3(&heapProps, D3D12_HEAP_FLAG_NONE,
+    HRESULT hr = 0;
+    if (m_Desc.Usage == BufferUsage::Dynamic) {
+        m_Device->GetDX12Device()->CreatePlacedResource2(m_Device->GetRingBuffer()->GetDX12Heap(), 0,
+            &resourceDesc, D3D12_BARRIER_LAYOUT_UNDEFINED, nullptr, 0, nullptr, IID_PPV_ARGS(&m_Resource));
+        hr = m_Resource->Map(0, nullptr, &m_Mapped);
+        return;
+    }
+
+    D3D12_HEAP_PROPERTIES heapProps = {
+        .Type = m_Desc.Usage == BufferUsage::Default ? D3D12_HEAP_TYPE_DEFAULT : D3D12_HEAP_TYPE_READBACK
+    };
+
+    hr = m_Device->GetDX12Device()->CreateCommittedResource3(&heapProps, D3D12_HEAP_FLAG_NONE,
         &resourceDesc, D3D12_BARRIER_LAYOUT_UNDEFINED, nullptr,
         nullptr, 0, nullptr, IID_PPV_ARGS(&m_Resource));
-}
-
-DX12Buffer::~DX12Buffer() {
-    m_Device->ReleaseResource(new BufferReleaseResource(m_Resource));
 }
 
 } // dx
