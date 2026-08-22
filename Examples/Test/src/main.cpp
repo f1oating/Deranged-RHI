@@ -39,12 +39,19 @@ int main() {
 
     TextureView* textureView = device->CreateTextureView(textureViewDesc);
 
+    float vertices[] = {
+        0.0f, 0.5f,
+        0.5f, -0.5f,
+        -0.5f, -0.5f
+    };
+
     BufferDesc bufferDesc = {
-        .Size = 512,
+        .Size = sizeof(vertices),
         .BindFlags = BUFFER_BIND_UNIFORM,
-        .Usage = BufferUsage::Dynamic
+        .Usage = BufferUsage::Default
     };
     Buffer* buffer = device->CreateBuffer(bufferDesc);
+    queue->CopyToBuffer(buffer, sizeof(vertices), vertices);
 
     auto vertexSource = ShaderCompiler::CompileShader("shaders/vertex.slang");
     Shader vertexShader{

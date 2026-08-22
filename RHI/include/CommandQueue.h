@@ -46,6 +46,8 @@ public:
     virtual void DrawInstansed(uint32_t VertexCountPerInstance, uint32_t InstanceCount = 1,
         uint32_t StartVertexLocation = 0, uint32_t StartInstanceLocation = 0) = 0;
 
+    virtual void CopyToBuffer(Buffer* dst, uint64_t size, void* data) = 0;
+
     virtual void Flush() = 0;
 
 };

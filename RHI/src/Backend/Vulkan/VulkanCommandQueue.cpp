@@ -4,6 +4,8 @@
 
 #include "Backend/Vulkan/VulkanCommandQueue.h"
 
+#include <cstring>
+
 #include "VulkanResource.h"
 #include "Backend/Vulkan/VulkanDevice.h"
 
@@ -139,6 +141,58 @@ void VulkanCommandQueue::DrawInstansed(uint32_t VertexCountPerInstance, uint32_t
         BeginRendering();
     }
     vkCmdDraw(m_CommandBuffer, VertexCountPerInstance, InstanceCount, StartVertexLocation, StartInstanceLocation);
+}
+
+void VulkanCommandQueue::CopyToBuffer(Buffer* dst, uint64_t size, void* data) {
+    VulkanBuffer* vkDst = static_cast<VulkanBuffer*>(dst);
+
+    VkBuffer staging = nullptr;
+    VkDeviceMemory memory = nullptr;
+
+    VkBufferCreateInfo bufferCreateInfo = {
+        .sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO,
+        .size = size,
+        .usage = VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+        .sharingMode = VK_SHARING_MODE_EXCLUSIVE
+    };
+    vkCreateBuffer(m_Device->GetVkDevice(), &bufferCreateInfo, nullptr, &staging);
+
+    VkMemoryRequirements memoryRequirements;
+    vkGetBufferMemoryRequirements(m_Device->GetVkDevice(), staging, &memoryRequirements);
+
+    VkPhysicalDeviceMemoryProperties memoryProperties;
+    vkGetPhysicalDeviceMemoryProperties(m_Device->GetVkPhysicalDevice(), &memoryProperties);
+
+    uint32_t memoryTypeIndex = 0;
+    for (int i = 0; i < memoryProperties.memoryTypeCount; i++) {
+        if (memoryProperties.memoryTypes[i].propertyFlags & VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT) {
+            memoryTypeIndex = i;
+            break;
+        }
+    }
+
+    VkMemoryAllocateInfo memoryAllocateInfo = {
+        .sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO,
+        .allocationSize = memoryRequirements.size,
+        .memoryTypeIndex = memoryTypeIndex,
+    };
+
+    vkAllocateMemory(m_Device->GetVkDevice(), &memoryAllocateInfo, nullptr, &memory);
+    vkBindBufferMemory(m_Device->GetVkDevice(), staging, memory, 0);
+
+    void* mapped = nullptr;
+    vkMapMemory(m_Device->GetVkDevice(), memory, 0, size, 0, &mapped);
+    memcpy(mapped, data, size);
+    vkUnmapMemory(m_Device->GetVkDevice(), memory);
+
+    VkBufferCopy copyRegion = {
+        .srcOffset = 0,
+        .dstOffset = 0,
+        .size = size
+    };
+    vkCmdCopyBuffer(m_CommandBuffer, staging, vkDst->GetVkBuffer(), 1, &copyRegion);
+
+    ReleaseResource(new ReleaseResourceWrapper(new BufferReleaseResource(m_Device->GetVkDevice(), staging, memory)));
 }
 
 void VulkanCommandQueue::Flush() {

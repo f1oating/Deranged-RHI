@@ -69,6 +69,7 @@ public:
     void* Map() override;
 
     BufferDesc GetDesc() override;
+    VkBuffer GetVkBuffer() const { return m_Buffer; }
 
 private:
     void CreateBuffer();
@@ -359,7 +360,7 @@ inline VkAccessFlags ToDstVkAccessFlags(ResourceLayout newLayout) {
 }
 
 inline VkImageUsageFlags ToVkImageUsageFlags(uint8_t flags) {
-    VkImageUsageFlags vkFlags = 0;
+    VkImageUsageFlags vkFlags = VK_BUFFER_USAGE_TRANSFER_DST_BIT;
 
     if (flags & TEXTURE_BIND_SHADER_RESOURCE) {
         vkFlags |= VK_IMAGE_USAGE_SAMPLED_BIT;
@@ -375,7 +376,7 @@ inline VkImageUsageFlags ToVkImageUsageFlags(uint8_t flags) {
 }
 
 inline VkBufferUsageFlags ToVkBufferUsageFlags(uint8_t flags) {
-    VkBufferUsageFlags vkFlags = 0;
+    VkBufferUsageFlags vkFlags = VK_BUFFER_USAGE_TRANSFER_DST_BIT;
 
     if (flags & BUFFER_BIND_VERTEX) {
         vkFlags |= VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;

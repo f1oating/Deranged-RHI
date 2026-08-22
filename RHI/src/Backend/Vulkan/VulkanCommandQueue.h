@@ -39,6 +39,8 @@ public:
     void DrawInstansed(uint32_t VertexCountPerInstance, uint32_t InstanceCount = 1,
         uint32_t StartVertexLocation = 0, uint32_t StartInstanceLocation = 0) override;
 
+    void CopyToBuffer(Buffer* dst, uint64_t size, void* data) override;
+
     void Flush() override;
 
     void AddWaitSemaphore(VkSemaphore waitSemaphore, uint64_t value = 1);
