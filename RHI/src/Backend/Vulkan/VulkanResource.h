@@ -29,12 +29,17 @@ public:
     void SetLayout(ResourceLayout layout) { m_Layout = layout; }
 
 private:
+    void CreateTexture();
+    void CreateMemory();
+
+private:
     VulkanDevice* m_Device = nullptr;
     TextureDesc m_Desc;
     VkImage m_Image = nullptr;
     VkDeviceMemory m_Memory = nullptr;
     TextureView* m_RTV = nullptr;
     ResourceLayout m_Layout = ResourceLayout::Undefined;
+    uint64_t m_SizeInBytes = 0;
 
 };
 
@@ -53,6 +58,30 @@ private:
     TextureViewDesc m_Desc;
     VkImageView m_ImageView = nullptr;
     VulkanTexture* m_Texture = nullptr;
+
+};
+
+class VulkanBuffer : public Buffer {
+public:
+    VulkanBuffer(BufferDesc desc, VulkanDevice* device);
+    ~VulkanBuffer() override;
+
+    void* Map() override;
+
+    BufferDesc GetDesc() override;
+
+private:
+    void CreateBuffer();
+    void CreateMemory();
+
+private:
+    VulkanDevice* m_Device = nullptr;
+    BufferDesc m_Desc;
+    VkBuffer m_Buffer = nullptr;
+    VkDeviceMemory m_Memory = nullptr;
+    uint64_t m_SizeInBytes = 0;
+    uint64_t m_Offset = 0;
+    void* m_Mapped = nullptr;
 
 };
 
@@ -80,6 +109,23 @@ struct ImageViewReleaseResource : ReleaseResourceBase {
 
     void Destroy() override {
         vkDestroyImageView(Device, ImageView, nullptr);
+    }
+
+};
+
+struct BufferReleaseResource : ReleaseResourceBase {
+    VkDevice Device;
+    VkBuffer Buffer;
+    VkDeviceMemory Memory;
+
+    BufferReleaseResource(VkDevice device, VkBuffer buffer, VkDeviceMemory memory)
+        : Device(device), Buffer(buffer), Memory(memory) {}
+
+    void Destroy() override {
+        if (Memory) {
+            vkFreeMemory(Device, Memory, nullptr);
+        }
+        vkDestroyBuffer(Device, Buffer, nullptr);
     }
 
 };
@@ -312,29 +358,32 @@ inline VkAccessFlags ToDstVkAccessFlags(ResourceLayout newLayout) {
     }
 }
 
-inline VkImageUsageFlags ToVkImageUsageFlags(ResourceBindFlags flags) {
+inline VkImageUsageFlags ToVkImageUsageFlags(uint8_t flags) {
     VkImageUsageFlags vkFlags = 0;
 
-    if (flags & RESOURCE_BIND_RENDER_TARGET) {
+    if (flags & TEXTURE_BIND_SHADER_RESOURCE) {
+        vkFlags |= VK_IMAGE_USAGE_SAMPLED_BIT;
+    }
+    if (flags & TEXTURE_BIND_RENDER_TARGET) {
         vkFlags |= VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
     }
-    if (flags & RESOURCE_BIND_DEPTH_STENCIL) {
+    if (flags & TEXTURE_BIND_DEPTH_STENCIL) {
         vkFlags |= VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT;
     }
 
     return vkFlags;
 }
 
-inline VkBufferUsageFlags ToVkBufferUsageFlags(ResourceBindFlags flags) {
-    VkImageUsageFlags vkFlags = 0;
+inline VkBufferUsageFlags ToVkBufferUsageFlags(uint8_t flags) {
+    VkBufferUsageFlags vkFlags = 0;
 
-    if (flags & RESOURCE_BIND_VERTEX_BUFFER) {
+    if (flags & BUFFER_BIND_VERTEX) {
         vkFlags |= VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
     }
-    if (flags & RESOURCE_BIND_INDEX_BUFFER) {
+    if (flags & BUFFER_BIND_INDEX) {
         vkFlags |= VK_BUFFER_USAGE_INDEX_BUFFER_BIT;
     }
-    if (flags & RESOURCE_BIND_UNIFORM_BUFFER) {
+    if (flags & BUFFER_BIND_UNIFORM) {
         vkFlags |= VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT;
     }
 

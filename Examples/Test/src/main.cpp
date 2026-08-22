@@ -20,15 +20,14 @@ int main() {
     GraphicsPipelineState* pipelineState;
 
     TextureDesc textureDesc = {
-        .Width = 512,
-        .Height = 512,
+        .Width = 32,
+        .Height = 32,
         .MipLevels = 1,
         .ArrayLayers = 1,
         .Samples = 1,
         .Format = TextureFormat::B8G8R8A8_UNORM,
         .Type = TextureType::Texture2D,
-        .Bind = RESOURCE_BIND_RENDER_TARGET,
-        .Usage = ResourceUsage::Default
+        .BindFlags = TEXTURE_BIND_RENDER_TARGET | TEXTURE_BIND_SHADER_RESOURCE
     };
 
     Texture* texture = device->CreateTexture(textureDesc);
@@ -41,10 +40,9 @@ int main() {
     TextureView* textureView = device->CreateTextureView(textureViewDesc);
 
     BufferDesc bufferDesc = {
-        .Width = 1,
-        .Height = 1,
-        .Bind = RESOURCE_BIND_NONE,
-        .Usage = ResourceUsage::Default
+        .Size = 512,
+        .BindFlags = BUFFER_BIND_UNIFORM,
+        .Usage = BufferUsage::Dynamic
     };
     Buffer* buffer = device->CreateBuffer(bufferDesc);
 
@@ -84,6 +82,8 @@ int main() {
         queue->DrawInstansed(3);
 
         queue->Barrier({ { swapchain->GetCurrentBackBuffer(), ResourceLayout::Present } });
+
+        buffer->Map();
 
         device->EndFrame();
         swapchain->Present();

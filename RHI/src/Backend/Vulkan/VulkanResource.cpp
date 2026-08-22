@@ -11,43 +11,9 @@ VulkanTexture::VulkanTexture(TextureDesc desc, VulkanDevice* device) {
     m_Desc = desc;
     m_Device = device;
 
-    VkImageCreateInfo imageCreateInfo = {
-        .sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO,
-        .imageType = ToVkImageType(m_Desc.Type),
-        .format = ToVkFormat(m_Desc.Format),
-        .extent = { m_Desc.Width, m_Desc.Height, 1 },
-        .mipLevels = m_Desc.MipLevels,
-        .arrayLayers = m_Desc.ArrayLayers,
-        .samples = ToVkSampleCountFlagBits(m_Desc.Samples),
-        .tiling = VK_IMAGE_TILING_OPTIMAL,
-        .usage = ToVkImageUsageFlags(m_Desc.Bind),
-        .sharingMode = VK_SHARING_MODE_EXCLUSIVE,
-        .initialLayout = VK_IMAGE_LAYOUT_UNDEFINED
-    };
+    CreateTexture();
+    CreateMemory();
 
-    vkCreateImage(m_Device->GetVkDevice(), &imageCreateInfo, nullptr, &m_Image);
-
-    VkPhysicalDeviceMemoryProperties physicalDeviceMemoryProperties;
-    vkGetPhysicalDeviceMemoryProperties(m_Device->GetVkPhysicalDevice(), &physicalDeviceMemoryProperties);
-
-    uint32_t memoryTypeIndex = 0;
-    for (int i = 0; i < physicalDeviceMemoryProperties.memoryTypeCount; i++) {
-        if (physicalDeviceMemoryProperties.memoryTypes[i].propertyFlags & VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT) {
-            memoryTypeIndex = i;
-            break;
-        }
-    }
-
-    VkMemoryRequirements imageMemoryRequirements;
-    vkGetImageMemoryRequirements(m_Device->GetVkDevice(), m_Image, &imageMemoryRequirements);
-
-    VkMemoryAllocateInfo memoryAllocateInfo = {
-        .sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO,
-        .allocationSize = imageMemoryRequirements.size,
-        .memoryTypeIndex = memoryTypeIndex
-    };
-
-    vkAllocateMemory(m_Device->GetVkDevice(), &memoryAllocateInfo, nullptr, &m_Memory);
     vkBindImageMemory(m_Device->GetVkDevice(), m_Image, m_Memory, 0);
 }
 
@@ -81,6 +47,49 @@ TextureDesc VulkanTexture::GetDesc() {
     return m_Desc;
 }
 
+void VulkanTexture::CreateTexture() {
+    VkImageCreateInfo imageCreateInfo = {
+        .sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO,
+        .imageType = ToVkImageType(m_Desc.Type),
+        .format = ToVkFormat(m_Desc.Format),
+        .extent = { m_Desc.Width, m_Desc.Height, 1 },
+        .mipLevels = m_Desc.MipLevels,
+        .arrayLayers = m_Desc.ArrayLayers,
+        .samples = ToVkSampleCountFlagBits(m_Desc.Samples),
+        .tiling = VK_IMAGE_TILING_OPTIMAL,
+        .usage = ToVkImageUsageFlags(m_Desc.BindFlags),
+        .sharingMode = VK_SHARING_MODE_EXCLUSIVE,
+        .initialLayout = VK_IMAGE_LAYOUT_UNDEFINED
+    };
+
+    vkCreateImage(m_Device->GetVkDevice(), &imageCreateInfo, nullptr, &m_Image);
+}
+
+void VulkanTexture::CreateMemory() {
+    VkMemoryRequirements imageMemoryRequirements;
+    vkGetImageMemoryRequirements(m_Device->GetVkDevice(), m_Image, &imageMemoryRequirements);
+    m_SizeInBytes = imageMemoryRequirements.size;
+
+    VkPhysicalDeviceMemoryProperties physicalDeviceMemoryProperties;
+    vkGetPhysicalDeviceMemoryProperties(m_Device->GetVkPhysicalDevice(), &physicalDeviceMemoryProperties);
+
+    uint32_t memoryTypeIndex = 0;
+    for (int i = 0; i < physicalDeviceMemoryProperties.memoryTypeCount; i++) {
+        if (physicalDeviceMemoryProperties.memoryTypes[i].propertyFlags & VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT) {
+            memoryTypeIndex = i;
+            break;
+        }
+    }
+
+    VkMemoryAllocateInfo memoryAllocateInfo = {
+        .sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO,
+        .allocationSize = m_SizeInBytes,
+        .memoryTypeIndex = memoryTypeIndex
+    };
+
+    vkAllocateMemory(m_Device->GetVkDevice(), &memoryAllocateInfo, nullptr, &m_Memory);
+}
+
 VulkanTextureView::VulkanTextureView(TextureViewDesc desc, VulkanDevice* device) {
     m_Desc = desc;
     m_Device = device;
@@ -100,7 +109,7 @@ VulkanTextureView::VulkanTextureView(TextureViewDesc desc, VulkanDevice* device)
         .sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
         .image = m_Texture->GetVkImage(),
         .viewType = VK_IMAGE_VIEW_TYPE_2D,
-        .format = VK_FORMAT_B8G8R8A8_UNORM,
+        .format = ToVkFormat(m_Desc.Format),
         .components = VK_COMPONENT_SWIZZLE_IDENTITY,
         .subresourceRange = imageSubresourceRange
     };
@@ -116,6 +125,77 @@ VulkanTextureView::~VulkanTextureView() {
 
 TextureViewDesc VulkanTextureView::GetDesc() {
     return m_Desc;
+}
+
+VulkanBuffer::VulkanBuffer(BufferDesc desc, VulkanDevice* device) {
+    m_Desc = desc;
+    m_Device = device;
+
+    CreateBuffer();
+    CreateMemory();
+
+    vkBindBufferMemory(m_Device->GetVkDevice(), m_Buffer, m_Memory, 0);
+}
+
+VulkanBuffer::~VulkanBuffer() {
+    if (m_Desc.Usage == BufferUsage::Dynamic) {
+        m_Device->ReleaseResource(new BufferReleaseResource(m_Device->GetVkDevice(), m_Buffer, nullptr));
+    } else {
+        m_Device->ReleaseResource(new BufferReleaseResource(m_Device->GetVkDevice(), m_Buffer, m_Memory));
+    }
+}
+
+void* VulkanBuffer::Map() {
+    m_Offset = m_Device->GetRingBuffer()->Allocate(m_SizeInBytes);
+    return (uint8_t*)m_Mapped + m_Offset;
+}
+
+BufferDesc VulkanBuffer::GetDesc() {
+    return m_Desc;
+}
+
+void VulkanBuffer::CreateBuffer() {
+    VkBufferCreateInfo bufferCreateInfo = {
+        .sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO,
+        .size = m_Desc.Size,
+        .usage = ToVkBufferUsageFlags(m_Desc.BindFlags),
+        .sharingMode = VK_SHARING_MODE_EXCLUSIVE,
+    };
+
+    vkCreateBuffer(m_Device->GetVkDevice(), &bufferCreateInfo, nullptr, &m_Buffer);
+}
+
+void VulkanBuffer::CreateMemory() {
+    VkMemoryRequirements bufferMemoryRequirements;
+    vkGetBufferMemoryRequirements(m_Device->GetVkDevice(), m_Buffer, &bufferMemoryRequirements);
+    m_SizeInBytes = bufferMemoryRequirements.size;
+
+    if (m_Desc.Usage == BufferUsage::Dynamic) {
+        m_Memory = m_Device->GetRingBuffer()->GetMemory();
+        m_Mapped = m_Device->GetRingBuffer()->GetMapped();
+        return;
+    }
+
+    VkPhysicalDeviceMemoryProperties physicalDeviceMemoryProperties;
+    vkGetPhysicalDeviceMemoryProperties(m_Device->GetVkPhysicalDevice(), &physicalDeviceMemoryProperties);
+
+    uint32_t memoryTypeIndex = 0;
+    uint32_t memoryPropertyFlags = m_Desc.Usage == BufferUsage::Default ?
+        VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT : VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT;
+    for (int i = 0; i < physicalDeviceMemoryProperties.memoryTypeCount; i++) {
+        if (physicalDeviceMemoryProperties.memoryTypes[i].propertyFlags == memoryPropertyFlags) {
+            memoryTypeIndex = i;
+            break;
+        }
+    }
+
+    VkMemoryAllocateInfo memoryAllocateInfo = {
+        .sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO,
+        .allocationSize = m_SizeInBytes,
+        .memoryTypeIndex = memoryTypeIndex
+    };
+
+    vkAllocateMemory(m_Device->GetVkDevice(), &memoryAllocateInfo, nullptr, &m_Memory);
 }
 
 } // vk

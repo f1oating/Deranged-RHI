@@ -32,6 +32,7 @@ public:
     VkInstance GetVkInstance() { return m_Instance; }
     VkDevice GetVkDevice() const { return m_Device; }
     VkPhysicalDevice GetVkPhysicalDevice() const { return m_PhysicalDevice; }
+    RingBuffer* GetRingBuffer() { return &m_RingBuffer; }
 
 private:
     void CreateInstance();
@@ -48,7 +49,20 @@ private:
     std::optional<uint32_t> m_QueueFamily;
     VkDevice m_Device = nullptr;
     VulkanCommandQueue* m_Queue = nullptr;
-    vk::RingBuffer m_RingBuffer;
+    RingBuffer m_RingBuffer;
+
+};
+
+struct RingBufferReleaseResource : ReleaseResourceBase {
+    RingBuffer* Buffer;
+    uint64_t Tail;
+
+    RingBufferReleaseResource(RingBuffer* buffer, uint64_t tail)
+        : Buffer(buffer), Tail(tail) {}
+
+    void Destroy() override {
+        Buffer->SetTail(Tail);
+    }
 
 };
 

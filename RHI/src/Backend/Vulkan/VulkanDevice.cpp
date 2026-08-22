@@ -31,6 +31,7 @@ VulkanDevice::~VulkanDevice() {
 }
 
 void VulkanDevice::EndFrame() {
+    ReleaseResource(new RingBufferReleaseResource(&m_RingBuffer, m_RingBuffer.GetHead()));
     m_Queue->EndFrame();
 }
 
@@ -55,7 +56,7 @@ TextureView* VulkanDevice::CreateTextureView(TextureViewDesc desc) {
 }
 
 Buffer* VulkanDevice::CreateBuffer(BufferDesc desc) {
-    return nullptr;
+    return new VulkanBuffer(desc, this);
 }
 
 void VulkanDevice::ReleaseResource(ReleaseResourceBase *resource) {

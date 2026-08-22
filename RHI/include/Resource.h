@@ -35,20 +35,22 @@ enum class TextureType {
     Texture1D, Texture2D, Texture3D
 };
 
-enum class ResourceUsage {
-    Default,
-    Dynamic,
-    Readback
+enum TextureBind : uint8_t {
+    TEXTURE_BIND_SHADER_RESOURCE = 1 << 0,
+    TEXTURE_BIND_RENDER_TARGET = 1 << 1,
+    TEXTURE_BIND_DEPTH_STENCIL = 1 << 2,
 };
 
-enum ResourceBindFlags {
-    RESOURCE_BIND_NONE = 1 << 0,
-    RESOURCE_BIND_VERTEX_BUFFER = 1 << 1,
-    RESOURCE_BIND_INDEX_BUFFER = 1 << 2,
-    RESOURCE_BIND_UNIFORM_BUFFER = 1 << 3,
-    RESOURCE_BIND_SHADER_RESOURCE = 1 << 4,
-    RESOURCE_BIND_RENDER_TARGET = 1 << 5,
-    RESOURCE_BIND_DEPTH_STENCIL = 1 << 6
+enum BufferBind : uint8_t {
+    BUFFER_BIND_VERTEX = 1 << 0,
+    BUFFER_BIND_INDEX = 1 << 1,
+    BUFFER_BIND_UNIFORM =  1 << 2
+};
+
+enum class BufferUsage {
+    Default,
+    Dynamic,
+    Staging
 };
 
 struct TextureDesc {
@@ -59,8 +61,7 @@ struct TextureDesc {
     uint32_t Samples;
     TextureFormat Format;
     TextureType Type;
-    ResourceBindFlags Bind;
-    ResourceUsage Usage;
+    uint8_t BindFlags;
 };
 
 class TextureView;
@@ -89,15 +90,16 @@ public:
 };
 
 struct BufferDesc {
-    uint32_t Width;
-    uint32_t Height;
-    ResourceBindFlags Bind;
-    ResourceUsage Usage;
+    uint64_t Size;
+    uint8_t BindFlags;
+    BufferUsage Usage;
 };
 
 class Buffer {
 public:
     virtual ~Buffer() = default;
+
+    virtual void* Map() = 0;
 
     virtual BufferDesc GetDesc() = 0;
 
