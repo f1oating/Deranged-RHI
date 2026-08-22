@@ -62,12 +62,19 @@ public:
     DX12Buffer(BufferDesc desc, DX12Device* device);
     ~DX12Buffer() override;
 
-    BufferDesc GetDesc() override { return m_Desc; }
+    void* Map() override;
+
+    BufferDesc GetDesc() override;
+
+private:
+    void CreateResource();
 
 private:
     BufferDesc m_Desc;
     DX12Device* m_Device = nullptr;
     ID3D12Resource* m_Resource = nullptr;
+    uint64_t m_Offset = 0;
+    void* m_Mapped = nullptr;
 
 };
 
@@ -312,15 +319,21 @@ inline D3D12_BARRIER_ACCESS ToDstD3D12BarrierAccess(ResourceLayout newLayout) {
     }
 }
 
-inline D3D12_RESOURCE_FLAGS ToD3D12ResourceFlags(ResourceBindFlags flags) {
+inline D3D12_RESOURCE_FLAGS ToD3D12TexResourceFlags(uint8_t flags) {
     D3D12_RESOURCE_FLAGS dxFlags = D3D12_RESOURCE_FLAG_NONE;
 
-    if (flags & RESOURCE_BIND_RENDER_TARGET) {
+    if (flags & TEXTURE_BIND_RENDER_TARGET) {
         dxFlags |= D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET;
     }
-    if (flags & RESOURCE_BIND_DEPTH_STENCIL) {
+    if (flags & TEXTURE_BIND_DEPTH_STENCIL) {
         dxFlags |= D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL;
     }
+
+    return dxFlags;
+}
+
+inline D3D12_RESOURCE_FLAGS ToD3D12BufResourceFlags(uint8_t flags) {
+    D3D12_RESOURCE_FLAGS dxFlags = D3D12_RESOURCE_FLAG_NONE;
 
     return dxFlags;
 }
