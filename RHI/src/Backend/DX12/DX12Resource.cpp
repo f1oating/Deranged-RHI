@@ -25,7 +25,7 @@ DX12Texture::DX12Texture(TextureDesc desc, DX12Device* device) {
         .Format = ToDXGIFormat(m_Desc.Format),
         .SampleDesc = { 1, 0 },
         .Layout = D3D12_TEXTURE_LAYOUT_UNKNOWN,
-        .Flags = D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET
+        .Flags = ToD3D12ResourceFlags(desc.Bind)
     };
 
     HRESULT hr = m_Device->GetDX12Device()->CreateCommittedResource3(&heapProps, D3D12_HEAP_FLAG_NONE,
@@ -89,6 +89,35 @@ void DX12TextureView::CreateRTV() {
     DX12Texture* dxTexture = static_cast<DX12Texture*>(m_Desc.Tex);
 
     m_Device->GetDX12Device()->CreateRenderTargetView(dxTexture->GetDX12Resource(), &rtvDesc, m_Allocation.GetCPUHandle(0));
+}
+
+DX12Buffer::DX12Buffer(BufferDesc desc, DX12Device* device) {
+    m_Desc = desc;
+    m_Device = device;
+
+    D3D12_HEAP_PROPERTIES heapProps = {
+        .Type = D3D12_HEAP_TYPE_DEFAULT
+    };
+
+    D3D12_RESOURCE_DESC1 resourceDesc = {
+        .Dimension = D3D12_RESOURCE_DIMENSION_BUFFER,
+        .Width = m_Desc.Width,
+        .Height = m_Desc.Height,
+        .DepthOrArraySize = 1,
+        .MipLevels = 1,
+        .Format = DXGI_FORMAT_UNKNOWN,
+        .SampleDesc = { 1, 0 },
+        .Layout = D3D12_TEXTURE_LAYOUT_ROW_MAJOR,
+        .Flags = ToD3D12ResourceFlags(desc.Bind)
+    };
+
+    HRESULT hr = m_Device->GetDX12Device()->CreateCommittedResource3(&heapProps, D3D12_HEAP_FLAG_NONE,
+        &resourceDesc, D3D12_BARRIER_LAYOUT_UNDEFINED, nullptr,
+        nullptr, 0, nullptr, IID_PPV_ARGS(&m_Resource));
+}
+
+DX12Buffer::~DX12Buffer() {
+    m_Device->ReleaseResource(new BufferReleaseResource(m_Resource));
 }
 
 } // dx

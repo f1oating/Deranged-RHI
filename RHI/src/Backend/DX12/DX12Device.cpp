@@ -100,6 +100,10 @@ TextureView* DX12Device::CreateTextureView(TextureViewDesc desc) {
     return new DX12TextureView(desc, this);
 }
 
+Buffer* DX12Device::CreateBuffer(BufferDesc desc) {
+    return new DX12Buffer(desc, this);
+}
+
 void DX12Device::ReleaseResource(ReleaseResourceBase* resource) {
     m_CommandQueue->ReleaseResource(new ReleaseResourceWrapper(resource, 1));
 }

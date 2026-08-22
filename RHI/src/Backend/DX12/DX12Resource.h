@@ -57,10 +57,36 @@ private:
 
 };
 
+class DX12Buffer : public Buffer {
+public:
+    DX12Buffer(BufferDesc desc, DX12Device* device);
+    ~DX12Buffer() override;
+
+    BufferDesc GetDesc() override { return m_Desc; }
+
+private:
+    BufferDesc m_Desc;
+    DX12Device* m_Device = nullptr;
+    ID3D12Resource* m_Resource = nullptr;
+
+};
+
 struct TextureReleaseResource : ReleaseResourceBase {
     ID3D12Resource* Resource;
 
     TextureReleaseResource(ID3D12Resource* resource)
+        : Resource(resource) {}
+
+    void Destroy() override {
+        Resource->Release();
+    }
+
+};
+
+struct BufferReleaseResource : ReleaseResourceBase {
+    ID3D12Resource* Resource;
+
+    BufferReleaseResource(ID3D12Resource* resource)
         : Resource(resource) {}
 
     void Destroy() override {
@@ -284,6 +310,19 @@ inline D3D12_BARRIER_ACCESS ToDstD3D12BarrierAccess(ResourceLayout newLayout) {
         default:
             return D3D12_BARRIER_ACCESS_NO_ACCESS;
     }
+}
+
+inline D3D12_RESOURCE_FLAGS ToD3D12ResourceFlags(ResourceBindFlags flags) {
+    D3D12_RESOURCE_FLAGS dxFlags = D3D12_RESOURCE_FLAG_NONE;
+
+    if (flags & RESOURCE_BIND_RENDER_TARGET) {
+        dxFlags |= D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET;
+    }
+    if (flags & RESOURCE_BIND_DEPTH_STENCIL) {
+        dxFlags |= D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL;
+    }
+
+    return dxFlags;
 }
 
 } // dx

@@ -54,7 +54,9 @@ DX12Swapchain::DX12Swapchain(DX12Device* device) {
             .ArrayLayers = 1,
             .Samples = 1,
             .Format = TextureFormat::B8G8R8A8_UNORM,
-            .Type = TextureType::Texture2D
+            .Type = TextureType::Texture2D,
+            .Bind = RESOURCE_BIND_RENDER_TARGET,
+            .Usage = ResourceUsage::Default
         };
         m_Textures[i] = new DX12Texture(desc, resource, m_Device);
     }
@@ -131,7 +133,9 @@ void DX12Swapchain::Present() {
                 .ArrayLayers = 1,
                 .Samples = 1,
                 .Format = TextureFormat::B8G8R8A8_UNORM,
-                .Type = TextureType::Texture2D
+                .Type = TextureType::Texture2D,
+                .Bind = RESOURCE_BIND_RENDER_TARGET,
+                .Usage = ResourceUsage::Default
             };
             m_Textures[i] = new DX12Texture(desc, resource, m_Device);
         }

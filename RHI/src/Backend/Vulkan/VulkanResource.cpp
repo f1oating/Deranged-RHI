@@ -20,7 +20,7 @@ VulkanTexture::VulkanTexture(TextureDesc desc, VulkanDevice* device) {
         .arrayLayers = m_Desc.ArrayLayers,
         .samples = ToVkSampleCountFlagBits(m_Desc.Samples),
         .tiling = VK_IMAGE_TILING_OPTIMAL,
-        .usage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT,
+        .usage = ToVkImageUsageFlags(m_Desc.Bind),
         .sharingMode = VK_SHARING_MODE_EXCLUSIVE,
         .initialLayout = VK_IMAGE_LAYOUT_UNDEFINED
     };

@@ -312,6 +312,35 @@ inline VkAccessFlags ToDstVkAccessFlags(ResourceLayout newLayout) {
     }
 }
 
+inline VkImageUsageFlags ToVkImageUsageFlags(ResourceBindFlags flags) {
+    VkImageUsageFlags vkFlags = 0;
+
+    if (flags & RESOURCE_BIND_RENDER_TARGET) {
+        vkFlags |= VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
+    }
+    if (flags & RESOURCE_BIND_DEPTH_STENCIL) {
+        vkFlags |= VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT;
+    }
+
+    return vkFlags;
+}
+
+inline VkBufferUsageFlags ToVkBufferUsageFlags(ResourceBindFlags flags) {
+    VkImageUsageFlags vkFlags = 0;
+
+    if (flags & RESOURCE_BIND_VERTEX_BUFFER) {
+        vkFlags |= VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
+    }
+    if (flags & RESOURCE_BIND_INDEX_BUFFER) {
+        vkFlags |= VK_BUFFER_USAGE_INDEX_BUFFER_BIT;
+    }
+    if (flags & RESOURCE_BIND_UNIFORM_BUFFER) {
+        vkFlags |= VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT;
+    }
+
+    return vkFlags;
+}
+
 } // vk
 
 #endif //DERANGED_RHI_VULKANRESOURCE_H

@@ -155,7 +155,9 @@ void VulkanSwapchain::CreateSwapchain() {
             .ArrayLayers = 1,
             .Samples = 1,
             .Format = TextureFormat::B8G8R8A8_UNORM,
-            .Type = TextureType::Texture2D
+            .Type = TextureType::Texture2D,
+            .Bind = RESOURCE_BIND_RENDER_TARGET,
+            .Usage = ResourceUsage::Default
         };
         m_Textures[i] = new VulkanTexture(desc, m_Device, swapchainImages[i]);
     }

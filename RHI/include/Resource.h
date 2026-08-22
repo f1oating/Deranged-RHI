@@ -35,6 +35,22 @@ enum class TextureType {
     Texture1D, Texture2D, Texture3D
 };
 
+enum class ResourceUsage {
+    Default,
+    Dynamic,
+    Readback
+};
+
+enum ResourceBindFlags {
+    RESOURCE_BIND_NONE = 1 << 0,
+    RESOURCE_BIND_VERTEX_BUFFER = 1 << 1,
+    RESOURCE_BIND_INDEX_BUFFER = 1 << 2,
+    RESOURCE_BIND_UNIFORM_BUFFER = 1 << 3,
+    RESOURCE_BIND_SHADER_RESOURCE = 1 << 4,
+    RESOURCE_BIND_RENDER_TARGET = 1 << 5,
+    RESOURCE_BIND_DEPTH_STENCIL = 1 << 6
+};
+
 struct TextureDesc {
     uint32_t Width;
     uint32_t Height;
@@ -43,6 +59,8 @@ struct TextureDesc {
     uint32_t Samples;
     TextureFormat Format;
     TextureType Type;
+    ResourceBindFlags Bind;
+    ResourceUsage Usage;
 };
 
 class TextureView;
@@ -67,6 +85,21 @@ public:
     virtual ~TextureView() = default;
 
     virtual TextureViewDesc GetDesc() = 0;
+
+};
+
+struct BufferDesc {
+    uint32_t Width;
+    uint32_t Height;
+    ResourceBindFlags Bind;
+    ResourceUsage Usage;
+};
+
+class Buffer {
+public:
+    virtual ~Buffer() = default;
+
+    virtual BufferDesc GetDesc() = 0;
 
 };
 

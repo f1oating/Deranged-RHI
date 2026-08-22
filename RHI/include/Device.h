@@ -23,6 +23,7 @@ public:
     virtual GraphicsPipelineState* CreateGraphicsPipelineState(GraphicsPipelineDesc desc) = 0;
     virtual Texture* CreateTexture(TextureDesc desc) = 0;
     virtual TextureView* CreateTextureView(TextureViewDesc desc) = 0;
+    virtual Buffer* CreateBuffer(BufferDesc desc) = 0;
 
 };
 

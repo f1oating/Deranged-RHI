@@ -54,6 +54,10 @@ TextureView* VulkanDevice::CreateTextureView(TextureViewDesc desc) {
     return new VulkanTextureView(desc, this);
 }
 
+Buffer* VulkanDevice::CreateBuffer(BufferDesc desc) {
+    return nullptr;
+}
+
 void VulkanDevice::ReleaseResource(ReleaseResourceBase *resource) {
     m_Queue->ReleaseResource(new ReleaseResourceWrapper(resource, 1));
 }

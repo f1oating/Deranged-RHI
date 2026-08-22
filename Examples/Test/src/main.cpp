@@ -26,7 +26,9 @@ int main() {
         .ArrayLayers = 1,
         .Samples = 1,
         .Format = TextureFormat::B8G8R8A8_UNORM,
-        .Type = TextureType::Texture2D
+        .Type = TextureType::Texture2D,
+        .Bind = RESOURCE_BIND_RENDER_TARGET,
+        .Usage = ResourceUsage::Default
     };
 
     Texture* texture = device->CreateTexture(textureDesc);
@@ -37,6 +39,14 @@ int main() {
     };
 
     TextureView* textureView = device->CreateTextureView(textureViewDesc);
+
+    BufferDesc bufferDesc = {
+        .Width = 1,
+        .Height = 1,
+        .Bind = RESOURCE_BIND_NONE,
+        .Usage = ResourceUsage::Default
+    };
+    Buffer* buffer = device->CreateBuffer(bufferDesc);
 
     auto vertexSource = ShaderCompiler::CompileShader("shaders/vertex.slang");
     Shader vertexShader{
@@ -79,6 +89,7 @@ int main() {
         swapchain->Present();
     }
 
+    delete buffer;
     delete textureView;
     delete texture;
     delete pipelineState;

@@ -25,6 +25,7 @@ public:
     GraphicsPipelineState* CreateGraphicsPipelineState(GraphicsPipelineDesc desc) override;
     Texture* CreateTexture(TextureDesc desc) override;
     TextureView* CreateTextureView(TextureViewDesc desc) override;
+    Buffer* CreateBuffer(BufferDesc desc) override;
 
     void ReleaseResource(ReleaseResourceBase* resource);
 
