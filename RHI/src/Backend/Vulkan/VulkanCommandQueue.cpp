@@ -67,13 +67,16 @@ void VulkanCommandQueue::SetScissor(Scissor scissor) {
     vkCmdSetScissor(m_CommandBuffer, 0, 1, &vkScissor);
 }
 
-void VulkanCommandQueue::Barrier(std::vector<TextureBarrier> barriers) {
+void VulkanCommandQueue::Barrier(uint32_t srcStage, uint32_t dstStage,
+    std::vector<BufferBarrier> bufBarriers, std::vector<TextureBarrier> texBarriers) {
     if (m_InsideRendering) {
         EndRendering();
     }
 
     std::vector<VkImageMemoryBarrier> imageBarriers;
-    for (auto barrier : barriers) {
+    std::vector<VkBufferMemoryBarrier> bufferBarriers;
+
+    for (auto barrier : texBarriers) {
         VulkanTexture* vkTexture = static_cast<VulkanTexture*>(barrier.Tex);
         VkImageSubresourceRange range = {
             .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
@@ -84,8 +87,8 @@ void VulkanCommandQueue::Barrier(std::vector<TextureBarrier> barriers) {
         };
         VkImageMemoryBarrier imageBarrier = {
             .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER,
-            .srcAccessMask = ToSrcVkAccessFlags(barrier.Layout),
-            .dstAccessMask = ToDstVkAccessFlags(barrier.Layout),
+            .srcAccessMask = ToVkAccess(barrier.SrcAccessFlags),
+            .dstAccessMask = ToVkAccess(barrier.DstAccessFlags),
             .oldLayout = ToVkImageLayout(vkTexture->GetLayout()),
             .newLayout = ToVkImageLayout(barrier.Layout),
             .image = vkTexture->GetVkImage(),
@@ -95,8 +98,23 @@ void VulkanCommandQueue::Barrier(std::vector<TextureBarrier> barriers) {
         vkTexture->SetLayout(barrier.Layout);
     }
 
-    vkCmdPipelineBarrier(m_CommandBuffer, VK_PIPELINE_STAGE_ALL_COMMANDS_BIT, VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
-        VK_DEPENDENCY_BY_REGION_BIT, 0, nullptr, 0, nullptr, imageBarriers.size(), imageBarriers.data());
+    for (auto barrier : bufBarriers) {
+        VulkanBuffer* vkBuffer = static_cast<VulkanBuffer*>(barrier.Buf);
+
+        VkBufferMemoryBarrier bufferBarrier = {
+            .sType = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER,
+            .srcAccessMask = ToVkAccess(barrier.SrcAccessFlags),
+            .dstAccessMask = ToVkAccess(barrier.DstAccessFlags),
+            .buffer = vkBuffer->GetVkBuffer(),
+            .offset = 0,
+            .size = vkBuffer->GetDesc().Size
+        };
+        bufferBarriers.push_back(bufferBarrier);
+    }
+
+    vkCmdPipelineBarrier(m_CommandBuffer, ToVkStage(srcStage), ToVkStage(dstStage),
+        VK_DEPENDENCY_BY_REGION_BIT, 0, nullptr, bufferBarriers.size(),
+        bufferBarriers.data(), imageBarriers.size(), imageBarriers.data());
 }
 
 void VulkanCommandQueue::SetRenderTargets(std::vector<TextureView*> rtvs) {

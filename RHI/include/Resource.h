@@ -39,12 +39,16 @@ enum TextureBind : uint8_t {
     TEXTURE_BIND_SHADER_RESOURCE = 1 << 0,
     TEXTURE_BIND_RENDER_TARGET = 1 << 1,
     TEXTURE_BIND_DEPTH_STENCIL = 1 << 2,
+    TEXTURE_BIND_TRANSFER_SRC = 1 << 3,
+    TEXTURE_BIND_TRANSFER_DST = 1 << 4,
 };
 
 enum BufferBind : uint8_t {
     BUFFER_BIND_VERTEX = 1 << 0,
     BUFFER_BIND_INDEX = 1 << 1,
-    BUFFER_BIND_UNIFORM =  1 << 2
+    BUFFER_BIND_UNIFORM =  1 << 2,
+    BUFFER_BIND_TRANSFER_SRC = 1 << 3,
+    BUFFER_BIND_TRANSFER_DST = 1 << 4,
 };
 
 enum class BufferUsage {
@@ -105,15 +109,53 @@ public:
 
 };
 
-enum class ResourceLayout {
+enum class ImageLayout {
     Undefined,
+    TransferSRC,
+    TransferDST,
+    ShaderResource,
     RenderTarget,
     Present
 };
 
+enum AccessFlags : uint32_t {
+    ACCESS_NONE = 0,
+    ACCESS_SHADER_READ = 1 << 0,
+    ACCESS_SHADER_WRITE = 1 << 1,
+    ACCESS_COLOR_ATTACHMENT_READ = 1 << 2,
+    ACCESS_COLOR_ATTACHMENT_WRITE = 1 << 3,
+    ACCESS_DEPTH_STENCIL_ATTACHMENT_READ = 1 << 4,
+    ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE = 1 << 5,
+    ACCESS_TRANSFER_READ = 1 << 6,
+    ACCESS_TRANSFER_WRITE = 1 << 7
+};
+
+enum PipelineStageFlags : uint32_t {
+    PIPELINE_STAGE_TOP_OF_PIPE = 1 << 0,
+    PIPELINE_STAGE_VERTEX_INPUT_BIT = 1 << 1,
+    PIPELINE_STAGE_VERTEX_SHADER_BIT = 1 << 2,
+    PIPELINE_STAGE_FRAGMENT_SHADER_BIT = 1 << 3,
+    PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT = 1 << 4,
+    PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT = 1 << 5,
+    PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT = 1 << 6,
+    PIPELINE_STAGE_COMPUTE_SHADER_BIT = 1 << 7,
+    PIPELINE_STAGE_TRANSFER_BIT = 1 << 8,
+    PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT = 1 << 9,
+    PIPELINE_STAGE_ALL_GRAPHICS_BIT = 1 << 10,
+    PIPELINE_STAGE_ALL_COMMANDS_BIT = 1 << 11
+};
+
 struct TextureBarrier {
     Texture* Tex;
-    ResourceLayout Layout;
+    ImageLayout Layout;
+    uint32_t SrcAccessFlags;
+    uint32_t DstAccessFlags;
+};
+
+struct BufferBarrier {
+    Buffer* Buf;
+    uint32_t SrcAccessFlags;
+    uint32_t DstAccessFlags;
 };
 
 #endif //DERANGED_RHI_RESOURCE_H

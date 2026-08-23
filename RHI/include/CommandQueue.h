@@ -38,7 +38,8 @@ public:
     virtual void SetViewport(Viewport viewport) = 0;
     virtual void SetScissor(Scissor scissor) = 0;
 
-    virtual void Barrier(std::vector<TextureBarrier> barriers) = 0;
+    virtual void Barrier(uint32_t srcStage, uint32_t dstStage,
+        std::vector<BufferBarrier> bufBarriers, std::vector<TextureBarrier> texBarriers) = 0;
 
     virtual void SetRenderTargets(std::vector<TextureView*> rtvs) = 0;
     virtual void ClearRenderTargets(float r, float g, float b, float a) = 0;

@@ -24,9 +24,9 @@ public:
     TextureDesc GetDesc() override;
 
     VkImage GetVkImage() const { return m_Image; }
-    ResourceLayout GetLayout() const { return m_Layout; }
+    ImageLayout GetLayout() const { return m_Layout; }
 
-    void SetLayout(ResourceLayout layout) { m_Layout = layout; }
+    void SetLayout(ImageLayout layout) { m_Layout = layout; }
 
 private:
     void CreateTexture();
@@ -38,7 +38,7 @@ private:
     VkImage m_Image = nullptr;
     VkDeviceMemory m_Memory = nullptr;
     TextureView* m_RTV = nullptr;
-    ResourceLayout m_Layout = ResourceLayout::Undefined;
+    ImageLayout m_Layout = ImageLayout::Undefined;
     uint64_t m_SizeInBytes = 0;
 
 };
@@ -308,55 +308,112 @@ inline VkSampleCountFlagBits ToVkSampleCountFlagBits(uint32_t sampleCount) {
     }
 }
 
-inline VkImageLayout ToVkImageLayout(ResourceLayout layout) {
+inline VkImageLayout ToVkImageLayout(ImageLayout layout) {
     switch (layout) {
-        case ResourceLayout::Undefined:
+        case ImageLayout::Undefined:
             return VK_IMAGE_LAYOUT_UNDEFINED;
-        case ResourceLayout::RenderTarget:
+        case ImageLayout::TransferSRC:
+            return VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
+        case ImageLayout::TransferDST:
+            return VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+        case ImageLayout::RenderTarget:
             return VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-        case ResourceLayout::Present:
+        case ImageLayout::Present:
             return VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
         default:
             return VK_IMAGE_LAYOUT_UNDEFINED;
     }
 }
 
-inline ResourceLayout FromVkImageLayout(VkImageLayout layout) {
+inline ImageLayout FromVkImageLayout(VkImageLayout layout) {
     switch (layout) {
         case VK_IMAGE_LAYOUT_UNDEFINED:
-            return ResourceLayout::Undefined;
+            return ImageLayout::Undefined;
+        case VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL:
+            return ImageLayout::TransferSRC;
+        case VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL:
+            return ImageLayout::TransferDST;
         case VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL:
-            return ResourceLayout::RenderTarget;
+            return ImageLayout::RenderTarget;
         case VK_IMAGE_LAYOUT_PRESENT_SRC_KHR:
-            return ResourceLayout::Present;
+            return ImageLayout::Present;
         default:
-            return ResourceLayout::Undefined;
+            return ImageLayout::Undefined;
     }
 }
 
-inline VkAccessFlags ToSrcVkAccessFlags(ResourceLayout newLayout) {
-    switch (newLayout) {
-        case ResourceLayout::Undefined:
-        case ResourceLayout::RenderTarget:
-            return VK_ACCESS_NONE;
-        case ResourceLayout::Present:
-            return VK_ACCESS_COLOR_ATTACHMENT_READ_BIT;
-        default:
-            return VK_ACCESS_NONE;
+inline VkAccessFlags ToVkAccess(uint32_t flags) {
+    VkAccessFlags vkFlags = VK_ACCESS_NONE;
+
+    if (flags & ACCESS_SHADER_READ) {
+        vkFlags |= VK_ACCESS_SHADER_READ_BIT;
     }
+    if (flags & ACCESS_SHADER_WRITE) {
+        vkFlags |= VK_ACCESS_SHADER_WRITE_BIT;
+    }
+    if (flags & ACCESS_COLOR_ATTACHMENT_READ) {
+        vkFlags |= VK_ACCESS_COLOR_ATTACHMENT_READ_BIT;
+    }
+    if (flags & ACCESS_COLOR_ATTACHMENT_WRITE) {
+        vkFlags |= VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+    }
+    if (flags & ACCESS_DEPTH_STENCIL_ATTACHMENT_READ) {
+        vkFlags |= VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT;
+    }
+    if (flags & ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE) {
+        vkFlags |= VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+    }
+    if (flags & ACCESS_TRANSFER_READ) {
+        vkFlags |= VK_ACCESS_TRANSFER_READ_BIT;
+    }
+    if (flags & ACCESS_TRANSFER_WRITE) {
+        vkFlags |= VK_ACCESS_TRANSFER_WRITE_BIT;
+    }
+
+    return vkFlags;
 }
 
-inline VkAccessFlags ToDstVkAccessFlags(ResourceLayout newLayout) {
-    switch (newLayout) {
-        case ResourceLayout::Undefined:
-            return VK_ACCESS_NONE;
-        case ResourceLayout::RenderTarget:
-            return VK_ACCESS_COLOR_ATTACHMENT_READ_BIT;
-        case ResourceLayout::Present:
-            return VK_ACCESS_NONE;
-        default:
-            return VK_ACCESS_NONE;
+inline VkPipelineStageFlags ToVkStage(uint32_t flags) {
+    VkPipelineStageFlags vkFlags = VK_PIPELINE_STAGE_NONE;
+
+    if (flags & PIPELINE_STAGE_TOP_OF_PIPE) {
+        vkFlags |= VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
     }
+    if (flags & PIPELINE_STAGE_VERTEX_INPUT_BIT) {
+        vkFlags |= VK_PIPELINE_STAGE_VERTEX_SHADER_BIT;
+    }
+    if (flags & PIPELINE_STAGE_VERTEX_SHADER_BIT) {
+        vkFlags |= VK_PIPELINE_STAGE_VERTEX_SHADER_BIT;
+    }
+    if (flags & PIPELINE_STAGE_FRAGMENT_SHADER_BIT) {
+        vkFlags |= VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
+    }
+    if (flags & PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT) {
+        vkFlags |= VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
+    }
+    if (flags & PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT) {
+        vkFlags |= VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
+    }
+    if (flags & PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT) {
+        vkFlags |= VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+    }
+    if (flags & PIPELINE_STAGE_COMPUTE_SHADER_BIT) {
+        vkFlags |= VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT;
+    }
+    if (flags & PIPELINE_STAGE_TRANSFER_BIT) {
+        vkFlags |= VK_PIPELINE_STAGE_TRANSFER_BIT;
+    }
+    if (flags & PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT) {
+        vkFlags |= VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
+    }
+    if (flags & PIPELINE_STAGE_ALL_GRAPHICS_BIT) {
+        vkFlags |= VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT;
+    }
+    if (flags & PIPELINE_STAGE_ALL_COMMANDS_BIT) {
+        vkFlags |= VK_PIPELINE_STAGE_ALL_COMMANDS_BIT;
+    }
+
+    return vkFlags;
 }
 
 inline VkImageUsageFlags ToVkImageUsageFlags(uint8_t flags) {
@@ -370,6 +427,12 @@ inline VkImageUsageFlags ToVkImageUsageFlags(uint8_t flags) {
     }
     if (flags & TEXTURE_BIND_DEPTH_STENCIL) {
         vkFlags |= VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT;
+    }
+    if (flags & TEXTURE_BIND_TRANSFER_SRC) {
+        vkFlags |= VK_IMAGE_USAGE_TRANSFER_SRC_BIT;
+    }
+    if (flags & TEXTURE_BIND_TRANSFER_DST) {
+        vkFlags |= VK_IMAGE_USAGE_TRANSFER_DST_BIT;
     }
 
     return vkFlags;
@@ -386,6 +449,12 @@ inline VkBufferUsageFlags ToVkBufferUsageFlags(uint8_t flags) {
     }
     if (flags & BUFFER_BIND_UNIFORM) {
         vkFlags |= VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT;
+    }
+    if (flags & BUFFER_BIND_TRANSFER_SRC) {
+        vkFlags |= VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
+    }
+    if (flags & BUFFER_BIND_TRANSFER_DST) {
+        vkFlags |= VK_BUFFER_USAGE_TRANSFER_DST_BIT;
     }
 
     return vkFlags;
