@@ -160,21 +160,11 @@ void VulkanCommandQueue::CopyToBuffer(Buffer* dst, uint64_t size, void* data) {
     VkMemoryRequirements memoryRequirements;
     vkGetBufferMemoryRequirements(m_Device->GetVkDevice(), staging, &memoryRequirements);
 
-    VkPhysicalDeviceMemoryProperties memoryProperties;
-    vkGetPhysicalDeviceMemoryProperties(m_Device->GetVkPhysicalDevice(), &memoryProperties);
-
-    uint32_t memoryTypeIndex = 0;
-    for (int i = 0; i < memoryProperties.memoryTypeCount; i++) {
-        if (memoryProperties.memoryTypes[i].propertyFlags & VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT) {
-            memoryTypeIndex = i;
-            break;
-        }
-    }
-
     VkMemoryAllocateInfo memoryAllocateInfo = {
         .sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO,
         .allocationSize = memoryRequirements.size,
-        .memoryTypeIndex = memoryTypeIndex,
+        .memoryTypeIndex = m_Device->FindMemoryTypeIndex(memoryRequirements.memoryTypeBits,
+            VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT)
     };
 
     vkAllocateMemory(m_Device->GetVkDevice(), &memoryAllocateInfo, nullptr, &memory);

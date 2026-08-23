@@ -16,7 +16,8 @@ void RingBuffer::Init(VkDevice device, VkPhysicalDevice physDevice, uint64_t siz
 
     uint32_t memoryTypeIndex = 0;
     for (int i = 0; i < memoryProperties.memoryTypeCount; i++) {
-        if (memoryProperties.memoryTypes[i].propertyFlags & VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT) {
+        if (memoryProperties.memoryTypes[i].propertyFlags &
+            (VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT)) {
             memoryTypeIndex = i;
             break;
         }

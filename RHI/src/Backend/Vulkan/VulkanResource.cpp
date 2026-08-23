@@ -56,7 +56,7 @@ void VulkanTexture::CreateTexture() {
         .mipLevels = m_Desc.MipLevels,
         .arrayLayers = m_Desc.ArrayLayers,
         .samples = ToVkSampleCountFlagBits(m_Desc.Samples),
-        .tiling = VK_IMAGE_TILING_OPTIMAL,
+        .tiling = VK_IMAGE_TILING_LINEAR,
         .usage = ToVkImageUsageFlags(m_Desc.BindFlags),
         .sharingMode = VK_SHARING_MODE_EXCLUSIVE,
         .initialLayout = VK_IMAGE_LAYOUT_UNDEFINED
@@ -70,21 +70,11 @@ void VulkanTexture::CreateMemory() {
     vkGetImageMemoryRequirements(m_Device->GetVkDevice(), m_Image, &imageMemoryRequirements);
     m_SizeInBytes = imageMemoryRequirements.size;
 
-    VkPhysicalDeviceMemoryProperties physicalDeviceMemoryProperties;
-    vkGetPhysicalDeviceMemoryProperties(m_Device->GetVkPhysicalDevice(), &physicalDeviceMemoryProperties);
-
-    uint32_t memoryTypeIndex = 0;
-    for (int i = 0; i < physicalDeviceMemoryProperties.memoryTypeCount; i++) {
-        if (physicalDeviceMemoryProperties.memoryTypes[i].propertyFlags & VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT) {
-            memoryTypeIndex = i;
-            break;
-        }
-    }
-
     VkMemoryAllocateInfo memoryAllocateInfo = {
         .sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO,
         .allocationSize = m_SizeInBytes,
-        .memoryTypeIndex = memoryTypeIndex
+        .memoryTypeIndex = m_Device->FindMemoryTypeIndex(imageMemoryRequirements.memoryTypeBits,
+            VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT)
     };
 
     vkAllocateMemory(m_Device->GetVkDevice(), &memoryAllocateInfo, nullptr, &m_Memory);
@@ -176,23 +166,14 @@ void VulkanBuffer::CreateMemory() {
         return;
     }
 
-    VkPhysicalDeviceMemoryProperties physicalDeviceMemoryProperties;
-    vkGetPhysicalDeviceMemoryProperties(m_Device->GetVkPhysicalDevice(), &physicalDeviceMemoryProperties);
-
-    uint32_t memoryTypeIndex = 0;
     uint32_t memoryPropertyFlags = m_Desc.Usage == BufferUsage::Default ?
-        VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT : VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT;
-    for (int i = 0; i < physicalDeviceMemoryProperties.memoryTypeCount; i++) {
-        if (physicalDeviceMemoryProperties.memoryTypes[i].propertyFlags == memoryPropertyFlags) {
-            memoryTypeIndex = i;
-            break;
-        }
-    }
+        VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT :
+        VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
 
     VkMemoryAllocateInfo memoryAllocateInfo = {
         .sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO,
         .allocationSize = m_SizeInBytes,
-        .memoryTypeIndex = memoryTypeIndex
+        .memoryTypeIndex = m_Device->FindMemoryTypeIndex(bufferMemoryRequirements.memoryTypeBits, memoryPropertyFlags)
     };
 
     vkAllocateMemory(m_Device->GetVkDevice(), &memoryAllocateInfo, nullptr, &m_Memory);

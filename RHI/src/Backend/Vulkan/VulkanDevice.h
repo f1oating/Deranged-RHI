@@ -29,6 +29,8 @@ public:
 
     void ReleaseResource(ReleaseResourceBase* resource);
 
+    uint32_t FindMemoryTypeIndex(uint32_t memoryTypeBits, uint32_t propertyFlags);
+
     VkInstance GetVkInstance() { return m_Instance; }
     VkDevice GetVkDevice() const { return m_Device; }
     VkPhysicalDevice GetVkPhysicalDevice() const { return m_PhysicalDevice; }

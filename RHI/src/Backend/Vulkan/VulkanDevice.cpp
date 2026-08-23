@@ -63,6 +63,25 @@ void VulkanDevice::ReleaseResource(ReleaseResourceBase *resource) {
     m_Queue->ReleaseResource(new ReleaseResourceWrapper(resource, 1));
 }
 
+uint32_t VulkanDevice::FindMemoryTypeIndex(uint32_t memoryTypeBits, uint32_t propertyFlags) {
+    VkPhysicalDeviceMemoryProperties physicalDeviceMemoryProperties;
+    vkGetPhysicalDeviceMemoryProperties(m_PhysicalDevice, &physicalDeviceMemoryProperties);
+
+    uint32_t memoryTypeIndex = 0;
+    for (int i = 0; i < physicalDeviceMemoryProperties.memoryTypeCount; i++) {
+        if (!(memoryTypeBits & ( 1U << i))) continue;
+
+        if ((physicalDeviceMemoryProperties.memoryTypes[i].propertyFlags & propertyFlags) != propertyFlags) {
+            continue;
+        }
+
+        memoryTypeIndex = i;
+        break;
+    }
+
+    return memoryTypeIndex;
+}
+
 void VulkanDevice::CreateInstance() {
     volkInitialize();
     VkApplicationInfo appInfo = {
