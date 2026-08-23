@@ -37,7 +37,7 @@ DX12Texture::DX12Texture(TextureDesc desc, ID3D12Resource* res, DX12Device* devi
     m_Desc = desc;
     m_Resource = res;
     m_Device = device;
-    m_Layout = ResourceLayout::Present;
+    m_Layout = ImageLayout::Present;
 }
 
 DX12Texture::~DX12Texture() {
@@ -135,7 +135,7 @@ void DX12Buffer::CreateResource() {
     }
 
     D3D12_HEAP_PROPERTIES heapProps = {
-        .Type = m_Desc.Usage == BufferUsage::Default ? D3D12_HEAP_TYPE_DEFAULT : D3D12_HEAP_TYPE_READBACK
+        .Type = m_Desc.Usage == BufferUsage::Default ? D3D12_HEAP_TYPE_DEFAULT : D3D12_HEAP_TYPE_UPLOAD
     };
 
     hr = m_Device->GetDX12Device()->CreateCommittedResource3(&heapProps, D3D12_HEAP_FLAG_NONE,

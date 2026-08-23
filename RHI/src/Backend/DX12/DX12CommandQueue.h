@@ -30,13 +30,16 @@ public:
     void SetViewport(Viewport viewport) override;
     void SetScissor(Scissor scissor) override;
 
-    void Barrier(std::vector<TextureBarrier> barriers) override;
+    void Barrier(uint32_t srcStage, uint32_t dstStage,
+        std::vector<BufferBarrier> bufBarriers, std::vector<TextureBarrier> texBarriers) override;
 
     void SetRenderTargets(std::vector<TextureView*> rtvs) override;
     void ClearRenderTargets(float r, float g, float b, float a) override;
 
     void DrawInstansed(uint32_t VertexCountPerInstance, uint32_t InstanceCount = 1,
         uint32_t StartVertexLocation = 0, uint32_t StartInstanceLocation = 0) override;
+
+    void CopyToBuffer(Buffer* dst, uint64_t size, void* data) override;
 
     void Flush() override;
 

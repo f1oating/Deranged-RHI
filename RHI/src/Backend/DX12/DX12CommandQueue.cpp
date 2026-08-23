@@ -79,11 +79,13 @@ void DX12CommandQueue::SetScissor(Scissor scissor) {
     m_CommandList->RSSetScissorRects(1, &dxScissor);
 }
 
-void DX12CommandQueue::Barrier(std::vector<TextureBarrier> barriers) {
-    std::vector<D3D12_TEXTURE_BARRIER> resourceBarriers;
+void DX12CommandQueue::Barrier(uint32_t srcStage, uint32_t dstStage,
+    std::vector<BufferBarrier> bufBarriers, std::vector<TextureBarrier> texBarriers) {
+    std::vector<D3D12_TEXTURE_BARRIER> textureBarriers;
+    std::vector<D3D12_BUFFER_BARRIER> bufferBarriers;
 
-    for (int i = 0; i < barriers.size(); i++) {
-        DX12Texture* dxTexture = static_cast<DX12Texture*>(barriers[i].Tex);
+    for (int i = 0; i < texBarriers.size(); i++) {
+        DX12Texture* dxTexture = static_cast<DX12Texture*>(texBarriers[i].Tex);
 
         D3D12_BARRIER_SUBRESOURCE_RANGE range = {
             .IndexOrFirstMipLevel = 0,
@@ -95,27 +97,55 @@ void DX12CommandQueue::Barrier(std::vector<TextureBarrier> barriers) {
         };
 
         D3D12_TEXTURE_BARRIER textureBarrier = {
-            .SyncBefore = D3D12_BARRIER_SYNC_ALL,
-            .SyncAfter = D3D12_BARRIER_SYNC_ALL,
-            .AccessBefore = ToSrcD3D12BarrierAccess(barriers[i].Layout),
-            .AccessAfter = ToDstD3D12BarrierAccess(barriers[i].Layout),
+            .SyncBefore = ToD3D12BarrierSync(srcStage),
+            .SyncAfter = ToD3D12BarrierSync(dstStage),
+            .AccessBefore = ToD3D12BarrierAccess(texBarriers[i].SrcAccessFlags),
+            .AccessAfter = ToD3D12BarrierAccess(texBarriers[i].DstAccessFlags),
             .LayoutBefore = ToD3D12BarrierLayout(dxTexture->GetResourceLayout()),
-            .LayoutAfter = ToD3D12BarrierLayout(barriers[i].Layout),
+            .LayoutAfter = ToD3D12BarrierLayout(texBarriers[i].Layout),
             .pResource = dxTexture->GetDX12Resource(),
             .Subresources = range
         };
 
-        resourceBarriers.push_back(textureBarrier);
-        dxTexture->SetResourceLayout(barriers[i].Layout);
+        textureBarriers.push_back(textureBarrier);
+        dxTexture->SetResourceLayout(texBarriers[i].Layout);
     }
 
-    D3D12_BARRIER_GROUP barrierGroup = {
-        .Type = D3D12_BARRIER_TYPE_TEXTURE,
-        .NumBarriers = (uint32_t)resourceBarriers.size(),
-        .pTextureBarriers = resourceBarriers.data()
-    };
+    for (int i = 0; i < bufBarriers.size(); i++) {
+        DX12Buffer* dxBuffer = static_cast<DX12Buffer*>(bufBarriers[i].Buf);
 
-    m_CommandList->Barrier(1, &barrierGroup);
+        D3D12_BARRIER_SUBRESOURCE_RANGE range = {
+            .IndexOrFirstMipLevel = 0,
+            .NumMipLevels = 1,
+            .FirstArraySlice = 0,
+            .NumArraySlices = 1,
+            .FirstPlane = 0,
+            .NumPlanes = 1
+        };
+
+        D3D12_BUFFER_BARRIER bufferBarrier = {
+            .SyncBefore = ToD3D12BarrierSync(srcStage),
+            .SyncAfter = ToD3D12BarrierSync(dstStage),
+            .AccessBefore = ToD3D12BarrierAccess(bufBarriers[i].SrcAccessFlags),
+            .AccessAfter = ToD3D12BarrierAccess(bufBarriers[i].DstAccessFlags),
+            .pResource = dxBuffer->GetDX12Resource(),
+            .Offset = 0,
+            .Size = dxBuffer->GetDesc().Size
+        };
+
+        bufferBarriers.push_back(bufferBarrier);
+    }
+
+    D3D12_BARRIER_GROUP barrierGroups[2];
+    barrierGroups[0].Type = D3D12_BARRIER_TYPE_TEXTURE;
+    barrierGroups[0].NumBarriers = (uint32_t)textureBarriers.size();
+    barrierGroups[0].pTextureBarriers = textureBarriers.data();
+
+    barrierGroups[1].Type = D3D12_BARRIER_TYPE_BUFFER;
+    barrierGroups[1].NumBarriers = (uint32_t)bufferBarriers.size();
+    barrierGroups[1].pBufferBarriers = bufferBarriers.data();
+
+    m_CommandList->Barrier(2, barrierGroups);
 }
 
 void DX12CommandQueue::SetRenderTargets(std::vector<TextureView*> rtvs) {
@@ -138,6 +168,38 @@ void DX12CommandQueue::ClearRenderTargets(float r, float g, float b, float a) {
 void DX12CommandQueue::DrawInstansed(uint32_t VertexCountPerInstance, uint32_t InstanceCount,
         uint32_t StartVertexLocation, uint32_t StartInstanceLocation) {
     m_CommandList->DrawInstanced(VertexCountPerInstance, InstanceCount, StartVertexLocation, StartInstanceLocation);
+}
+
+void DX12CommandQueue::CopyToBuffer(Buffer* dst, uint64_t size, void* data) {
+    DX12Buffer* dxDst = static_cast<DX12Buffer*>(dst);
+
+    ID3D12Resource* src = nullptr;
+
+    D3D12_HEAP_PROPERTIES heapProps = {
+        .Type = D3D12_HEAP_TYPE_UPLOAD
+    };
+
+    D3D12_RESOURCE_DESC1 resourceDesc = {
+        .Dimension = D3D12_RESOURCE_DIMENSION_BUFFER,
+        .Width =  size,
+        .Height = 1,
+        .DepthOrArraySize = 1,
+        .MipLevels = 1,
+        .SampleDesc = { 1, 0 },
+        .Layout = D3D12_TEXTURE_LAYOUT_ROW_MAJOR
+    };
+
+    m_Device->GetDX12Device()->CreateCommittedResource3(&heapProps, D3D12_HEAP_FLAG_NONE, &resourceDesc,
+        D3D12_BARRIER_LAYOUT_UNDEFINED, nullptr, nullptr, 0, nullptr, IID_PPV_ARGS(&src));
+
+    void* mapped = nullptr;
+    src->Map(0, nullptr, &mapped);
+    memcpy(mapped, data, size);
+    src->Unmap(0, nullptr);
+
+    m_CommandList->CopyBufferRegion(dxDst->GetDX12Resource(), 0, src, 0, size);
+
+    ReleaseResource(new ReleaseResourceWrapper(new BufferReleaseResource(src)));
 }
 
 void DX12CommandQueue::Flush() {

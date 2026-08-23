@@ -25,15 +25,15 @@ public:
     TextureDesc GetDesc() override;
 
     ID3D12Resource* GetDX12Resource() const { return m_Resource; }
-    ResourceLayout GetResourceLayout() const { return m_Layout; }
+    ImageLayout GetResourceLayout() const { return m_Layout; }
 
-    void SetResourceLayout(ResourceLayout layout) { m_Layout = layout; }
+    void SetResourceLayout(ImageLayout layout) { m_Layout = layout; }
 
 private:
     TextureDesc m_Desc;
     DX12Device* m_Device = nullptr;
     ID3D12Resource* m_Resource = nullptr;
-    ResourceLayout m_Layout = ResourceLayout::Undefined;
+    ImageLayout m_Layout = ImageLayout::Undefined;
     TextureView* m_RTV = nullptr;
 
 };
@@ -65,6 +65,7 @@ public:
     void* Map() override;
 
     BufferDesc GetDesc() override;
+    ID3D12Resource* GetDX12Resource() const { return m_Resource; }
 
 private:
     void CreateResource();
@@ -271,52 +272,95 @@ inline TextureType FromD3D12ResourceDimension(D3D12_RESOURCE_DIMENSION dimension
     }
 }
 
-inline D3D12_BARRIER_LAYOUT ToD3D12BarrierLayout(ResourceLayout layout) {
+inline D3D12_BARRIER_LAYOUT ToD3D12BarrierLayout(ImageLayout layout) {
     switch (layout) {
-        case ResourceLayout::Undefined:
+        case ImageLayout::Undefined:
             return  D3D12_BARRIER_LAYOUT_UNDEFINED;
-        case ResourceLayout::RenderTarget:
+        case ImageLayout::TransferSRC:
+            return  D3D12_BARRIER_LAYOUT_COPY_SOURCE;
+        case ImageLayout::TransferDST:
+            return  D3D12_BARRIER_LAYOUT_COPY_DEST;
+        case ImageLayout::RenderTarget:
             return D3D12_BARRIER_LAYOUT_RENDER_TARGET;
-        case ResourceLayout::Present:
+        case ImageLayout::Present:
             return D3D12_BARRIER_LAYOUT_PRESENT;
         default:
             return D3D12_BARRIER_LAYOUT_UNDEFINED;
     }
 }
 
-inline ResourceLayout FromD3D12BarrierLayout(D3D12_BARRIER_LAYOUT layout) {
-    switch (layout) {
-        case D3D12_BARRIER_LAYOUT_UNDEFINED:
-            return ResourceLayout::Undefined;
-        case D3D12_BARRIER_LAYOUT_RENDER_TARGET:
-            return ResourceLayout::RenderTarget;
-        case D3D12_BARRIER_LAYOUT_PRESENT:
-            return ResourceLayout::Present;
-        default:
-            return ResourceLayout::Undefined;
+inline D3D12_BARRIER_ACCESS ToD3D12BarrierAccess(uint32_t flags) {
+    D3D12_BARRIER_ACCESS dxFlags = D3D12_BARRIER_ACCESS_COMMON;
+
+    if (flags & ACCESS_NONE) {
+        dxFlags |= D3D12_BARRIER_ACCESS_NO_ACCESS;
     }
+    if (flags & ACCESS_SHADER_READ) {
+        dxFlags |= D3D12_BARRIER_ACCESS_SHADER_RESOURCE;
+    }
+    if (flags & ACCESS_SHADER_WRITE) {
+        dxFlags |= D3D12_BARRIER_ACCESS_SHADER_RESOURCE;
+    }
+    if (flags & ACCESS_COLOR_ATTACHMENT_READ) {
+        dxFlags |= D3D12_BARRIER_ACCESS_RENDER_TARGET;
+    }
+    if (flags & ACCESS_COLOR_ATTACHMENT_WRITE) {
+        dxFlags |= D3D12_BARRIER_ACCESS_RENDER_TARGET;
+    }
+    if (flags & ACCESS_DEPTH_STENCIL_ATTACHMENT_READ) {
+        dxFlags |= D3D12_BARRIER_ACCESS_DEPTH_STENCIL_READ;
+    }
+    if (flags & ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE) {
+        dxFlags |= D3D12_BARRIER_ACCESS_DEPTH_STENCIL_WRITE;
+    }
+    if (flags & ACCESS_TRANSFER_READ) {
+        dxFlags |= D3D12_BARRIER_ACCESS_COPY_SOURCE;
+    }
+    if (flags & ACCESS_TRANSFER_WRITE) {
+        dxFlags = D3D12_BARRIER_ACCESS_COPY_DEST;
+    }
+
+    return dxFlags;
 }
 
-inline D3D12_BARRIER_ACCESS ToSrcD3D12BarrierAccess(ResourceLayout newLayout) {
-    switch (newLayout) {
-        case ResourceLayout::RenderTarget:
-            return D3D12_BARRIER_ACCESS_COMMON;
-        case ResourceLayout::Present:
-            return D3D12_BARRIER_ACCESS_RENDER_TARGET;
-        default:
-            return D3D12_BARRIER_ACCESS_NO_ACCESS;
-    }
-}
+inline D3D12_BARRIER_SYNC ToD3D12BarrierSync(uint32_t flags) {
+    D3D12_BARRIER_SYNC dxFlags = D3D12_BARRIER_SYNC_NONE;
 
-inline D3D12_BARRIER_ACCESS ToDstD3D12BarrierAccess(ResourceLayout newLayout) {
-    switch (newLayout) {
-        case ResourceLayout::RenderTarget:
-            return D3D12_BARRIER_ACCESS_RENDER_TARGET;
-        case ResourceLayout::Present:
-            return D3D12_BARRIER_ACCESS_COMMON;
-        default:
-            return D3D12_BARRIER_ACCESS_NO_ACCESS;
+    if (flags & PIPELINE_STAGE_NONE) {
+        dxFlags |= D3D12_BARRIER_SYNC_NONE;
     }
+    if (flags & PIPELINE_STAGE_VERTEX_INPUT) {
+        dxFlags |= D3D12_BARRIER_SYNC_VERTEX_SHADING;
+    }
+    if (flags & PIPELINE_STAGE_VERTEX_SHADER) {
+        dxFlags |= D3D12_BARRIER_SYNC_VERTEX_SHADING;
+    }
+    if (flags & PIPELINE_STAGE_FRAGMENT_SHADER) {
+        dxFlags |= D3D12_BARRIER_SYNC_PIXEL_SHADING;
+    }
+    if (flags & PIPELINE_STAGE_EARLY_FRAGMENT_TESTS) {
+        dxFlags |= D3D12_BARRIER_SYNC_PIXEL_SHADING;
+    }
+    if (flags & PIPELINE_STAGE_LATE_FRAGMENT_TESTS) {
+        dxFlags |= D3D12_BARRIER_SYNC_PIXEL_SHADING;
+    }
+    if (flags & PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT) {
+        dxFlags |= D3D12_BARRIER_SYNC_RENDER_TARGET;
+    }
+    if (flags & PIPELINE_STAGE_COMPUTE_SHADER) {
+        dxFlags |= D3D12_BARRIER_SYNC_COMPUTE_SHADING;
+    }
+    if (flags & PIPELINE_STAGE_TRANSFER) {
+        dxFlags |= D3D12_BARRIER_SYNC_COPY;
+    }
+    if (flags & PIPELINE_STAGE_ALL_GRAPHICS) {
+        dxFlags |= D3D12_BARRIER_SYNC_ALL_SHADING;
+    }
+    if (flags & PIPELINE_STAGE_ALL_COMMANDS) {
+        dxFlags |= D3D12_BARRIER_SYNC_ALL;
+    }
+
+    return dxFlags;
 }
 
 inline D3D12_RESOURCE_FLAGS ToD3D12TexResourceFlags(uint8_t flags) {

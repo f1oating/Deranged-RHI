@@ -52,7 +52,7 @@ int main() {
     };
     Buffer* buffer = device->CreateBuffer(bufferDesc);
     queue->CopyToBuffer(buffer, sizeof(vertices), vertices);
-    queue->Barrier(PIPELINE_STAGE_TRANSFER_BIT, PIPELINE_STAGE_VERTEX_INPUT_BIT,
+    queue->Barrier(PIPELINE_STAGE_TRANSFER, PIPELINE_STAGE_VERTEX_INPUT,
     { { buffer, ACCESS_TRANSFER_WRITE, ACCESS_SHADER_READ } }, {});
 
     auto vertexSource = ShaderCompiler::CompileShader("shaders/vertex.slang");
@@ -78,7 +78,7 @@ int main() {
         Texture* currentBackBuffer = swapchain->GetCurrentBackBuffer();
         TextureDesc backBufferDesc = currentBackBuffer->GetDesc();
 
-        queue->Barrier(PIPELINE_STAGE_TOP_OF_PIPE, PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, {},
+        queue->Barrier(PIPELINE_STAGE_NONE, PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT, {},
             { { currentBackBuffer, ImageLayout::RenderTarget, ACCESS_NONE, ACCESS_COLOR_ATTACHMENT_READ } });
 
         queue->SetGraphicsPipelineState(pipelineState);
@@ -91,7 +91,7 @@ int main() {
 
         queue->DrawInstansed(3);
 
-        queue->Barrier(PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT, {},
+        queue->Barrier(PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT, PIPELINE_STAGE_NONE, {},
             { { currentBackBuffer, ImageLayout::Present, ACCESS_COLOR_ATTACHMENT_WRITE, ACCESS_NONE } });
 
         buffer->Map();

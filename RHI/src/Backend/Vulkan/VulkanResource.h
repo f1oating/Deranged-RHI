@@ -374,42 +374,40 @@ inline VkAccessFlags ToVkAccess(uint32_t flags) {
 }
 
 inline VkPipelineStageFlags ToVkStage(uint32_t flags) {
-    VkPipelineStageFlags vkFlags = VK_PIPELINE_STAGE_NONE;
+    VkPipelineStageFlags vkFlags = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
 
-    if (flags & PIPELINE_STAGE_TOP_OF_PIPE) {
+
+    if (flags & PIPELINE_STAGE_NONE) {
         vkFlags |= VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
     }
-    if (flags & PIPELINE_STAGE_VERTEX_INPUT_BIT) {
+    if (flags & PIPELINE_STAGE_VERTEX_INPUT) {
         vkFlags |= VK_PIPELINE_STAGE_VERTEX_SHADER_BIT;
     }
-    if (flags & PIPELINE_STAGE_VERTEX_SHADER_BIT) {
+    if (flags & PIPELINE_STAGE_VERTEX_SHADER) {
         vkFlags |= VK_PIPELINE_STAGE_VERTEX_SHADER_BIT;
     }
-    if (flags & PIPELINE_STAGE_FRAGMENT_SHADER_BIT) {
+    if (flags & PIPELINE_STAGE_FRAGMENT_SHADER) {
         vkFlags |= VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
     }
-    if (flags & PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT) {
+    if (flags & PIPELINE_STAGE_EARLY_FRAGMENT_TESTS) {
         vkFlags |= VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
     }
-    if (flags & PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT) {
+    if (flags & PIPELINE_STAGE_LATE_FRAGMENT_TESTS) {
         vkFlags |= VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
     }
-    if (flags & PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT) {
+    if (flags & PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT) {
         vkFlags |= VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
     }
-    if (flags & PIPELINE_STAGE_COMPUTE_SHADER_BIT) {
+    if (flags & PIPELINE_STAGE_COMPUTE_SHADER) {
         vkFlags |= VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT;
     }
-    if (flags & PIPELINE_STAGE_TRANSFER_BIT) {
+    if (flags & PIPELINE_STAGE_TRANSFER) {
         vkFlags |= VK_PIPELINE_STAGE_TRANSFER_BIT;
     }
-    if (flags & PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT) {
-        vkFlags |= VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
-    }
-    if (flags & PIPELINE_STAGE_ALL_GRAPHICS_BIT) {
+    if (flags & PIPELINE_STAGE_ALL_GRAPHICS) {
         vkFlags |= VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT;
     }
-    if (flags & PIPELINE_STAGE_ALL_COMMANDS_BIT) {
+    if (flags & PIPELINE_STAGE_ALL_COMMANDS) {
         vkFlags |= VK_PIPELINE_STAGE_ALL_COMMANDS_BIT;
     }
 
