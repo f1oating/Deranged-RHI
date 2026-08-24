@@ -26,7 +26,8 @@ void DX12GraphicsPipelineState::CreateRootSignature() {
         .NumParameters = 0,
         .pParameters = nullptr,
         .NumStaticSamplers = 0,
-        .pStaticSamplers = nullptr
+        .pStaticSamplers = nullptr,
+        .Flags = D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT
     };
 
     ID3DBlob* serializedSignature = nullptr;
@@ -47,9 +48,23 @@ void DX12GraphicsPipelineState::CreatePipeline() {
         .Quality = 0
     };
 
+    std::vector<D3D12_INPUT_ELEMENT_DESC> inputElements;
+    for (int i = 0; i < m_Desc.VertexInput.InputElements.size(); i++) {
+        D3D12_INPUT_ELEMENT_DESC inputElement = {
+            .SemanticName = m_Desc.VertexInput.InputElements[i].Name.c_str(),
+            .SemanticIndex = 0,
+            .Format = ToDXGIFormat(m_Desc.VertexInput.InputElements[i].Type),
+            .InputSlot = 0,
+            .AlignedByteOffset = D3D12_APPEND_ALIGNED_ELEMENT,
+            .InputSlotClass = D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA,
+            .InstanceDataStepRate = 0
+        };
+        inputElements.push_back(inputElement);
+    }
+
     D3D12_INPUT_LAYOUT_DESC inputLayoutDesc = {
-        .pInputElementDescs = nullptr,
-        .NumElements = 0
+        .pInputElementDescs = inputElements.data(),
+        .NumElements = (uint32_t)inputElements.size()
     };
 
     D3D12_RASTERIZER_DESC rasterizerDesc = {
