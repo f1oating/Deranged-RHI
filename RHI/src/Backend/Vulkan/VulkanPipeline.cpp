@@ -81,8 +81,32 @@ void VulkanGraphicsPipelineState::CreatePipeline() {
         .pDynamicStates = dynamicState.data(),
     };
 
+    std::vector<VkVertexInputAttributeDescription> inputAttributes;
+
+    uint32_t offset = 0;
+    for (int i = 0; i < m_Desc.VertexInput.InputElements.size(); i++) {
+        VkVertexInputAttributeDescription attributeDescription = {
+            .location = (uint32_t)i,
+            .binding = 0,
+            .format = ToVkFormat(m_Desc.VertexInput.InputElements[i].Type),
+            .offset = offset
+        };
+        inputAttributes.push_back(attributeDescription);
+        offset += ToSize(m_Desc.VertexInput.InputElements[i].Type);
+    }
+
+    VkVertexInputBindingDescription inputBinding = {
+        .binding = 0,
+        .stride = offset,
+        .inputRate = VK_VERTEX_INPUT_RATE_VERTEX
+    };
+
     VkPipelineVertexInputStateCreateInfo vertexInputStateCreateInfo = {
-        .sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO
+        .sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO,
+        .vertexBindingDescriptionCount = m_Desc.VertexInput.InputElements.size() ? 1U : 0U,
+        .pVertexBindingDescriptions = m_Desc.VertexInput.InputElements.size() ? &inputBinding : nullptr,
+        .vertexAttributeDescriptionCount = (uint32_t)inputAttributes.size(),
+        .pVertexAttributeDescriptions = inputAttributes.data()
     };
 
     VkPipelineMultisampleStateCreateInfo multisampleStateCreateInfo = {

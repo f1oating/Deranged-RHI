@@ -47,7 +47,7 @@ int main() {
 
     BufferDesc bufferDesc = {
         .Size = sizeof(vertices),
-        .BindFlags = BUFFER_BIND_UNIFORM,
+        .BindFlags = BUFFER_BIND_VERTEX,
         .Usage = BufferUsage::Default
     };
     Buffer* buffer = device->CreateBuffer(bufferDesc);
@@ -66,9 +66,14 @@ int main() {
         .Size = fragmentSource.size()
     };
 
+    VertexInputDesc inputDesc = {
+        { { "POSITION", ValueType::Float2 } }
+    };
+
     GraphicsPipelineDesc pipelineDesc = {
         .VertexShader = vertexShader,
-        .FragmentShader = fragmentShader
+        .FragmentShader = fragmentShader,
+        .VertexInput = inputDesc
     };
     pipelineState = device->CreateGraphicsPipelineState(pipelineDesc);
 
@@ -89,6 +94,7 @@ int main() {
             (float)backBufferDesc.Height, 0.0f, 1.0f });
         queue->SetScissor({ 0, 0, (int)backBufferDesc.Width, (int)backBufferDesc.Height });
 
+        queue->SetVertexBuffer(buffer);
         queue->DrawInstansed(3);
 
         queue->Barrier(PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT, PIPELINE_STAGE_NONE, {},

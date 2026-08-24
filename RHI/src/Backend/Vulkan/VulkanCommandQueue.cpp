@@ -153,6 +153,13 @@ void VulkanCommandQueue::ClearRenderTargets(float r, float g, float b, float a) 
         attachments.data(), 1, &clearRect);
 }
 
+void VulkanCommandQueue::SetVertexBuffer(Buffer* buffer) {
+    VulkanBuffer* vkBuffer = static_cast<VulkanBuffer*>(buffer);
+    VkBuffer vkBuffers = { vkBuffer->GetVkBuffer() };
+    VkDeviceSize offset = 0;
+    vkCmdBindVertexBuffers(m_CommandBuffer, 0, 1, &vkBuffers, &offset);
+}
+
 void VulkanCommandQueue::DrawInstansed(uint32_t VertexCountPerInstance, uint32_t InstanceCount,
     uint32_t StartVertexLocation, uint32_t StartInstanceLocation) {
     if (!m_InsideRendering) {

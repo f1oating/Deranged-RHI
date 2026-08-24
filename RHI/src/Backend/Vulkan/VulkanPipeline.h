@@ -47,6 +47,50 @@ struct PipelineStateReleaseResource : ReleaseResourceBase {
 
 };
 
+inline uint32_t ToSize(ValueType type) {
+    switch (type) {
+        case ValueType::Int:
+        case ValueType::Float:
+            return 4;
+        case ValueType::Int2:
+        case ValueType::Float2:
+            return 8;
+        case ValueType::Int3:
+        case ValueType::Float3:
+            return 12;
+        case ValueType::Int4:
+        case ValueType::Float4:
+            return 16;
+        default:
+            return 4;
+    }
+}
+
+inline VkFormat ToVkFormat(ValueType type) {
+    switch (type) {
+        case ValueType::Int:
+            return VK_FORMAT_R32_SINT;
+        case ValueType::Int2:
+            return VK_FORMAT_R32G32_SINT;
+        case ValueType::Int3:
+            return VK_FORMAT_R32G32B32_SINT;
+        case ValueType::Int4:
+            return VK_FORMAT_R32G32B32A32_SINT;
+
+        case ValueType::Float:
+            return VK_FORMAT_R32_SFLOAT;
+        case ValueType::Float2:
+            return VK_FORMAT_R32G32_SFLOAT;
+        case ValueType::Float3:
+            return VK_FORMAT_R32G32B32_SFLOAT;
+        case ValueType::Float4:
+            return VK_FORMAT_R32G32B32A32_SFLOAT;
+
+        default:
+            return VK_FORMAT_R32_SINT;
+    }
+}
+
 } // vk
 
 #endif //DERANGED_RHI_VULKANPIPELINE_H
