@@ -4,6 +4,7 @@
 
 #include "Backend/DX12/DX12Pipeline.h"
 #include "Backend/DX12/DX12Device.h"
+#include "Backend/DX12/DX12Resource.h"
 
 namespace dx {
 
@@ -19,6 +20,10 @@ DX12GraphicsPipelineState::~DX12GraphicsPipelineState() {
     if (m_RootSignature && m_PipelineState) {
         m_Device->ReleaseResource(new PipelineStateReleaseResource(m_RootSignature, m_PipelineState));
     }
+}
+
+GraphicsPipelineDesc DX12GraphicsPipelineState::GetDesc() {
+    return m_Desc;
 }
 
 void DX12GraphicsPipelineState::CreateRootSignature() {
@@ -68,28 +73,45 @@ void DX12GraphicsPipelineState::CreatePipeline() {
     };
 
     D3D12_RASTERIZER_DESC rasterizerDesc = {
-        .FillMode = D3D12_FILL_MODE_SOLID,
-        .CullMode = D3D12_CULL_MODE_NONE,
-        .FrontCounterClockwise = false,
-        .DepthClipEnable = false,
-        .AntialiasedLineEnable = false
-    };
-
-    D3D12_RENDER_TARGET_BLEND_DESC renderTargetBlendDesc = {
-        .BlendEnable = false,
-        .LogicOpEnable = false,
-        .RenderTargetWriteMask = D3D12_COLOR_WRITE_ENABLE_ALL
+        .FillMode = ToD3D12FillMode(m_Desc.Rasterization.Polygon),
+        .CullMode = ToD3D12CullMode(m_Desc.Rasterization.Cull),
+        .FrontCounterClockwise = m_Desc.Rasterization.Face == FrontFace::CW ? false : true,
+        .DepthBias = (int)m_Desc.Rasterization.DepthBiasConstant,
+        .DepthBiasClamp = m_Desc.Rasterization.DepthBiasClamp,
+        .SlopeScaledDepthBias = m_Desc.Rasterization.DepthBiasSlope,
+        .DepthClipEnable = true,
+        .MultisampleEnable = false,
+        .AntialiasedLineEnable = false,
+        .ForcedSampleCount = 0,
+        .ConservativeRaster = D3D12_CONSERVATIVE_RASTERIZATION_MODE_OFF
     };
 
     D3D12_BLEND_DESC blendDesc = {
         .AlphaToCoverageEnable = false,
         .IndependentBlendEnable = false
     };
-    blendDesc.RenderTarget[0] = renderTargetBlendDesc;
+
+    for (int i = 0; i < m_Desc.Blend.ColorAttachments.size(); i++) {
+        D3D12_RENDER_TARGET_BLEND_DESC renderTargetBlendDesc = {
+            .BlendEnable = m_Desc.Blend.ColorAttachments[i].BlendEnable,
+            .LogicOpEnable = m_Desc.Blend.LogicOpEnable,
+            .SrcBlend = ToD3D12Blend(m_Desc.Blend.ColorAttachments[i].SrcColorBlend),
+            .DestBlend = ToD3D12Blend(m_Desc.Blend.ColorAttachments[i].DstColorBlend),
+            .BlendOp = ToD3D12BlendOp(m_Desc.Blend.ColorAttachments[i].ColorBlend),
+            .SrcBlendAlpha = ToD3D12Blend(m_Desc.Blend.ColorAttachments[i].SrcAlphaBlend),
+            .DestBlendAlpha = ToD3D12Blend(m_Desc.Blend.ColorAttachments[i].DstAlphaBlend),
+            .BlendOpAlpha = ToD3D12BlendOp(m_Desc.Blend.ColorAttachments[i].AlphaBlend),
+            .LogicOp = ToD3D12LogicOp(m_Desc.Blend.Logic),
+            .RenderTargetWriteMask = ToD3D12ColorWriteMask(m_Desc.Blend.ColorAttachments[i].ColorWriteMask)
+        };
+
+        blendDesc.RenderTarget[i] = renderTargetBlendDesc;
+    }
 
     D3D12_DEPTH_STENCIL_DESC depthStencilDesc = {
-        .DepthEnable = false,
-        .StencilEnable = false
+        .DepthFunc = ToD3D12ComparisonFunc(m_Desc.DepthStencil.DepthCompare),
+        .FrontFace = ToD3D12StencilOp(m_Desc.DepthStencil.Front),
+        .BackFace = ToD3D12StencilOp(m_Desc.DepthStencil.Back)
     };
 
     D3D12_GRAPHICS_PIPELINE_STATE_DESC graphicsPipelineStateDesc = {
@@ -101,11 +123,15 @@ void DX12GraphicsPipelineState::CreatePipeline() {
         .RasterizerState = rasterizerDesc,
         .DepthStencilState = depthStencilDesc,
         .InputLayout = inputLayoutDesc,
-        .PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE,
-        .NumRenderTargets = 1,
+        .PrimitiveTopologyType = ToD3D12PrimitiveTopologyType(m_Desc.PrimitiveTopology),
+        .NumRenderTargets = (uint32_t)m_Desc.ColorFormats.size(),
         .SampleDesc = sampleDesc
     };
-    graphicsPipelineStateDesc.RTVFormats[0] = DXGI_FORMAT_B8G8R8A8_UNORM;
+
+    for (int i = 0; i < m_Desc.ColorFormats.size(); i++) {
+        graphicsPipelineStateDesc.RTVFormats[0] = ToDXGIFormat(m_Desc.ColorFormats[i]);
+    }
+    graphicsPipelineStateDesc.DSVFormat = ToDXGIFormat(m_Desc.DepthStencilFormat);
 
     HRESULT hr = m_Device->GetDX12Device()->CreateGraphicsPipelineState(&graphicsPipelineStateDesc, IID_PPV_ARGS(&m_PipelineState));
 }

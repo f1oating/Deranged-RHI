@@ -53,7 +53,7 @@ void DX12CommandQueue::SetGraphicsPipelineState(GraphicsPipelineState* graphicsP
 
     m_CommandList->SetGraphicsRootSignature(dxGraphicsPipelineState->GetRootSignature());
     m_CommandList->SetPipelineState(dxGraphicsPipelineState->GetPipelineState());
-    m_CommandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+    m_CommandList->IASetPrimitiveTopology(ToD3D12PrimitiveTopology(dxGraphicsPipelineState->GetDesc().PrimitiveTopology));
 }
 
 void DX12CommandQueue::SetViewport(Viewport viewport) {
@@ -77,6 +77,11 @@ void DX12CommandQueue::SetScissor(Scissor scissor) {
     };
 
     m_CommandList->RSSetScissorRects(1, &dxScissor);
+}
+
+void DX12CommandQueue::SetBlendConstants(float r, float g, float b, float a) {
+    float rgba[] = { r, g, b, a };
+    m_CommandList->OMSetBlendFactor(rgba);
 }
 
 void DX12CommandQueue::Barrier(uint32_t srcStage, uint32_t dstStage,

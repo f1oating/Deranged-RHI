@@ -18,6 +18,8 @@ public:
     VulkanGraphicsPipelineState(GraphicsPipelineDesc desc, VulkanDevice* device);
     ~VulkanGraphicsPipelineState() override;
 
+    GraphicsPipelineDesc GetDesc() override;
+
     VkPipeline GetPipeline() const { return m_Pipeline; }
 
 private:

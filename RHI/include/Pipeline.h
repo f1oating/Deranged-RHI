@@ -167,6 +167,8 @@ class GraphicsPipelineState {
 public:
     virtual ~GraphicsPipelineState() = default;
 
+    virtual GraphicsPipelineDesc GetDesc() = 0;
+
 };
 
 #endif //DERANGED_RHI_PIPELINE_H
