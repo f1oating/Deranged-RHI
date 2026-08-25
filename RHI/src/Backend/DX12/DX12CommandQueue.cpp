@@ -165,6 +165,17 @@ void DX12CommandQueue::ClearRenderTargets(float r, float g, float b, float a) {
     }
 }
 
+void DX12CommandQueue::SetVertexBuffer(Buffer* buffer, uint32_t stride) {
+    DX12Buffer* dxBuffer = static_cast<DX12Buffer*>(buffer);
+
+    D3D12_VERTEX_BUFFER_VIEW vertexBufferView = {
+        .BufferLocation = dxBuffer->GetDX12Resource()->GetGPUVirtualAddress(),
+        .SizeInBytes = (uint32_t)dxBuffer->GetDesc().Size,
+        .StrideInBytes = stride
+    };
+    m_CommandList->IASetVertexBuffers(0, 1, &vertexBufferView);
+}
+
 void DX12CommandQueue::DrawInstansed(uint32_t VertexCountPerInstance, uint32_t InstanceCount,
         uint32_t StartVertexLocation, uint32_t StartInstanceLocation) {
     m_CommandList->DrawInstanced(VertexCountPerInstance, InstanceCount, StartVertexLocation, StartInstanceLocation);

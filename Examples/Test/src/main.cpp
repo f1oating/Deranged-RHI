@@ -125,7 +125,7 @@ int main() {
             (float)backBufferDesc.Height, 0.0f, 1.0f });
         queue->SetScissor({ 0, 0, (int)backBufferDesc.Width, (int)backBufferDesc.Height });
 
-        queue->SetVertexBuffer(buffer);
+        queue->SetVertexBuffer(buffer, 8);
         queue->DrawInstansed(3);
 
         queue->Barrier(PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT, PIPELINE_STAGE_NONE, {},

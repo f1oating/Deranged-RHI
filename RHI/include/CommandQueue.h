@@ -45,7 +45,7 @@ public:
     virtual void SetRenderTargets(std::vector<TextureView*> rtvs) = 0;
     virtual void ClearRenderTargets(float r, float g, float b, float a) = 0;
 
-    virtual void SetVertexBuffer(Buffer* buffer) = 0;
+    virtual void SetVertexBuffer(Buffer* buffer, uint32_t stride) = 0;
 
     virtual void DrawInstansed(uint32_t VertexCountPerInstance, uint32_t InstanceCount = 1,
         uint32_t StartVertexLocation = 0, uint32_t StartInstanceLocation = 0) = 0;

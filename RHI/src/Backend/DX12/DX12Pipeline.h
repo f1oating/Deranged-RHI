@@ -46,6 +46,31 @@ struct PipelineStateReleaseResource : ReleaseResourceBase {
     }
 };
 
+inline DXGI_FORMAT ToDXGIFormat(ValueType type) {
+    switch (type) {
+        case ValueType::Int:
+            return DXGI_FORMAT_R32_SINT;
+        case ValueType::Int2:
+            return DXGI_FORMAT_R32G32_SINT;
+        case ValueType::Int3:
+            return DXGI_FORMAT_R32G32B32_SINT;
+        case ValueType::Int4:
+            return DXGI_FORMAT_R32G32B32A32_SINT;
+
+        case ValueType::Float:
+            return DXGI_FORMAT_R32_FLOAT;
+        case ValueType::Float2:
+            return DXGI_FORMAT_R32G32_FLOAT;
+        case ValueType::Float3:
+            return DXGI_FORMAT_R32G32B32_FLOAT;
+        case ValueType::Float4:
+            return DXGI_FORMAT_R32G32B32A32_FLOAT;
+
+        default:
+            return DXGI_FORMAT_R32_SINT;
+    }
+}
+
 } // dx
 
 #endif //DERANGED_RHI_DX12PIPELINE_H

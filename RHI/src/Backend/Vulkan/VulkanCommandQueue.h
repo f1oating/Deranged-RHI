@@ -38,7 +38,7 @@ public:
     void SetRenderTargets(std::vector<TextureView*> rtvs) override;
     void ClearRenderTargets(float r, float g, float b, float a) override;
 
-    void SetVertexBuffer(Buffer* buffer) override;
+    void SetVertexBuffer(Buffer* buffer, uint32_t stride) override;
 
     void DrawInstansed(uint32_t VertexCountPerInstance, uint32_t InstanceCount = 1,
         uint32_t StartVertexLocation = 0, uint32_t StartInstanceLocation = 0) override;

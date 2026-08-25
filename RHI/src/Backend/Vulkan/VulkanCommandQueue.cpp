@@ -158,7 +158,7 @@ void VulkanCommandQueue::ClearRenderTargets(float r, float g, float b, float a) 
         attachments.data(), 1, &clearRect);
 }
 
-void VulkanCommandQueue::SetVertexBuffer(Buffer* buffer) {
+void VulkanCommandQueue::SetVertexBuffer(Buffer* buffer, uint32_t stride) {
     VulkanBuffer* vkBuffer = static_cast<VulkanBuffer*>(buffer);
     VkBuffer vkBuffers = { vkBuffer->GetVkBuffer() };
     VkDeviceSize offset = 0;
