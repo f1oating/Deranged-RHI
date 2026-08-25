@@ -72,7 +72,8 @@ void VulkanGraphicsPipelineState::CreatePipeline() {
 
     std::vector<VkDynamicState> dynamicState = {
         VK_DYNAMIC_STATE_VIEWPORT,
-        VK_DYNAMIC_STATE_SCISSOR
+        VK_DYNAMIC_STATE_SCISSOR,
+        VK_DYNAMIC_STATE_BLEND_CONSTANTS
     };
 
     VkPipelineDynamicStateCreateInfo dynamicStateCreateInfo = {
@@ -126,21 +127,21 @@ void VulkanGraphicsPipelineState::CreatePipeline() {
 
     VkPipelineInputAssemblyStateCreateInfo inputAssemblyStateCreateInfo = {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO,
-        .topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST,
+        .topology = ToVkPrimitiveTopology(m_Desc.PrimitiveTopology),
         .primitiveRestartEnable = false
     };
 
     VkPipelineRasterizationStateCreateInfo rasterizationStateCreateInfo = {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO,
-        .depthClampEnable = false,
+        .depthClampEnable = m_Desc.Rasterization.DepthBiasClamp > 0.0f,
         .rasterizerDiscardEnable = false,
-        .polygonMode = VK_POLYGON_MODE_FILL,
-        .cullMode = VK_CULL_MODE_NONE,
-        .frontFace = VK_FRONT_FACE_CLOCKWISE,
-        .depthBiasEnable = false,
-        .depthBiasConstantFactor = 0.0f,
-        .depthBiasClamp = 0.0f,
-        .depthBiasSlopeFactor = 0.0f,
+        .polygonMode = ToVkPolygonMode(m_Desc.Rasterization.Polygon),
+        .cullMode = ToVkCullMode(m_Desc.Rasterization.Cull),
+        .frontFace = ToVkFrontFace(m_Desc.Rasterization.Face),
+        .depthBiasEnable = m_Desc.Rasterization.DepthBiasConstant > 0,
+        .depthBiasConstantFactor = m_Desc.Rasterization.DepthBiasConstant,
+        .depthBiasClamp = m_Desc.Rasterization.DepthBiasClamp,
+        .depthBiasSlopeFactor = m_Desc.Rasterization.DepthBiasSlope,
         .lineWidth = 1.0f,
     };
 
@@ -152,33 +153,49 @@ void VulkanGraphicsPipelineState::CreatePipeline() {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO,
         .depthTestEnable = false,
         .depthWriteEnable = false,
-        .depthCompareOp = VK_COMPARE_OP_LESS,
+        .depthCompareOp = ToVkCompareOp(m_Desc.DepthStencil.DepthCompare),
         .depthBoundsTestEnable = false,
         .stencilTestEnable = false,
+        .front = ToVkStencilOp(m_Desc.DepthStencil.Front),
+        .back = ToVkStencilOp(m_Desc.DepthStencil.Back),
         .minDepthBounds = 0.0f,
-        .maxDepthBounds = 1.0f,
+        .maxDepthBounds = 1.0f
     };
 
-    VkPipelineColorBlendAttachmentState colorBlendAttachmentState = {
-        .blendEnable = false,
-        .colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT
-            | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT,
-    };
+    std::vector<VkPipelineColorBlendAttachmentState> colorBlendAttachments;
+    for (auto attachment : m_Desc.Blend.ColorAttachments) {
+        VkPipelineColorBlendAttachmentState colorBlendAttachment = {
+            .blendEnable = attachment.BlendEnable,
+            .srcColorBlendFactor = ToVkBlendFactor(attachment.SrcColorBlend),
+            .dstColorBlendFactor = ToVkBlendFactor(attachment.DstColorBlend),
+            .colorBlendOp = ToVkBlendOp(attachment.ColorBlend),
+            .srcAlphaBlendFactor = ToVkBlendFactor(attachment.SrcAlphaBlend),
+            .dstAlphaBlendFactor = ToVkBlendFactor(attachment.DstAlphaBlend),
+            .alphaBlendOp = ToVkBlendOp(attachment.AlphaBlend),
+            .colorWriteMask = ToVkColorWriteMask(attachment.ColorWriteMask)
+        };
+        colorBlendAttachments.push_back(colorBlendAttachment);
+    }
 
     VkPipelineColorBlendStateCreateInfo colorBlendStateCreateInfo = {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO,
-        .logicOpEnable = false,
-        .logicOp = VK_LOGIC_OP_CLEAR,
-        .attachmentCount = 1,
-        .pAttachments = &colorBlendAttachmentState
+        .logicOpEnable = m_Desc.Blend.LogicOpEnable,
+        .logicOp = ToVkLogicOp(m_Desc.Blend.Logic),
+        .attachmentCount = (uint32_t)colorBlendAttachments.size(),
+        .pAttachments = colorBlendAttachments.data()
     };
 
-    VkFormat colorAttachmentFormat = VK_FORMAT_B8G8R8A8_UNORM;
+    std::vector<VkFormat> colorAttachmentFormats;
+    for (auto format : m_Desc.ColorFormats) {
+        colorAttachmentFormats.push_back(ToVkFormat(format));
+    }
 
     VkPipelineRenderingCreateInfo renderingCreateInfo = {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_RENDERING_CREATE_INFO,
-        .colorAttachmentCount = 1,
-        .pColorAttachmentFormats = &colorAttachmentFormat
+        .colorAttachmentCount = (uint32_t)colorAttachmentFormats.size(),
+        .pColorAttachmentFormats = colorAttachmentFormats.data(),
+        .depthAttachmentFormat = ToVkFormat(m_Desc.DepthStencilFormat),
+        .stencilAttachmentFormat = HasStencilAspect(m_Desc.DepthStencilFormat) ? ToVkFormat(m_Desc.DepthStencilFormat) : VK_FORMAT_UNDEFINED
     };
 
     VkGraphicsPipelineCreateInfo graphicsPipelineCreateInfo = {

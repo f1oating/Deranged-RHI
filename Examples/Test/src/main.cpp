@@ -70,10 +70,41 @@ int main() {
         { { "POSITION", ValueType::Float2 } }
     };
 
+    RasterizationDesc rasterizationDesc = {
+        .Polygon = PolygonMode::Fill,
+        .Cull = CullMode::None,
+        .Face = FrontFace::CW,
+        .DepthBiasClamp = 0.0f,
+        .DepthBiasConstant = 0.0f,
+        .DepthBiasSlope = 0.0f
+    };
+
+    DepthStencilDesc depthStencilDesc = {
+        .DepthCompare = CompareOp::Never,
+        .Front = StencilOp::Keep,
+        .Back = StencilOp::Keep
+    };
+
+    BlendAttachmentDesc blendAttachmentDesc = {
+        .BlendEnable = false,
+        .ColorWriteMask = COLOR_COMPONENT_R | COLOR_COMPONENT_G | COLOR_COMPONENT_B | COLOR_COMPONENT_A,
+    };
+
+    BlendDesc blendDesc = {
+        .LogicOpEnable = false,
+        .ColorAttachments = { blendAttachmentDesc }
+    };
+
     GraphicsPipelineDesc pipelineDesc = {
         .VertexShader = vertexShader,
         .FragmentShader = fragmentShader,
-        .VertexInput = inputDesc
+        .VertexInput = inputDesc,
+        .Rasterization = rasterizationDesc,
+        .DepthStencil = depthStencilDesc,
+        .Blend = blendDesc,
+        .ColorFormats = { TextureFormat::B8G8R8A8_UNORM },
+        .DepthStencilFormat = TextureFormat::Unknown,
+        .PrimitiveTopology = Topology::TriangleList
     };
     pipelineState = device->CreateGraphicsPipelineState(pipelineDesc);
 

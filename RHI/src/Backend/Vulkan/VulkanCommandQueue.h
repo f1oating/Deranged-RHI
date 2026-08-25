@@ -30,6 +30,7 @@ public:
 
     void SetViewport(Viewport viewport) override;
     void SetScissor(Scissor scissor) override;
+    void SetBlendConstants(float r, float g, float b, float a) override;
 
     void Barrier(uint32_t srcStage, uint32_t dstStage,
         std::vector<BufferBarrier> bufBarriers, std::vector<TextureBarrier> texBarriers) override;

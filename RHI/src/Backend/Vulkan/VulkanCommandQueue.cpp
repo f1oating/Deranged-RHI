@@ -67,6 +67,11 @@ void VulkanCommandQueue::SetScissor(Scissor scissor) {
     vkCmdSetScissor(m_CommandBuffer, 0, 1, &vkScissor);
 }
 
+void VulkanCommandQueue::SetBlendConstants(float r, float g, float b, float a) {
+    float rgba[] = { r, g, b, a };
+    vkCmdSetBlendConstants(m_CommandBuffer, rgba);
+}
+
 void VulkanCommandQueue::Barrier(uint32_t srcStage, uint32_t dstStage,
     std::vector<BufferBarrier> bufBarriers, std::vector<TextureBarrier> texBarriers) {
     if (m_InsideRendering) {
