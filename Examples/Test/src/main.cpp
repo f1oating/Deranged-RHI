@@ -79,10 +79,23 @@ int main() {
         .DepthBiasSlope = 0.0f
     };
 
+    StencilStateDesc front = {
+
+    };
+
+    StencilStateDesc back = {
+
+    };
+
     DepthStencilDesc depthStencilDesc = {
+        .DepthEnable = false,
+        .StencilEnable = false,
+        .DepthWriteEnable = false,
         .DepthCompare = CompareOp::Never,
-        .Front = StencilOp::Keep,
-        .Back = StencilOp::Keep
+        .Front = front,
+        .Back = back,
+        .StencilReadMask = 0xff,
+        .StencilWriteMask = 0xff
     };
 
     BlendAttachmentDesc blendAttachmentDesc = {

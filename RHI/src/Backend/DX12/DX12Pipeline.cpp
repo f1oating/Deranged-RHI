@@ -108,10 +108,29 @@ void DX12GraphicsPipelineState::CreatePipeline() {
         blendDesc.RenderTarget[i] = renderTargetBlendDesc;
     }
 
+    D3D12_DEPTH_STENCILOP_DESC frontState = {
+        .StencilFailOp = ToD3D12StencilOp(m_Desc.DepthStencil.Front.Fail),
+        .StencilDepthFailOp = ToD3D12StencilOp(m_Desc.DepthStencil.Front.DepthFail),
+        .StencilPassOp = ToD3D12StencilOp(m_Desc.DepthStencil.Front.Pass),
+        .StencilFunc = ToD3D12ComparisonFunc(m_Desc.DepthStencil.Front.StencilFunc)
+    };
+
+    D3D12_DEPTH_STENCILOP_DESC backState = {
+        .StencilFailOp = ToD3D12StencilOp(m_Desc.DepthStencil.Back.Fail),
+        .StencilDepthFailOp = ToD3D12StencilOp(m_Desc.DepthStencil.Back.DepthFail),
+        .StencilPassOp = ToD3D12StencilOp(m_Desc.DepthStencil.Back.Pass),
+        .StencilFunc = ToD3D12ComparisonFunc(m_Desc.DepthStencil.Back.StencilFunc)
+    };
+
     D3D12_DEPTH_STENCIL_DESC depthStencilDesc = {
+        .DepthEnable = m_Desc.DepthStencil.DepthEnable,
+        .DepthWriteMask = m_Desc.DepthStencil.DepthWriteEnable ? D3D12_DEPTH_WRITE_MASK_ALL : D3D12_DEPTH_WRITE_MASK_ZERO,
         .DepthFunc = ToD3D12ComparisonFunc(m_Desc.DepthStencil.DepthCompare),
-        .FrontFace = ToD3D12StencilOp(m_Desc.DepthStencil.Front),
-        .BackFace = ToD3D12StencilOp(m_Desc.DepthStencil.Back)
+        .StencilEnable = m_Desc.DepthStencil.StencilEnable,
+        .StencilReadMask = m_Desc.DepthStencil.StencilReadMask,
+        .StencilWriteMask = m_Desc.DepthStencil.StencilWriteMask,
+        .FrontFace = frontState,
+        .BackFace = backState
     };
 
     D3D12_GRAPHICS_PIPELINE_STATE_DESC graphicsPipelineStateDesc = {

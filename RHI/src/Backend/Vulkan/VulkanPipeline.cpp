@@ -153,15 +153,33 @@ void VulkanGraphicsPipelineState::CreatePipeline() {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_TESSELLATION_STATE_CREATE_INFO
     };
 
+    VkStencilOpState frontState = {
+        .failOp = ToVkStencilOp(m_Desc.DepthStencil.Front.Fail),
+        .passOp = ToVkStencilOp(m_Desc.DepthStencil.Front.Pass),
+        .depthFailOp = ToVkStencilOp(m_Desc.DepthStencil.Front.DepthFail),
+        .compareOp = ToVkCompareOp(m_Desc.DepthStencil.Front.StencilFunc),
+        .compareMask = m_Desc.DepthStencil.StencilReadMask,
+        .writeMask = m_Desc.DepthStencil.StencilWriteMask
+    };
+
+    VkStencilOpState backState = {
+        .failOp = ToVkStencilOp(m_Desc.DepthStencil.Back.Fail),
+        .passOp = ToVkStencilOp(m_Desc.DepthStencil.Back.Pass),
+        .depthFailOp = ToVkStencilOp(m_Desc.DepthStencil.Back.DepthFail),
+        .compareOp = ToVkCompareOp(m_Desc.DepthStencil.Back.StencilFunc),
+        .compareMask = m_Desc.DepthStencil.StencilReadMask,
+        .writeMask = m_Desc.DepthStencil.StencilWriteMask
+    };
+
     VkPipelineDepthStencilStateCreateInfo depthStencilStateCreateInfo = {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO,
-        .depthTestEnable = false,
-        .depthWriteEnable = false,
+        .depthTestEnable = m_Desc.DepthStencil.DepthEnable,
+        .depthWriteEnable = m_Desc.DepthStencil.DepthWriteEnable,
         .depthCompareOp = ToVkCompareOp(m_Desc.DepthStencil.DepthCompare),
         .depthBoundsTestEnable = false,
-        .stencilTestEnable = false,
-        .front = ToVkStencilOp(m_Desc.DepthStencil.Front),
-        .back = ToVkStencilOp(m_Desc.DepthStencil.Back),
+        .stencilTestEnable = m_Desc.DepthStencil.StencilEnable,
+        .front = frontState,
+        .back = backState,
         .minDepthBounds = 0.0f,
         .maxDepthBounds = 1.0f
     };

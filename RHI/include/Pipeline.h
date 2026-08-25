@@ -128,10 +128,22 @@ struct RasterizationDesc {
     float DepthBiasSlope;
 };
 
+struct StencilStateDesc {
+    StencilOp DepthFail;
+    StencilOp Fail;
+    StencilOp Pass;
+    CompareOp StencilFunc;
+};
+
 struct DepthStencilDesc {
+    bool DepthEnable;
+    bool StencilEnable;
+    bool DepthWriteEnable;
     CompareOp DepthCompare;
-    StencilOp Front;
-    StencilOp Back;
+    StencilStateDesc Front;
+    StencilStateDesc Back;
+    uint8_t StencilReadMask;
+    uint8_t StencilWriteMask;
 };
 
 struct BlendAttachmentDesc {
