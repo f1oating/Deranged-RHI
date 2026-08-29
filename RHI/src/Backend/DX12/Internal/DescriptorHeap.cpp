@@ -88,43 +88,48 @@ void DescriptorHeap::Free(DescriptorHeapAllocation allocation) {
     m_VariableSizeAllocationManager.Free(offset, allocation.GetNumHandles());
 }
 
-void DescriptorsState::Init(ID3D12Device10* device) {
+void DescriptorsStateManager::Init(ID3D12Device10* device) {
     m_Device = device;
     m_Heap.Init(m_Device, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 128);
 }
 
-void DescriptorsState::Shutdown() {
+void DescriptorsStateManager::Shutdown() {
     m_Heap.Shutdown();
 }
 
-void DescriptorsState::SetCBV(uint32_t offset, D3D12_CONSTANT_BUFFER_VIEW_DESC cbvViewDesc) {
-    m_StateCBVs.emplace_back(offset, cbvViewDesc);
+void DescriptorsStateManager::SetState(std::unordered_map<uint32_t, Descriptor> descriptorsStruct) {
+    m_DescriptorsState = descriptorsStruct;
 }
 
-void DescriptorsState::SetSRV(uint32_t offset, ID3D12Resource* resource, D3D12_SHADER_RESOURCE_VIEW_DESC srvViewDesc) {
-    m_StateSRVs.push_back({ offset, { resource, srvViewDesc } });
+void DescriptorsStateManager::SetCBV(uint32_t offset, D3D12_CONSTANT_BUFFER_VIEW_DESC cbvViewDesc) {
+    m_DescriptorsState.at(offset).CBVDesc = cbvViewDesc;
 }
 
-DescriptorHeapAllocation DescriptorsState::WriteAndAllocate(uint64_t frame) {
-    DescriptorHeapAllocation allocation = m_Heap.Allocate(m_StateCBVs.size() + m_StateSRVs.size());
+void DescriptorsStateManager::SetSRV(uint32_t offset, ID3D12Resource* resource, D3D12_SHADER_RESOURCE_VIEW_DESC srvViewDesc) {
+    m_DescriptorsState.at(offset).SRVDesc = srvViewDesc;
+    m_DescriptorsState.at(offset).Resource = resource;
+}
 
-    for (auto pair : m_StateCBVs) {
-        m_Device->CreateConstantBufferView(&pair.second, allocation.GetCPUHandle(pair.first));
-    }
-    for (auto pair : m_StateSRVs) {
-        m_Device->CreateShaderResourceView( pair.second.first, &pair.second.second,allocation.GetCPUHandle(pair.first));
+DescriptorHeapAllocation DescriptorsStateManager::WriteAndAllocate(uint64_t frame) {
+    DescriptorHeapAllocation allocation = m_Heap.Allocate(m_DescriptorsState.size());
+
+    for (auto pair : m_DescriptorsState) {
+        if (pair.second.Type == DescriptorType::ConstantBuffer) {
+            m_Device->CreateConstantBufferView(&pair.second.CBVDesc, allocation.GetCPUHandle(pair.first));
+        } else {
+            m_Device->CreateShaderResourceView(pair.second.Resource, &pair.second.SRVDesc,allocation.GetCPUHandle(pair.first));
+        }
     }
 
     m_Allocations.emplace_back(frame, allocation);
     return allocation;
 }
 
-void DescriptorsState::Clear() {
-    m_StateCBVs.clear();
-    m_StateSRVs.clear();
+void DescriptorsStateManager::Clear() {
+    m_DescriptorsState.clear();
 }
 
-void DescriptorsState::FreeFrames(uint64_t frame) {
+void DescriptorsStateManager::FreeFrames(uint64_t frame) {
     while (!m_Allocations.empty()) {
         if (m_Allocations.front().first <= frame) {
             DescriptorHeapAllocation allocation = m_Allocations.front().second;

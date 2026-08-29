@@ -9,6 +9,7 @@
 #include <d3d12.h>
 #include <deque>
 #include "VariableSizeAllocationManager.h"
+#include <unordered_map>
 
 namespace dx {
 
@@ -58,10 +59,24 @@ private:
 
 };
 
-class DescriptorsState {
+enum class DescriptorType {
+    ConstantBuffer,
+    ShaderResource
+};
+
+struct Descriptor {
+    DescriptorType Type;
+    D3D12_CONSTANT_BUFFER_VIEW_DESC CBVDesc;
+    D3D12_SHADER_RESOURCE_VIEW_DESC SRVDesc;
+    ID3D12Resource* Resource;
+};
+
+class DescriptorsStateManager {
 public:
     void Init(ID3D12Device10* device);
     void Shutdown();
+
+    void SetState(std::unordered_map<uint32_t, Descriptor> descriptorsState);
 
     void SetCBV(uint32_t offset, D3D12_CONSTANT_BUFFER_VIEW_DESC cbvViewDesc);
     void SetSRV(uint32_t offset, ID3D12Resource* resource, D3D12_SHADER_RESOURCE_VIEW_DESC srvViewDesc);
@@ -78,8 +93,7 @@ private:
     ID3D12Device10* m_Device = nullptr;
     DescriptorHeap m_Heap;
     std::deque<std::pair<uint64_t, DescriptorHeapAllocation>> m_Allocations;
-    std::deque<std::pair<uint32_t, D3D12_CONSTANT_BUFFER_VIEW_DESC>> m_StateCBVs;
-    std::deque<std::pair<uint32_t, std::pair<ID3D12Resource*, D3D12_SHADER_RESOURCE_VIEW_DESC>>> m_StateSRVs;
+    std::unordered_map<uint32_t, Descriptor> m_DescriptorsState;
 
 };
 

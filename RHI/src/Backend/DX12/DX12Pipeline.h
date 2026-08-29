@@ -10,6 +10,7 @@
 #include "ReleaseManager.h"
 #include <unordered_map>
 #include <string>
+#include "Backend/DX12/Internal/DescriptorHeap.h"
 
 namespace dx {
 
@@ -25,8 +26,10 @@ public:
     ID3D12RootSignature* GetRootSignature() { return m_RootSignature; }
     ID3D12PipelineState* GetPipelineState() { return m_PipelineState; };
     uint32_t GetDescriptorOffset(std::string name) { return m_DescriptorOffsets.at(name); }
+    std::unordered_map<uint32_t, Descriptor> GetDescriptorsState() { return m_DescriptorsState; }
 
 private:
+    void ReflexShader(Shader shader, std::vector<D3D12_DESCRIPTOR_RANGE>& descriptorRanges);
     void CreateRootSignature();
     void CreatePipeline();
 
@@ -36,6 +39,7 @@ private:
     ID3D12RootSignature* m_RootSignature = nullptr;
     ID3D12PipelineState* m_PipelineState = nullptr;
     std::unordered_map<std::string, uint32_t> m_DescriptorOffsets;
+    std::unordered_map<uint32_t, Descriptor> m_DescriptorsState;
 
 };
 
@@ -279,7 +283,7 @@ inline D3D12_STENCIL_OP ToD3D12StencilOp(StencilOp op) {
     }
 }
 
-inline D3D12_DESCRIPTOR_RANGE_TYPE ToD3D12DescriptorRangeType(D3D_SHADER_INPUT_TYPE  type) {
+inline D3D12_DESCRIPTOR_RANGE_TYPE ToD3D12DescriptorRangeType(D3D_SHADER_INPUT_TYPE type) {
     switch (type) {
         case D3D_SIT_CBUFFER:
             return D3D12_DESCRIPTOR_RANGE_TYPE_CBV;
@@ -287,6 +291,17 @@ inline D3D12_DESCRIPTOR_RANGE_TYPE ToD3D12DescriptorRangeType(D3D_SHADER_INPUT_T
             return D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
         default:
             return D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
+    }
+}
+
+inline DescriptorType ToDescriptorType(D3D_SHADER_INPUT_TYPE type) {
+    switch (type) {
+        case D3D_SIT_CBUFFER:
+            return DescriptorType::ConstantBuffer;
+        case D3D_SIT_TEXTURE:
+            return DescriptorType::ShaderResource;
+        default:
+            return DescriptorType::ShaderResource;
     }
 }
 

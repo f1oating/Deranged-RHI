@@ -71,7 +71,7 @@ private:
     ReleaseManager m_ReleaseManager;
     std::vector<D3D12_CPU_DESCRIPTOR_HANDLE> m_RTVs;
     DX12GraphicsPipelineState* m_BoundPipeline = nullptr;
-    DescriptorsState m_DescriptorsState;
+    DescriptorsStateManager m_DescriptorsStateManager;
 
 };
 
