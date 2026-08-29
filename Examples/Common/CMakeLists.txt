@@ -33,7 +33,6 @@ target_include_directories(slang INTERFACE ${CMAKE_BINARY_DIR}/slang/include)
 
 if(WIN32)
     execute_process(
-        COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}
         COMMAND ${CMAKE_COMMAND} -E copy_if_different ${CMAKE_BINARY_DIR}/slang/bin/slang.dll ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}
         COMMAND ${CMAKE_COMMAND} -E copy_if_different ${CMAKE_BINARY_DIR}/slang/bin/slang-compiler.dll ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}
     )

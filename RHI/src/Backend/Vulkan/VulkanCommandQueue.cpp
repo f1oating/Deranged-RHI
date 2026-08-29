@@ -165,6 +165,10 @@ void VulkanCommandQueue::SetVertexBuffer(Buffer* buffer, uint32_t stride) {
     vkCmdBindVertexBuffers(m_CommandBuffer, 0, 1, &vkBuffers, &offset);
 }
 
+void VulkanCommandQueue::SetConstantBuffer(std::string name, Buffer* buffer) {
+
+}
+
 void VulkanCommandQueue::DrawInstansed(uint32_t VertexCountPerInstance, uint32_t InstanceCount,
     uint32_t StartVertexLocation, uint32_t StartInstanceLocation) {
     if (!m_InsideRendering) {

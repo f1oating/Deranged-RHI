@@ -14,6 +14,7 @@ DX12CommandQueue::DX12CommandQueue(DX12Device* device) {
     D3D12_COMMAND_QUEUE_DESC queueDesc = {};
     HRESULT hr = m_Device->GetDX12Device()->CreateCommandQueue(&queueDesc, IID_PPV_ARGS(&m_Queue));
     m_CommandAllocatorPool.Init(m_Device->GetDX12Device());
+    m_DescriptorsState.Init(m_Device->GetDX12Device());
 
     m_Fence = new DX12Fence(m_Device);
     hr = m_Device->GetDX12Device()->CreateCommandList1(0, D3D12_COMMAND_LIST_TYPE_DIRECT,
@@ -32,6 +33,7 @@ DX12CommandQueue::~DX12CommandQueue() {
     if (m_CommandList) {
         m_CommandList->Release();
     }
+    m_DescriptorsState.Shutdown();
     m_CommandAllocatorPool.Shutdown();
     if (m_Queue) {
         m_Queue->Release();
@@ -54,6 +56,8 @@ void DX12CommandQueue::SetGraphicsPipelineState(GraphicsPipelineState* graphicsP
     m_CommandList->SetGraphicsRootSignature(dxGraphicsPipelineState->GetRootSignature());
     m_CommandList->SetPipelineState(dxGraphicsPipelineState->GetPipelineState());
     m_CommandList->IASetPrimitiveTopology(ToD3D12PrimitiveTopology(dxGraphicsPipelineState->GetDesc().PrimitiveTopology));
+
+    m_BoundPipeline = dxGraphicsPipelineState;
 }
 
 void DX12CommandQueue::SetViewport(Viewport viewport) {
@@ -181,9 +185,21 @@ void DX12CommandQueue::SetVertexBuffer(Buffer* buffer, uint32_t stride) {
     m_CommandList->IASetVertexBuffers(0, 1, &vertexBufferView);
 }
 
+void DX12CommandQueue::SetConstantBuffer(std::string name, Buffer* buffer) {
+    DX12Buffer* dxBuffer = static_cast<DX12Buffer*>(buffer);
+    D3D12_CONSTANT_BUFFER_VIEW_DESC desc = {
+        .BufferLocation = dxBuffer->GetDX12Resource()->GetGPUVirtualAddress(),
+        .SizeInBytes = (uint32_t)dxBuffer->GetDesc().Size,
+    };
+    m_DescriptorsState.SetCBV(m_BoundPipeline->GetDescriptorOffset(name), desc);
+}
+
 void DX12CommandQueue::DrawInstansed(uint32_t VertexCountPerInstance, uint32_t InstanceCount,
         uint32_t StartVertexLocation, uint32_t StartInstanceLocation) {
+    DescriptorHeapAllocation allocation = m_DescriptorsState.WriteAndAllocate(m_CommandAllocatorNumber);
+    m_CommandList->SetGraphicsRootDescriptorTable(0, allocation.GetGPUHandle(0));
     m_CommandList->DrawInstanced(VertexCountPerInstance, InstanceCount, StartVertexLocation, StartInstanceLocation);
+    m_DescriptorsState.Clear();
 }
 
 void DX12CommandQueue::CopyToBuffer(Buffer* dst, uint64_t size, void* data) {
@@ -230,12 +246,15 @@ void DX12CommandQueue::ReleaseResource(ReleaseResourceWrapper* resource) {
 void DX12CommandQueue::EndFrame() {
     uint64_t completedValue = m_Fence->GetCompletedValue();
     m_CommandAllocatorPool.Poll(completedValue);
+    m_DescriptorsState.FreeFrames(completedValue);
     m_ReleaseManager.DiscardResources(completedValue);
 }
 
 void DX12CommandQueue::AcquireCommandAllocator() {
     m_CommandAllocator = m_CommandAllocatorPool.AcquireCommandAllocator();
     m_CommandList->Reset(m_CommandAllocator, nullptr);
+    ID3D12DescriptorHeap* heap = m_DescriptorsState.GetDX12Heap();
+    m_CommandList->SetDescriptorHeaps(1, &heap);
     m_CommandAllocatorNumber++;
 }
 

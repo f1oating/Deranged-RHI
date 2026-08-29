@@ -12,7 +12,7 @@ using Offset = uint64_t;
 using Size = uint64_t;
 struct FreeBlock;
 using FreeBlocksByOffset = std::map<Offset, FreeBlock>;
-using FreeBlocksBySize = std::map<Size, FreeBlocksByOffset::iterator>;
+using FreeBlocksBySize = std::multimap<Size, FreeBlocksByOffset::iterator>;
 struct FreeBlock {
     Size BlockSize;
     FreeBlocksBySize::iterator OrderBySize;

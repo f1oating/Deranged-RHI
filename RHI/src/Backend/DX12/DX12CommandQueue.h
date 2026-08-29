@@ -12,6 +12,7 @@
 #include <vector>
 #include "ReleaseManager.h"
 #include "Backend/DX12/DX12Pipeline.h"
+#include "Internal/DescriptorHeap.h"
 
 namespace dx {
 
@@ -39,6 +40,8 @@ public:
 
     void SetVertexBuffer(Buffer* buffer, uint32_t stride) override;
 
+    void SetConstantBuffer(std::string name, Buffer* buffer) override;
+
     void DrawInstansed(uint32_t VertexCountPerInstance, uint32_t InstanceCount = 1,
         uint32_t StartVertexLocation = 0, uint32_t StartInstanceLocation = 0) override;
 
@@ -58,7 +61,7 @@ private:
 private:
     DX12Device* m_Device = nullptr;
     ID3D12CommandQueue* m_Queue = nullptr;
-    dx::CommandAllocatorPool m_CommandAllocatorPool;
+    CommandAllocatorPool m_CommandAllocatorPool;
     DX12Fence* m_Fence = nullptr;
     std::vector<std::pair<ID3D12Fence*, uint64_t>> m_WaitFences;
     std::vector<std::pair<ID3D12Fence*, uint64_t>> m_SignalFences;
@@ -67,6 +70,8 @@ private:
     uint64_t m_CommandAllocatorNumber = 0;
     ReleaseManager m_ReleaseManager;
     std::vector<D3D12_CPU_DESCRIPTOR_HANDLE> m_RTVs;
+    DX12GraphicsPipelineState* m_BoundPipeline = nullptr;
+    DescriptorsState m_DescriptorsState;
 
 };
 

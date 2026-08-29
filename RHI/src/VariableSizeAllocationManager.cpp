@@ -29,7 +29,7 @@ Size VariableSizeAllocationManager::Allocate(Size size) {
         AddNewBlock(newOffset, newSize);
     }
 
-    m_FreeSize = newSize;
+    m_FreeSize -= size;
     return offset;
 }
 
@@ -79,5 +79,5 @@ void VariableSizeAllocationManager::Free(Offset offset, Size size) {
 void VariableSizeAllocationManager::AddNewBlock(Offset offset, Size size) {
     auto newBlockByOffsetIt = m_FreeBlocksByOffset.emplace(offset, size);
     auto newBlockBySizeIt = m_FreeBlocksBySize.emplace(size, newBlockByOffsetIt.first);
-    newBlockByOffsetIt.first->second.OrderBySize = newBlockBySizeIt.first;
+    newBlockByOffsetIt.first->second.OrderBySize = newBlockBySizeIt;
 }

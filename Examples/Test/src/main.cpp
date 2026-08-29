@@ -39,6 +39,16 @@ int main() {
 
     TextureView* textureView = device->CreateTextureView(textureViewDesc);
 
+    float color[] = {
+        0.1f, 0.6f, 0.1f, 1.0f
+    };
+    BufferDesc cbufferDesc = {
+        .Size = 256,
+        .BindFlags = BUFFER_BIND_UNIFORM,
+        .Usage = BufferUsage::Dynamic
+    };
+    Buffer* cbuffer = device->CreateBuffer(cbufferDesc);
+
     float vertices[] = {
         0.0f, 0.5f,
         0.5f, -0.5f,
@@ -139,6 +149,11 @@ int main() {
         queue->SetScissor({ 0, 0, (int)backBufferDesc.Width, (int)backBufferDesc.Height });
 
         queue->SetVertexBuffer(buffer, 8);
+        void* ptr = cbuffer->Map();
+        memcpy(ptr, color, 16);
+
+        queue->SetConstantBuffer("Color", cbuffer);
+
         queue->DrawInstansed(3);
 
         queue->Barrier(PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT, PIPELINE_STAGE_NONE, {},
@@ -150,6 +165,7 @@ int main() {
         swapchain->Present();
     }
 
+    delete cbuffer;
     delete buffer;
     delete textureView;
     delete texture;

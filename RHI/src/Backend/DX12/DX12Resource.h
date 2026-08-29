@@ -8,7 +8,7 @@
 #include "Resource.h"
 #include <d3d12.h>
 #include "ReleaseManager.h"
-#include "Backend/DX12/Internal/DescriptorHeapAllocator.h"
+#include "Backend/DX12/Internal/DescriptorHeap.h"
 
 namespace dx {
 
@@ -104,10 +104,10 @@ struct BufferReleaseResource : ReleaseResourceBase {
 };
 
 struct DescriptorAllocationReleaseResource : ReleaseResourceBase {
-    DescriptorHeapAllocator* Allocator;
+    DescriptorHeap* Allocator;
     DescriptorHeapAllocation Allocation;
 
-    DescriptorAllocationReleaseResource(DescriptorHeapAllocator* allocator, DescriptorHeapAllocation allocation)
+    DescriptorAllocationReleaseResource(DescriptorHeap* allocator, DescriptorHeapAllocation allocation)
         : Allocator(allocator), Allocation(allocation) {}
 
     void Destroy() override {

@@ -5,6 +5,9 @@
 #include "Backend/DX12/DX12Pipeline.h"
 #include "Backend/DX12/DX12Device.h"
 #include "Backend/DX12/DX12Resource.h"
+#include <d3d12shader.h>
+#include <dxcapi.h>
+#include <set>
 
 namespace dx {
 
@@ -27,9 +30,96 @@ GraphicsPipelineDesc DX12GraphicsPipelineState::GetDesc() {
 }
 
 void DX12GraphicsPipelineState::CreateRootSignature() {
+    IDxcUtils* utils = nullptr;
+    DxcCreateInstance(CLSID_DxcUtils, IID_PPV_ARGS(&utils));
+
+    DxcBuffer vertexReflectionBuffer = {
+        .Ptr = m_Desc.VertexShader.Data,
+        .Size = m_Desc.VertexShader.Size,
+        .Encoding = 0,
+    };
+    DxcBuffer fragmentReflectionBuffer = {
+        .Ptr = m_Desc.FragmentShader.Data,
+        .Size = m_Desc.FragmentShader.Size,
+        .Encoding = 0,
+    };
+
+    ID3D12ShaderReflection* vertexShaderReflection = nullptr;
+    ID3D12ShaderReflection* fragmentShaderReflection = nullptr;
+
+    utils->CreateReflection(&vertexReflectionBuffer, IID_PPV_ARGS(&vertexShaderReflection));
+    utils->CreateReflection(&fragmentReflectionBuffer, IID_PPV_ARGS(&fragmentShaderReflection));
+
+    D3D12_SHADER_DESC vertexDesc{};
+    D3D12_SHADER_DESC fragmentDesc{};
+
+    vertexShaderReflection->GetDesc(&vertexDesc);
+    fragmentShaderReflection->GetDesc(&fragmentDesc);
+
+    std::set<uint16_t> uniqueRanges;
+    std::vector<D3D12_DESCRIPTOR_RANGE> descriptorRanges;
+
+    for (int i = 0; i < vertexDesc.BoundResources; i++) {
+        D3D12_SHADER_INPUT_BIND_DESC shaderInputBindDesc = {};
+        vertexShaderReflection->GetResourceBindingDesc(i, &shaderInputBindDesc);
+
+        D3D12_DESCRIPTOR_RANGE descriptorRange = {
+            .RangeType = ToD3D12DescriptorRangeType(shaderInputBindDesc.Type),
+            .NumDescriptors = shaderInputBindDesc.BindCount,
+            .BaseShaderRegister = shaderInputBindDesc.BindPoint,
+            .RegisterSpace = shaderInputBindDesc.Space,
+            .OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND
+        };
+
+        uint16_t uniqueRange = 0;
+        uint8_t* uniqueRangePtr = reinterpret_cast<uint8_t*>(&uniqueRange);
+        uniqueRangePtr[0] = shaderInputBindDesc.Space;
+        uniqueRangePtr[1] = shaderInputBindDesc.BindPoint;
+
+        if (!uniqueRanges.contains(uniqueRange)) {
+            uniqueRanges.insert(uniqueRange);
+            descriptorRanges.push_back(descriptorRange);
+            std::string name = shaderInputBindDesc.Name;
+            m_DescriptorOffsets.emplace(name.substr(0, name.find('_')), i);
+        }
+    }
+
+    for (int i = 0; i < fragmentDesc.BoundResources; i++) {
+        D3D12_SHADER_INPUT_BIND_DESC shaderInputBindDesc = {};
+        fragmentShaderReflection->GetResourceBindingDesc(i, &shaderInputBindDesc);
+
+        D3D12_DESCRIPTOR_RANGE descriptorRange = {
+            .RangeType = ToD3D12DescriptorRangeType(shaderInputBindDesc.Type),
+            .NumDescriptors = shaderInputBindDesc.BindCount,
+            .BaseShaderRegister = shaderInputBindDesc.BindPoint,
+            .RegisterSpace = shaderInputBindDesc.Space,
+            .OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND
+        };
+
+        uint16_t uniqueRange = static_cast<uint16_t>(shaderInputBindDesc.Space) << 8 | static_cast<uint16_t>(shaderInputBindDesc.BindPoint);
+
+        if (!uniqueRanges.contains(uniqueRange)) {
+            uniqueRanges.insert(uniqueRange);
+            descriptorRanges.push_back(descriptorRange);
+            std::string name = shaderInputBindDesc.Name;
+            m_DescriptorOffsets.emplace(name.substr(0, name.find('_')), i);
+        }
+    }
+
+    D3D12_ROOT_DESCRIPTOR_TABLE descriptorTable = {
+        .NumDescriptorRanges = (uint32_t)descriptorRanges.size(),
+        .pDescriptorRanges = descriptorRanges.data()
+    };
+
+    D3D12_ROOT_PARAMETER rootParameter = {
+        .ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE,
+        .DescriptorTable = descriptorTable,
+        .ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL
+    };
+
     D3D12_ROOT_SIGNATURE_DESC rootSignatureDesc = {
-        .NumParameters = 0,
-        .pParameters = nullptr,
+        .NumParameters = 1,
+        .pParameters = &rootParameter,
         .NumStaticSamplers = 0,
         .pStaticSamplers = nullptr,
         .Flags = D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT
@@ -45,6 +135,10 @@ void DX12GraphicsPipelineState::CreateRootSignature() {
 
     hr = m_Device->GetDX12Device()->CreateRootSignature(0, serializedSignature->GetBufferPointer(),
         serializedSignature->GetBufferSize(), IID_PPV_ARGS(&m_RootSignature));
+
+    fragmentShaderReflection->Release();
+    vertexShaderReflection->Release();
+    utils->Release();
 }
 
 void DX12GraphicsPipelineState::CreatePipeline() {

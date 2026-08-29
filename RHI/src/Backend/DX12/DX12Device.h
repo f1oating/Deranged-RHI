@@ -10,7 +10,7 @@
 #include <d3d12.h>
 #include "Backend/DX12/DX12CommandQueue.h"
 #include "Backend/DX12/Internal/RingBuffer.h"
-#include "Backend/DX12/Internal/DescriptorHeapAllocator.h"
+#include "Backend/DX12/Internal/DescriptorHeap.h"
 
 namespace dx {
 
@@ -32,8 +32,8 @@ public:
 
     IDXGIFactory3* GetDXGIFactory() const { return m_Factory;}
     ID3D12Device10* GetDX12Device() const { return m_Device; }
-    DescriptorHeapAllocator* GetRTVAllocator() { return &m_RTVAllocator; }
-    DescriptorHeapAllocator* GetDSVAllocator() { return &m_DSVAllocator; }
+    DescriptorHeap* GetRTVAllocator() { return &m_RTVAllocator; }
+    DescriptorHeap* GetDSVAllocator() { return &m_DSVAllocator; }
     RingBuffer* GetRingBuffer() { return &m_RingBuffer; }
 
 private:
@@ -44,8 +44,8 @@ private:
     ID3D12InfoQueue1* m_DebugQueue = nullptr;
     DX12CommandQueue* m_CommandQueue = nullptr;
     RingBuffer m_RingBuffer;
-    DescriptorHeapAllocator m_RTVAllocator;
-    DescriptorHeapAllocator m_DSVAllocator;
+    DescriptorHeap m_RTVAllocator;
+    DescriptorHeap m_DSVAllocator;
 
 };
 

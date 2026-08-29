@@ -7,6 +7,7 @@
 
 #include <cstdint>
 #include <d3d12.h>
+#include <deque>
 #include "VariableSizeAllocationManager.h"
 
 namespace dx {
@@ -36,7 +37,7 @@ private:
 
 };
 
-class DescriptorHeapAllocator {
+class DescriptorHeap {
 public:
     void Init(ID3D12Device10* device, D3D12_DESCRIPTOR_HEAP_TYPE type,
         uint32_t numDescriptors);
@@ -54,6 +55,31 @@ private:
     uint32_t m_DescriptorSize = 0;
     VariableSizeAllocationManager m_VariableSizeAllocationManager;
     bool m_ShaderVisible = false;
+
+};
+
+class DescriptorsState {
+public:
+    void Init(ID3D12Device10* device);
+    void Shutdown();
+
+    void SetCBV(uint32_t offset, D3D12_CONSTANT_BUFFER_VIEW_DESC cbvViewDesc);
+    void SetSRV(uint32_t offset, ID3D12Resource* resource, D3D12_SHADER_RESOURCE_VIEW_DESC srvViewDesc);
+
+    DescriptorHeapAllocation WriteAndAllocate(uint64_t frame);
+
+    void Clear();
+
+    void FreeFrames(uint64_t frame);
+
+    ID3D12DescriptorHeap* GetDX12Heap() { return m_Heap.GetDX12Heap(); }
+
+private:
+    ID3D12Device10* m_Device = nullptr;
+    DescriptorHeap m_Heap;
+    std::deque<std::pair<uint64_t, DescriptorHeapAllocation>> m_Allocations;
+    std::deque<std::pair<uint32_t, D3D12_CONSTANT_BUFFER_VIEW_DESC>> m_StateCBVs;
+    std::deque<std::pair<uint32_t, std::pair<ID3D12Resource*, D3D12_SHADER_RESOURCE_VIEW_DESC>>> m_StateSRVs;
 
 };
 

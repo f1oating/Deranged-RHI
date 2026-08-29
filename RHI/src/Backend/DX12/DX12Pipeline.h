@@ -8,6 +8,8 @@
 #include "Pipeline.h"
 #include <d3d12.h>
 #include "ReleaseManager.h"
+#include <unordered_map>
+#include <string>
 
 namespace dx {
 
@@ -22,6 +24,7 @@ public:
 
     ID3D12RootSignature* GetRootSignature() { return m_RootSignature; }
     ID3D12PipelineState* GetPipelineState() { return m_PipelineState; };
+    uint32_t GetDescriptorOffset(std::string name) { return m_DescriptorOffsets.at(name); }
 
 private:
     void CreateRootSignature();
@@ -32,6 +35,7 @@ private:
     GraphicsPipelineDesc m_Desc;
     ID3D12RootSignature* m_RootSignature = nullptr;
     ID3D12PipelineState* m_PipelineState = nullptr;
+    std::unordered_map<std::string, uint32_t> m_DescriptorOffsets;
 
 };
 
@@ -272,6 +276,17 @@ inline D3D12_STENCIL_OP ToD3D12StencilOp(StencilOp op) {
             return D3D12_STENCIL_OP_DECR;
         default:
             return D3D12_STENCIL_OP_KEEP;
+    }
+}
+
+inline D3D12_DESCRIPTOR_RANGE_TYPE ToD3D12DescriptorRangeType(D3D_SHADER_INPUT_TYPE  type) {
+    switch (type) {
+        case D3D_SIT_CBUFFER:
+            return D3D12_DESCRIPTOR_RANGE_TYPE_CBV;
+        case D3D_SIT_TEXTURE:
+            return D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
+        default:
+            return D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
     }
 }
 

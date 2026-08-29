@@ -106,6 +106,7 @@ DX12Buffer::~DX12Buffer() {
 }
 
 void* DX12Buffer::Map() {
+    m_Offset = m_Device->GetRingBuffer()->Allocate(m_Desc.Size);
     return (uint8_t*)m_Mapped + m_Offset;
 }
 
