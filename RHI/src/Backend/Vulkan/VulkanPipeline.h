@@ -8,6 +8,12 @@
 #include "Pipeline.h"
 #include <volk.h>
 #include "ReleaseManager.h"
+#include <vector>
+#include <unordered_map>
+#include <string>
+
+#include "spirv_reflect.h"
+#include "Backend/Vulkan/Internal/DescriptorPool.h"
 
 namespace vk {
 
@@ -20,9 +26,13 @@ public:
 
     GraphicsPipelineDesc GetDesc() override;
 
-    VkPipeline GetPipeline() const { return m_Pipeline; }
+    VkPipeline GetVkPipeline() const { return m_Pipeline; }
+    VkPipelineLayout GetVkLayout() const { return m_Layout; }
+    std::vector<DescriptorSet> GetDescriptorState() const { return m_DescriptorState; }
+    std::pair<uint32_t, uint32_t> GetBindingPlace(std::string name) const { return m_BindingsPlaceMap.at(name); }
 
 private:
+    void ReflectShader(Shader shader);
     void CreatePipelineLayout();
     void CreatePipeline();
 
@@ -31,6 +41,9 @@ private:
     VkPipelineLayout m_Layout = nullptr;
     VkPipeline m_Pipeline = nullptr;
     GraphicsPipelineDesc m_Desc;
+    std::vector<VkDescriptorSetLayout> m_DescriptorSetLayouts;
+    std::vector<DescriptorSet> m_DescriptorState;
+    std::unordered_map<std::string, std::pair<uint32_t, uint32_t>> m_BindingsPlaceMap;
 
 };
 
@@ -48,6 +61,31 @@ struct PipelineStateReleaseResource : ReleaseResourceBase {
     }
 
 };
+
+struct DescriptorSetLayoutReleaseResource : ReleaseResourceBase {
+    VkDevice Device;
+    std::vector<VkDescriptorSetLayout> Layouts;
+    DescriptorSetLayoutReleaseResource(VkDevice device, std::vector<VkDescriptorSetLayout> layouts)
+        : Device(device), Layouts(layouts) {}
+
+    void Destroy() override {
+        for (const auto& layout : Layouts) {
+            vkDestroyDescriptorSetLayout(Device, layout, nullptr);
+        }
+    }
+
+};
+
+inline VkDescriptorType ToVkDescriptorType(SpvReflectDescriptorType type) {
+    switch (type) {
+        case SPV_REFLECT_DESCRIPTOR_TYPE_UNIFORM_BUFFER:
+            return VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+        case SPV_REFLECT_DESCRIPTOR_TYPE_SAMPLED_IMAGE:
+            return VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
+        default:
+            return VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
+    }
+}
 
 inline uint32_t ToSize(ValueType type) {
     switch (type) {

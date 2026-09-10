@@ -5,6 +5,7 @@
 #include "Backend/Vulkan/VulkanPipeline.h"
 #include "Backend/Vulkan/VulkanDevice.h"
 #include <vector>
+#include <spirv_reflect.h>
 
 namespace vk {
 
@@ -19,7 +20,9 @@ VulkanGraphicsPipelineState::VulkanGraphicsPipelineState(GraphicsPipelineDesc de
 VulkanGraphicsPipelineState::~VulkanGraphicsPipelineState() {
     if (m_Pipeline && m_Layout) {
         m_Device->ReleaseResource(
-            new PipelineStateReleaseResource(m_Device->GetVkDevice(), m_Layout,m_Pipeline));
+            new PipelineStateReleaseResource(m_Device->GetVkDevice(), m_Layout, m_Pipeline));
+        m_Device->ReleaseResource(
+            new DescriptorSetLayoutReleaseResource(m_Device->GetVkDevice(), m_DescriptorSetLayouts));
     }
 }
 
@@ -27,9 +30,71 @@ GraphicsPipelineDesc VulkanGraphicsPipelineState::GetDesc() {
     return m_Desc;
 }
 
+void VulkanGraphicsPipelineState::ReflectShader(Shader shader) {
+    SpvReflectShaderModule module;
+    SpvReflectResult res = spvReflectCreateShaderModule(shader.Size, shader.Data, &module);
+
+    uint32_t setsCount = 0;
+    std::vector<SpvReflectDescriptorSet*> sets;
+    res = spvReflectEnumerateDescriptorSets(&module, &setsCount, nullptr);
+    sets.resize(setsCount);
+    spvReflectEnumerateDescriptorSets(&module, &setsCount, sets.data());
+
+    m_DescriptorState.resize(setsCount);
+    for (int i = 0; i < setsCount; i++) {
+        m_DescriptorState[i].Descriptors.resize(sets[i]->binding_count);
+        for (int j = 0; j < sets[i]->binding_count; j++) {
+            SpvReflectDescriptorBinding* binding = sets[i]->bindings[j];
+            m_DescriptorState[i].Descriptors[j] = {
+                .Type = ToVkDescriptorType(binding->descriptor_type),
+                .Binding = binding->binding,
+            };
+            m_BindingsPlaceMap.insert({ binding->name, { i, j } });
+        }
+    }
+
+    spvReflectDestroyShaderModule(&module);
+}
+
 void VulkanGraphicsPipelineState::CreatePipelineLayout() {
+    if (m_Desc.VertexShader.Data) {
+        ReflectShader(m_Desc.VertexShader);
+    }
+    if (m_Desc.FragmentShader.Data) {
+        ReflectShader(m_Desc.FragmentShader);
+    }
+
+    m_DescriptorSetLayouts.resize(m_DescriptorState.size());
+    for (int i = 0; i < m_DescriptorState.size(); i ++) {
+        std::vector<VkDescriptorSetLayoutBinding> bindings(m_DescriptorState[i].Descriptors.size());
+        for (int j = 0; j < m_DescriptorState[i].Descriptors.size(); j++) {
+            VkDescriptorSetLayoutBinding binding = {
+                .binding = m_DescriptorState[i].Descriptors[j].Binding,
+                .descriptorType = m_DescriptorState[i].Descriptors[j].Type,
+                .descriptorCount = 1,
+                .stageFlags = VK_SHADER_STAGE_ALL,
+                .pImmutableSamplers = nullptr
+            };
+            bindings[j] = binding;
+        }
+
+        VkDescriptorSetLayoutCreateInfo descriptorSetLayoutCreateInfo = {
+            .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO,
+            .bindingCount = (uint32_t)bindings.size(),
+            .pBindings = bindings.data()
+        };
+        vkCreateDescriptorSetLayout(m_Device->GetVkDevice(), &descriptorSetLayoutCreateInfo,
+            nullptr, &m_DescriptorSetLayouts[i]);
+    }
+
+    for (int i = 0; i < m_DescriptorState.size(); i++) {
+        m_DescriptorState[i].Layout = m_DescriptorSetLayouts[i];
+    }
+
     VkPipelineLayoutCreateInfo pipelineLayoutCreateInfo = {
-        .sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO
+        .sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
+        .setLayoutCount = (uint32_t)m_DescriptorSetLayouts.size(),
+        .pSetLayouts = m_DescriptorSetLayouts.data()
     };
     vkCreatePipelineLayout(m_Device->GetVkDevice(), &pipelineLayoutCreateInfo, nullptr, &m_Layout);
 }

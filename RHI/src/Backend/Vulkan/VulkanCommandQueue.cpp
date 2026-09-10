@@ -16,6 +16,7 @@ VulkanCommandQueue::VulkanCommandQueue(uint32_t queueIndex, VulkanDevice* device
     m_Device = device;
     vkGetDeviceQueue(m_Device->GetVkDevice(), m_QueueIndex, 0, &m_Queue);
     m_CommandBufferPool.Init(m_Device->GetVkDevice(), m_QueueIndex);
+    m_DescriptorManager.Init(m_Device->GetVkDevice());
     m_Fence = new VulkanFence(m_Device);
 
     AcquireCommandBuffer();
@@ -25,6 +26,7 @@ VulkanCommandQueue::~VulkanCommandQueue() {
     if (m_Fence) {
         delete m_Fence;
     }
+    m_DescriptorManager.Shutdown();
     m_CommandBufferPool.Shutdown();
     m_ReleaseManager.Clear();
 }
@@ -42,7 +44,9 @@ void VulkanCommandQueue::Signal(Fence* fence, uint64_t value) {
 void VulkanCommandQueue::SetGraphicsPipelineState(GraphicsPipelineState* graphicsPipelineState) {
     VulkanGraphicsPipelineState* vkGraphicsPipelineState = static_cast<VulkanGraphicsPipelineState*>(graphicsPipelineState);
 
-    vkCmdBindPipeline(m_CommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, vkGraphicsPipelineState->GetPipeline());
+    m_DescriptorManager.SetDescriptorState(vkGraphicsPipelineState->GetDescriptorState());
+    vkCmdBindPipeline(m_CommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, vkGraphicsPipelineState->GetVkPipeline());
+    m_BoundPipeline = vkGraphicsPipelineState;
 }
 
 void VulkanCommandQueue::SetViewport(Viewport viewport) {
@@ -166,7 +170,16 @@ void VulkanCommandQueue::SetVertexBuffer(Buffer* buffer, uint32_t stride) {
 }
 
 void VulkanCommandQueue::SetConstantBuffer(std::string name, Buffer* buffer) {
+    VulkanBuffer* vkBuffer = static_cast<VulkanBuffer*>(buffer);
+    const auto [set, binding] = m_BoundPipeline->GetBindingPlace(name);
 
+    VkDescriptorBufferInfo bufferInfo = {
+        .buffer = vkBuffer->GetVkBuffer(),
+        .offset = 0,
+        .range = VK_WHOLE_SIZE
+    };
+
+    m_DescriptorManager.SetConstantBuffer(set, binding, bufferInfo);
 }
 
 void VulkanCommandQueue::DrawInstansed(uint32_t VertexCountPerInstance, uint32_t InstanceCount,
@@ -174,6 +187,9 @@ void VulkanCommandQueue::DrawInstansed(uint32_t VertexCountPerInstance, uint32_t
     if (!m_InsideRendering) {
         BeginRendering();
     }
+
+    m_DescriptorManager.WriteAndBind(m_CommandBuffer, m_BoundPipeline->GetVkLayout(), m_CommandBufferNumber);
+
     vkCmdDraw(m_CommandBuffer, VertexCountPerInstance, InstanceCount, StartVertexLocation, StartInstanceLocation);
 }
 
@@ -241,6 +257,7 @@ void VulkanCommandQueue::ReleaseResource(ReleaseResourceWrapper* releaseResource
 void VulkanCommandQueue::EndFrame() {
     uint64_t completedFenceValue = m_Fence->GetCompletedValue();
     m_CommandBufferPool.Poll(completedFenceValue);
+    m_DescriptorManager.Free(completedFenceValue);
     m_ReleaseManager.DiscardResources(completedFenceValue);
 }
 

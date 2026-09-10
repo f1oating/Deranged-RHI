@@ -4,6 +4,7 @@
 
 #include "Device.h"
 #include "ShaderCompiler.h"
+#include <cstring>
 
 #ifdef WIN32
 #include <windows.h>

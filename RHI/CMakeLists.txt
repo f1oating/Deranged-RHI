@@ -28,6 +28,14 @@ FetchContent_Declare(
         SOURCE_DIR ${CMAKE_BINARY_DIR}/glfw
 )
 
+set(SPIRV_REFLECT_STATIC_LIB ON CACHE INTERNAL "Turn on static lib for spirv-reflect")
+FetchContent_Declare(
+    spirv-reflect
+    GIT_REPOSITORY https://github.com/KhronosGroup/SPIRV-Reflect.git
+    GIT_TAG 3954c1e89a031cfb1724fa640be4e696558e6e8c
+    SOURCE_DIR ${CMAKE_BINARY_DIR}/spirv-reflect
+)
+
 if(WIN32)
     FetchContent_Declare(
         agility
@@ -55,7 +63,7 @@ if(WIN32)
     )
 endif()
 
-FetchContent_MakeAvailable(volk glfw)
+FetchContent_MakeAvailable(volk glfw spirv-reflect)
 add_library(RHI SHARED ${SOURCES_CORE} ${SOURCES_VULKAN} ${SOURCES_DX12})
 
 target_include_directories(RHI
@@ -70,6 +78,7 @@ target_link_libraries(RHI
         volk
         Vulkan::Vulkan
         glfw
+        spirv-reflect-static
         $<$<PLATFORM_ID:Windows>:agility>
         $<$<PLATFORM_ID:Windows>:d3d12>
         $<$<PLATFORM_ID:Windows>:dxgi>

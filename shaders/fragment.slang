@@ -1,3 +1,4 @@
+[vk::binding(0, 0)]
 cbuffer Color : register(b0) {
     float4 color;
 };

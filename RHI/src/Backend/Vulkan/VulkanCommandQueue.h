@@ -13,6 +13,7 @@
 #include "ReleaseManager.h"
 #include "Backend/Vulkan/VulkanPipeline.h"
 #include "Backend/Vulkan/VulkanResource.h"
+#include "Backend/Vulkan/Internal/DescriptorPool.h"
 
 namespace vk {
 
@@ -80,6 +81,8 @@ private:
     ReleaseManager m_ReleaseManager;
     std::vector<VulkanTextureView*> m_RTVs;
     bool m_InsideRendering = false;
+    DescriptorManager m_DescriptorManager;
+    VulkanGraphicsPipelineState* m_BoundPipeline = nullptr;
 
 };
 
