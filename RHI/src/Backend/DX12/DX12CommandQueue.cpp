@@ -158,10 +158,10 @@ void DX12CommandQueue::Barrier(uint32_t srcStage, uint32_t dstStage,
     m_CommandList->Barrier(2, barrierGroups);
 }
 
-void DX12CommandQueue::SetRenderTargets(std::vector<TextureView*> rtvs) {
+void DX12CommandQueue::SetRenderTargets(std::vector<RenderTargetView*> rtvs) {
     for (auto rtv : rtvs) {
-        DX12TextureView* dxRTV = static_cast<DX12TextureView*>(rtv);
-        m_RTVs.push_back(dxRTV->GetDescriptor().GetCPUHandle(0));
+        DX12RenderTargetView* dxRTV = static_cast<DX12RenderTargetView*>(rtv);
+        m_RTVs.push_back(dxRTV->GetAllocation().GetCPUHandle(0));
     }
 
     m_CommandList->OMSetRenderTargets(m_RTVs.size(),
@@ -193,6 +193,19 @@ void DX12CommandQueue::SetConstantBuffer(std::string name, Buffer* buffer) {
         .SizeInBytes = (uint32_t)dxBuffer->GetDesc().Size,
     };
     m_DescriptorsStateManager.SetCBV(m_BoundPipeline->GetDescriptorOffset(name), desc);
+}
+
+void DX12CommandQueue::SetTexture(std::string name, ShaderResourceView* textureView) {
+    DX12ShaderResourceView* dxTextureView = static_cast<DX12ShaderResourceView*>(textureView);
+
+    m_DescriptorsStateManager.SetSRV(m_BoundPipeline->GetDescriptorOffset(name),
+        dxTextureView->GetDXTexture()->GetDX12Resource(), dxTextureView->GetDXView());
+}
+
+void DX12CommandQueue::SetSampler(std::string name, Sampler* sampler) {
+    DX12Sampler* dxSampler = static_cast<DX12Sampler*>(sampler);
+
+    m_DescriptorsStateManager.SetSampler(m_BoundPipeline->GetDescriptorOffset(name), dxSampler->GetDXSampler());
 }
 
 void DX12CommandQueue::DrawInstansed(uint32_t VertexCountPerInstance, uint32_t InstanceCount,

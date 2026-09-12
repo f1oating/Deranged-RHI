@@ -61,13 +61,15 @@ private:
 
 enum class DescriptorType {
     ConstantBuffer,
-    ShaderResource
+    ShaderResource,
+    Sampler
 };
 
 struct Descriptor {
     DescriptorType Type;
     D3D12_CONSTANT_BUFFER_VIEW_DESC CBVDesc;
     D3D12_SHADER_RESOURCE_VIEW_DESC SRVDesc;
+    D3D12_SAMPLER_DESC SamplerDesc;
     ID3D12Resource* Resource;
 };
 
@@ -80,6 +82,7 @@ public:
 
     void SetCBV(uint32_t offset, D3D12_CONSTANT_BUFFER_VIEW_DESC cbvViewDesc);
     void SetSRV(uint32_t offset, ID3D12Resource* resource, D3D12_SHADER_RESOURCE_VIEW_DESC srvViewDesc);
+    void SetSampler(uint32_t offset, D3D12_SAMPLER_DESC desc);
 
     DescriptorHeapAllocation WriteAndAllocate(uint64_t frame);
 

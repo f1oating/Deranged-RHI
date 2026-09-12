@@ -68,28 +68,37 @@ struct TextureDesc {
     uint8_t BindFlags;
 };
 
-class TextureView;
+class RenderTargetView;
+class DepthStencilView;
+class ShaderResourceView;
 
 class Texture {
 public:
     virtual ~Texture() = default;
 
-    virtual TextureView* GetView() = 0;
+    virtual RenderTargetView* GetRTV() = 0;
+    virtual DepthStencilView* GetDSV() = 0;
+    virtual ShaderResourceView* GetSRV() = 0;
 
     virtual TextureDesc GetDesc() = 0;
 
 };
 
-struct TextureViewDesc {
-    Texture* Tex;
-    TextureFormat Format;
+class RenderTargetView {
+public:
+    virtual ~RenderTargetView() = default;
+
 };
 
-class TextureView {
+class DepthStencilView {
 public:
-    virtual ~TextureView() = default;
+    virtual ~DepthStencilView() = default;
 
-    virtual TextureViewDesc GetDesc() = 0;
+};
+
+class ShaderResourceView {
+public:
+    virtual ~ShaderResourceView() = default;
 
 };
 

@@ -96,12 +96,24 @@ Texture* DX12Device::CreateTexture(TextureDesc desc) {
     return new DX12Texture(desc, this);
 }
 
-TextureView* DX12Device::CreateTextureView(TextureViewDesc desc) {
-    return new DX12TextureView(desc, this);
+RenderTargetView* DX12Device::CreateRenderTargetView(Texture* texture) {
+    return new DX12RenderTargetView(static_cast<DX12Texture*>(texture), this);
+}
+
+DepthStencilView* DX12Device::CreateDepthStencilView(Texture* texture) {
+    return new DX12DepthStencilView(static_cast<DX12Texture*>(texture), this);
+}
+
+ShaderResourceView* DX12Device::CreateShaderResourceView(Texture* texture) {
+    return new DX12ShaderResourceView(static_cast<DX12Texture*>(texture), this);
 }
 
 Buffer* DX12Device::CreateBuffer(BufferDesc desc) {
     return new DX12Buffer(desc, this);
+}
+
+Sampler* DX12Device::CreateSampler(SamplerDesc desc) {
+    return new DX12Sampler(desc, this);
 }
 
 void DX12Device::ReleaseResource(ReleaseResourceBase* resource) {

@@ -43,13 +43,13 @@ public:
     virtual void Barrier(uint32_t srcStage, uint32_t dstStage,
         std::vector<BufferBarrier> bufBarriers, std::vector<TextureBarrier> texBarriers) = 0;
 
-    virtual void SetRenderTargets(std::vector<TextureView*> rtvs) = 0;
+    virtual void SetRenderTargets(std::vector<RenderTargetView*> rtvs) = 0;
     virtual void ClearRenderTargets(float r, float g, float b, float a) = 0;
 
     virtual void SetVertexBuffer(Buffer* buffer, uint32_t stride) = 0;
 
-    virtual void SetBuffer(std::string name, Buffer* buffer) = 0;
-    virtual void SetTexture(std::string name, TextureView* textureView) = 0;
+    virtual void SetConstantBuffer(std::string name, Buffer* buffer) = 0;
+    virtual void SetTexture(std::string name, ShaderResourceView* textureView) = 0;
     virtual void SetSampler(std::string name, Sampler* sampler) = 0;
 
     virtual void DrawInstansed(uint32_t VertexCountPerInstance, uint32_t InstanceCount = 1,

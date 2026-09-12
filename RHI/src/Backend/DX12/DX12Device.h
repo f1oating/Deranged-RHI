@@ -25,8 +25,11 @@ public:
     Swapchain* CreateSwapchain() override;
     GraphicsPipelineState* CreateGraphicsPipelineState(GraphicsPipelineDesc desc) override;
     Texture* CreateTexture(TextureDesc desc) override;
-    TextureView* CreateTextureView(TextureViewDesc desc) override;
+    RenderTargetView* CreateRenderTargetView(Texture* texture) override;
+    DepthStencilView* CreateDepthStencilView(Texture* texture) override;
+    ShaderResourceView* CreateShaderResourceView(Texture* texture) override;
     Buffer* CreateBuffer(BufferDesc desc) override;
+    Sampler* CreateSampler(SamplerDesc desc) override;
 
     void ReleaseResource(ReleaseResourceBase* resource);
 

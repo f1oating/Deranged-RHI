@@ -44,51 +44,92 @@ DX12Texture::~DX12Texture() {
     if (m_RTV) {
         delete m_RTV;
     }
+    if (m_DSV) {
+        delete m_DSV;
+    }
+    if (m_SRV) {
+        delete m_SRV;
+    }
     m_Device->ReleaseResource(new TextureReleaseResource(m_Resource));
 }
 
-TextureView* DX12Texture::GetRTV() {
+RenderTargetView* DX12Texture::GetRTV() {
     if (!m_RTV) {
-        TextureViewDesc desc = {
-            .Tex = this,
-            .Format = TextureFormat::B8G8R8A8_UNORM
-        };
-        m_RTV = new DX12TextureView(desc, m_Device);
+        m_RTV = new DX12RenderTargetView(this, m_Device);
     }
     return m_RTV;
+}
+
+DepthStencilView* DX12Texture::GetDSV() {
+    if (!m_DSV) {
+        m_DSV = new DX12DepthStencilView(this, m_Device);
+    }
+    return m_DSV;
+}
+
+ShaderResourceView* DX12Texture::GetSRV() {
+    if (!m_RTV) {
+        m_SRV = new DX12ShaderResourceView(this, m_Device);
+    }
+    return m_SRV;
 }
 
 TextureDesc DX12Texture::GetDesc() {
     return m_Desc;
 }
 
-DX12TextureView::DX12TextureView(TextureViewDesc desc, DX12Device* device) {
-    m_Desc = desc;
+DX12RenderTargetView::DX12RenderTargetView(DX12Texture* texture, DX12Device* device) {
     m_Device = device;
+    m_Texture = texture;
     m_Allocation = m_Device->GetRTVAllocator()->Allocate(1);
 
-    CreateRTV();
+    D3D12_RENDER_TARGET_VIEW_DESC rtvDesc = {
+        .Format = ToDXGIFormat(m_Texture->GetDesc().Format),
+        .ViewDimension = D3D12_RTV_DIMENSION_TEXTURE2D
+    };
+
+    m_Device->GetDX12Device()->CreateRenderTargetView(m_Texture->GetDX12Resource(), &rtvDesc, m_Allocation.GetCPUHandle(0));
 }
 
-DX12TextureView::~DX12TextureView() {
+DX12RenderTargetView::~DX12RenderTargetView() {
     if (!m_Allocation.IsNull()) {
         m_Device->ReleaseResource(new DescriptorAllocationReleaseResource(m_Device->GetRTVAllocator(), m_Allocation));
     }
 }
 
-TextureViewDesc DX12TextureView::GetDesc() {
-    return m_Desc;
-}
+DX12DepthStencilView::DX12DepthStencilView(DX12Texture* texture, DX12Device* device) {
+    m_Device = device;
+    m_Texture = texture;
+    m_Allocation = m_Device->GetDSVAllocator()->Allocate(1);
 
-void DX12TextureView::CreateRTV() {
-    D3D12_RENDER_TARGET_VIEW_DESC rtvDesc = {
-        .Format = ToDXGIFormat(m_Desc.Format),
-        .ViewDimension = D3D12_RTV_DIMENSION_TEXTURE2D
+    D3D12_DEPTH_STENCIL_VIEW_DESC dsvDesc = {
+        .Format = ToDXGIFormat(m_Texture->GetDesc().Format),
+        .ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2D
     };
 
-    DX12Texture* dxTexture = static_cast<DX12Texture*>(m_Desc.Tex);
+    m_Device->GetDX12Device()->CreateDepthStencilView(m_Texture->GetDX12Resource(), &dsvDesc, m_Allocation.GetCPUHandle(0));
+}
 
-    m_Device->GetDX12Device()->CreateRenderTargetView(dxTexture->GetDX12Resource(), &rtvDesc, m_Allocation.GetCPUHandle(0));
+DX12DepthStencilView::~DX12DepthStencilView() {
+    if (!m_Allocation.IsNull()) {
+        m_Device->ReleaseResource(new DescriptorAllocationReleaseResource(m_Device->GetDSVAllocator(), m_Allocation));
+    }
+}
+
+DX12ShaderResourceView::DX12ShaderResourceView(DX12Texture* texture, DX12Device* device) {
+    m_Device = device;
+    m_Texture = texture;
+
+    D3D12_SHADER_RESOURCE_VIEW_DESC view = {
+        .Format = ToDXGIFormat(m_Texture->GetDesc().Format),
+        .ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D
+    };
+
+    m_View = view;
+}
+
+DX12ShaderResourceView::~DX12ShaderResourceView() {
+
 }
 
 DX12Buffer::DX12Buffer(BufferDesc desc, DX12Device* device) {
@@ -142,6 +183,19 @@ void DX12Buffer::CreateResource() {
     hr = m_Device->GetDX12Device()->CreateCommittedResource3(&heapProps, D3D12_HEAP_FLAG_NONE,
         &resourceDesc, D3D12_BARRIER_LAYOUT_UNDEFINED, nullptr,
         nullptr, 0, nullptr, IID_PPV_ARGS(&m_Resource));
+}
+
+DX12Sampler::DX12Sampler(SamplerDesc desc, DX12Device* device) {
+    m_Device = device;
+    m_Desc = desc;
+}
+
+DX12Sampler::~DX12Sampler() {
+
+}
+
+SamplerDesc DX12Sampler::GetDesc() {
+    return m_Desc;
 }
 
 } // dx

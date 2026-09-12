@@ -126,10 +126,10 @@ void VulkanCommandQueue::Barrier(uint32_t srcStage, uint32_t dstStage,
         bufferBarriers.data(), imageBarriers.size(), imageBarriers.data());
 }
 
-void VulkanCommandQueue::SetRenderTargets(std::vector<TextureView*> rtvs) {
+void VulkanCommandQueue::SetRenderTargets(std::vector<RenderTargetView*> rtvs) {
     m_RTVs.resize(rtvs.size());
     for (int i = 0; i < m_RTVs.size(); i++) {
-        m_RTVs[i] = static_cast<VulkanTextureView*>(rtvs[i]);
+        m_RTVs[i] = static_cast<VulkanRenderTargetView*>(rtvs[i]);
     }
     BeginRendering();
 }
@@ -149,7 +149,7 @@ void VulkanCommandQueue::ClearRenderTargets(float r, float g, float b, float a) 
             .clearValue = { r, g, b, a }
         };
         attachments.push_back(attachment);
-        TextureDesc texDesc = m_RTVs[i]->GetTexture()->GetDesc();
+        TextureDesc texDesc = m_RTVs[i]->GetVkTexture()->GetDesc();
         rect.extent = { texDesc.Width, texDesc.Height };
     }
 
@@ -169,7 +169,7 @@ void VulkanCommandQueue::SetVertexBuffer(Buffer* buffer, uint32_t stride) {
     vkCmdBindVertexBuffers(m_CommandBuffer, 0, 1, &vkBuffers, &offset);
 }
 
-void VulkanCommandQueue::SetBuffer(std::string name, Buffer* buffer) {
+void VulkanCommandQueue::SetConstantBuffer(std::string name, Buffer* buffer) {
     VulkanBuffer* vkBuffer = static_cast<VulkanBuffer*>(buffer);
     const auto [set, binding] = m_BoundPipeline->GetBindingPlace(name);
 
@@ -182,13 +182,13 @@ void VulkanCommandQueue::SetBuffer(std::string name, Buffer* buffer) {
     m_DescriptorManager.WriteBufferInfo(set, binding, bufferInfo);
 }
 
-void VulkanCommandQueue::SetTexture(std::string name, TextureView* textureView) {
-    VulkanTextureView* vkTextureView = static_cast<VulkanTextureView*>(textureView);
+void VulkanCommandQueue::SetTexture(std::string name, ShaderResourceView* textureView) {
+    VulkanShaderResourceView* vkTextureView = static_cast<VulkanShaderResourceView*>(textureView);
     const auto [set, binding] = m_BoundPipeline->GetBindingPlace(name);
 
     VkDescriptorImageInfo imageInfo = {
         .imageView = vkTextureView->GetVkImageView(),
-        .imageLayout = ToVkImageLayout(vkTextureView->GetTexture()->GetLayout())
+        .imageLayout = ToVkImageLayout(vkTextureView->GetVkTexture()->GetLayout())
     };
 
     m_DescriptorManager.WriteImageInfo(set, binding, imageInfo);
@@ -346,14 +346,14 @@ void VulkanCommandQueue::BeginRendering() {
         VkRenderingAttachmentInfo attachmentInfo = {
             .sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO,
             .imageView = rtv->GetVkImageView(),
-            .imageLayout = ToVkImageLayout(rtv->GetTexture()->GetLayout()),
+            .imageLayout = ToVkImageLayout(rtv->GetVkTexture()->GetLayout()),
             .loadOp = VK_ATTACHMENT_LOAD_OP_LOAD,
             .storeOp = VK_ATTACHMENT_STORE_OP_STORE,
             .clearValue = clearValue
         };
         attachments.push_back(attachmentInfo);
-        renderArea.extent.width = rtv->GetTexture()->GetDesc().Width;
-        renderArea.extent.height = rtv->GetTexture()->GetDesc().Height;
+        renderArea.extent.width = rtv->GetVkTexture()->GetDesc().Width;
+        renderArea.extent.height = rtv->GetVkTexture()->GetDesc().Height;
     }
 
     VkRenderingInfo renderingInfo = {

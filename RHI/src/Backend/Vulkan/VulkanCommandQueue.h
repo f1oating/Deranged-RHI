@@ -36,13 +36,13 @@ public:
     void Barrier(uint32_t srcStage, uint32_t dstStage,
         std::vector<BufferBarrier> bufBarriers, std::vector<TextureBarrier> texBarriers) override;
 
-    void SetRenderTargets(std::vector<TextureView*> rtvs) override;
+    void SetRenderTargets(std::vector<RenderTargetView*> rtvs) override;
     void ClearRenderTargets(float r, float g, float b, float a) override;
 
     void SetVertexBuffer(Buffer* buffer, uint32_t stride) override;
 
-    void SetBuffer(std::string name, Buffer* buffer) override;
-    void SetTexture(std::string name, TextureView* textureView) override;
+    void SetConstantBuffer(std::string name, Buffer* buffer) override;
+    void SetTexture(std::string name, ShaderResourceView* textureView) override;
     void SetSampler(std::string name, Sampler* sampler) override;
 
     void DrawInstansed(uint32_t VertexCountPerInstance, uint32_t InstanceCount = 1,
@@ -81,7 +81,7 @@ private:
     std::vector<uint64_t> m_SignalSemaphoresValues;
     VulkanFence* m_Fence = nullptr;
     ReleaseManager m_ReleaseManager;
-    std::vector<VulkanTextureView*> m_RTVs;
+    std::vector<VulkanRenderTargetView*> m_RTVs;
     bool m_InsideRendering = false;
     DescriptorManager m_DescriptorManager;
     VulkanGraphicsPipelineState* m_BoundPipeline = nullptr;

@@ -24,23 +24,39 @@ VulkanTexture::VulkanTexture(TextureDesc desc, VulkanDevice* device, VkImage ima
 }
 
 VulkanTexture::~VulkanTexture() {
-    if (m_View) {
-        delete m_View;
+    if (m_RTV) {
+        delete m_RTV;
+    }
+    if (m_DSV) {
+        delete m_DSV;
+    }
+    if (m_SRV) {
+        delete m_SRV;
     }
     if (m_Memory) {
         m_Device->ReleaseResource(new ImageReleaseResource(m_Device->GetVkDevice(), m_Image, m_Memory));
     }
 }
 
-TextureView* VulkanTexture::GetView() {
-    if (!m_View) {
-        TextureViewDesc desc = {
-            .Tex = this,
-            .Format = TextureFormat::B8G8R8A8_UNORM
-        };
-        m_View = new VulkanTextureView(desc, m_Device);
+RenderTargetView* VulkanTexture::GetRTV() {
+    if (!m_RTV) {
+        m_RTV = new VulkanRenderTargetView(this, m_Device);
     }
-    return m_View;
+    return m_RTV;
+}
+
+DepthStencilView* VulkanTexture::GetDSV() {
+    if (!m_DSV) {
+        m_DSV = new VulkanDepthStencilView(this, m_Device);
+    }
+    return m_DSV;
+}
+
+ShaderResourceView* VulkanTexture::GetSRV() {
+    if (!m_SRV) {
+        m_SRV = new VulkanShaderResourceView(this, m_Device);
+    }
+    return m_SRV;
 }
 
 TextureDesc VulkanTexture::GetDesc() {
@@ -80,11 +96,8 @@ void VulkanTexture::CreateMemory() {
     vkAllocateMemory(m_Device->GetVkDevice(), &memoryAllocateInfo, nullptr, &m_Memory);
 }
 
-VulkanTextureView::VulkanTextureView(TextureViewDesc desc, VulkanDevice* device) {
-    m_Desc = desc;
+VulkanRenderTargetView::VulkanRenderTargetView(VulkanTexture* texture, VulkanDevice* device) {
     m_Device = device;
-
-    VulkanTexture* texture = static_cast<VulkanTexture*>(m_Desc.Tex);
     m_Texture = texture;
 
     VkImageSubresourceRange imageSubresourceRange = {
@@ -99,22 +112,78 @@ VulkanTextureView::VulkanTextureView(TextureViewDesc desc, VulkanDevice* device)
         .sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
         .image = m_Texture->GetVkImage(),
         .viewType = ToVkImageViewType(texture->GetDesc().Type),
-        .format = ToVkFormat(m_Desc.Format),
+        .format = ToVkFormat(m_Texture->GetDesc().Format),
         .components = VK_COMPONENT_SWIZZLE_IDENTITY,
         .subresourceRange = imageSubresourceRange
     };
 
-    vkCreateImageView(m_Device->GetVkDevice(), &imageViewCreateInfo, nullptr, &m_ImageView);
+    vkCreateImageView(m_Device->GetVkDevice(), &imageViewCreateInfo, nullptr, &m_View);
 }
 
-VulkanTextureView::~VulkanTextureView() {
-    if (m_ImageView) {
-        m_Device->ReleaseResource(new ImageViewReleaseResource(m_Device->GetVkDevice(), m_ImageView));
+VulkanRenderTargetView::~VulkanRenderTargetView() {
+    if (m_View) {
+        m_Device->ReleaseResource(new ImageViewReleaseResource(m_Device->GetVkDevice(), m_View));
     }
 }
 
-TextureViewDesc VulkanTextureView::GetDesc() {
-    return m_Desc;
+VulkanDepthStencilView::VulkanDepthStencilView(VulkanTexture* texture, VulkanDevice* device) {
+    m_Device = device;
+    m_Texture = texture;
+
+    VkImageSubresourceRange imageSubresourceRange = {
+        .aspectMask = ToVkImageAspectFlags(texture->GetDesc().Format),
+        .baseMipLevel = 0,
+        .levelCount = 1,
+        .baseArrayLayer = 0,
+        .layerCount = 1
+    };
+
+    VkImageViewCreateInfo imageViewCreateInfo = {
+        .sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
+        .image = m_Texture->GetVkImage(),
+        .viewType = ToVkImageViewType(texture->GetDesc().Type),
+        .format = ToVkFormat(m_Texture->GetDesc().Format),
+        .components = VK_COMPONENT_SWIZZLE_IDENTITY,
+        .subresourceRange = imageSubresourceRange
+    };
+
+    vkCreateImageView(m_Device->GetVkDevice(), &imageViewCreateInfo, nullptr, &m_View);
+}
+
+VulkanDepthStencilView::~VulkanDepthStencilView() {
+    if (m_View) {
+        m_Device->ReleaseResource(new ImageViewReleaseResource(m_Device->GetVkDevice(), m_View));
+    }
+}
+
+VulkanShaderResourceView::VulkanShaderResourceView(VulkanTexture* texture, VulkanDevice* device) {
+    m_Device = device;
+    m_Texture = texture;
+
+    VkImageSubresourceRange imageSubresourceRange = {
+        .aspectMask = ToVkImageAspectFlags(texture->GetDesc().Format),
+        .baseMipLevel = 0,
+        .levelCount = 1,
+        .baseArrayLayer = 0,
+        .layerCount = 1
+    };
+
+    VkImageViewCreateInfo imageViewCreateInfo = {
+        .sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
+        .image = m_Texture->GetVkImage(),
+        .viewType = ToVkImageViewType(texture->GetDesc().Type),
+        .format = ToVkFormat(m_Texture->GetDesc().Format),
+        .components = VK_COMPONENT_SWIZZLE_IDENTITY,
+        .subresourceRange = imageSubresourceRange
+    };
+
+    vkCreateImageView(m_Device->GetVkDevice(), &imageViewCreateInfo, nullptr, &m_View);
+}
+
+VulkanShaderResourceView::~VulkanShaderResourceView() {
+    if (m_View) {
+        m_Device->ReleaseResource(new ImageViewReleaseResource(m_Device->GetVkDevice(), m_View));
+    }
 }
 
 VulkanBuffer::VulkanBuffer(BufferDesc desc, VulkanDevice* device) {

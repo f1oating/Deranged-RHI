@@ -35,12 +35,14 @@ public:
     void Barrier(uint32_t srcStage, uint32_t dstStage,
         std::vector<BufferBarrier> bufBarriers, std::vector<TextureBarrier> texBarriers) override;
 
-    void SetRenderTargets(std::vector<TextureView*> rtvs) override;
+    void SetRenderTargets(std::vector<RenderTargetView*> rtvs) override;
     void ClearRenderTargets(float r, float g, float b, float a) override;
 
     void SetVertexBuffer(Buffer* buffer, uint32_t stride) override;
 
     void SetConstantBuffer(std::string name, Buffer* buffer) override;
+    void SetTexture(std::string name, ShaderResourceView* textureView) override;
+    void SetSampler(std::string name, Sampler* sampler) override;
 
     void DrawInstansed(uint32_t VertexCountPerInstance, uint32_t InstanceCount = 1,
         uint32_t StartVertexLocation = 0, uint32_t StartInstanceLocation = 0) override;

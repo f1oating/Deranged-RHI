@@ -110,14 +110,20 @@ void DescriptorsStateManager::SetSRV(uint32_t offset, ID3D12Resource* resource, 
     m_DescriptorsState.at(offset).Resource = resource;
 }
 
+void DescriptorsStateManager::SetSampler(uint32_t offset, D3D12_SAMPLER_DESC desc) {
+    m_DescriptorsState.at(offset).SamplerDesc = desc;
+}
+
 DescriptorHeapAllocation DescriptorsStateManager::WriteAndAllocate(uint64_t frame) {
     DescriptorHeapAllocation allocation = m_Heap.Allocate(m_DescriptorsState.size());
 
     for (auto pair : m_DescriptorsState) {
         if (pair.second.Type == DescriptorType::ConstantBuffer) {
             m_Device->CreateConstantBufferView(&pair.second.CBVDesc, allocation.GetCPUHandle(pair.first));
-        } else {
+        } else if (pair.second.Type == DescriptorType::ShaderResource) {
             m_Device->CreateShaderResourceView(pair.second.Resource, &pair.second.SRVDesc,allocation.GetCPUHandle(pair.first));
+        } else if (pair.second.Type == DescriptorType::Sampler) {
+            m_Device->CreateSampler(&pair.second.SamplerDesc,allocation.GetCPUHandle(pair.first));
         }
     }
 

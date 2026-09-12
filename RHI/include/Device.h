@@ -22,7 +22,9 @@ public:
     virtual Swapchain* CreateSwapchain() = 0;
     virtual GraphicsPipelineState* CreateGraphicsPipelineState(GraphicsPipelineDesc desc) = 0;
     virtual Texture* CreateTexture(TextureDesc desc) = 0;
-    virtual TextureView* CreateTextureView(TextureViewDesc desc) = 0;
+    virtual RenderTargetView* CreateRenderTargetView(Texture* texture) = 0;
+    virtual DepthStencilView* CreateDepthStencilView(Texture* texture) = 0;
+    virtual ShaderResourceView* CreateShaderResourceView(Texture* texture) = 0;
     virtual Buffer* CreateBuffer(BufferDesc desc) = 0;
     virtual Sampler* CreateSampler(SamplerDesc desc) = 0;
 

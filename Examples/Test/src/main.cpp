@@ -33,13 +33,6 @@ int main() {
 
     Texture* texture = device->CreateTexture(textureDesc);
 
-    TextureViewDesc textureViewDesc = {
-        .Tex = texture,
-        .Format = TextureFormat::B8G8R8A8_UNORM
-    };
-
-    TextureView* textureView = device->CreateTextureView(textureViewDesc);
-
     float color[] = {
         0.1f, 0.6f, 0.1f, 1.0f
     };
@@ -155,7 +148,7 @@ int main() {
             { { currentBackBuffer, ImageLayout::RenderTarget, ACCESS_NONE, ACCESS_COLOR_ATTACHMENT_READ } });
 
         queue->SetGraphicsPipelineState(pipelineState);
-        queue->SetRenderTargets({ swapchain->GetCurrentBackBuffer()->GetView() });
+        queue->SetRenderTargets({ swapchain->GetCurrentBackBuffer()->GetRTV() });
         queue->ClearRenderTargets(0.1f, 0.2f, 0.3f, 1.0f);
 
         queue->SetViewport({ 0, 0, (float)backBufferDesc.Width,
@@ -166,7 +159,7 @@ int main() {
         void* ptr = cbuffer->Map();
         memcpy(ptr, color, 16);
 
-        queue->SetBuffer("Color", cbuffer);
+        queue->SetConstantBuffer("Color", cbuffer);
 
         queue->DrawInstansed(3);
 
@@ -182,7 +175,6 @@ int main() {
     delete sampler;
     delete cbuffer;
     delete buffer;
-    delete textureView;
     delete texture;
     delete pipelineState;
     delete swapchain;

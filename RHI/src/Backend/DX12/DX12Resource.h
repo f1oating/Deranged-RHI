@@ -13,6 +13,9 @@
 namespace dx {
 
 class DX12Device;
+class DX12RenderTargetView;
+class DX12DepthStencilView;
+class DX12ShaderResourceView;
 
 class DX12Texture : public Texture {
 public:
@@ -20,7 +23,9 @@ public:
     DX12Texture(TextureDesc desc, ID3D12Resource* res, DX12Device* device);
     ~DX12Texture() override;
 
-    TextureView* GetRTV() override;
+    RenderTargetView* GetRTV() override;
+    DepthStencilView* GetDSV() override;
+    ShaderResourceView* GetSRV() override;
 
     TextureDesc GetDesc() override;
 
@@ -34,26 +39,52 @@ private:
     DX12Device* m_Device = nullptr;
     ID3D12Resource* m_Resource = nullptr;
     ImageLayout m_Layout = ImageLayout::Undefined;
-    TextureView* m_RTV = nullptr;
+    DX12RenderTargetView* m_RTV = nullptr;
+    DX12DepthStencilView* m_DSV = nullptr;
+    DX12ShaderResourceView* m_SRV = nullptr;
 
 };
 
-class DX12TextureView : public TextureView {
+class DX12RenderTargetView : public RenderTargetView {
 public:
-    DX12TextureView(TextureViewDesc desc, DX12Device* device);
-    ~DX12TextureView() override;
+    DX12RenderTargetView(DX12Texture* texture, DX12Device* device);
+    ~DX12RenderTargetView();
 
-    TextureViewDesc GetDesc() override;
-
-    DescriptorHeapAllocation GetDescriptor() const { return m_Allocation; }
+    DescriptorHeapAllocation GetAllocation() const { return m_Allocation; }
 
 private:
-    void CreateRTV();
-
-private:
-    TextureViewDesc m_Desc;
     DX12Device* m_Device = nullptr;
+    DX12Texture* m_Texture = nullptr;
     DescriptorHeapAllocation m_Allocation;
+
+};
+
+class DX12DepthStencilView : public DepthStencilView {
+public:
+    DX12DepthStencilView(DX12Texture* texture, DX12Device* device);
+    ~DX12DepthStencilView();
+
+    DescriptorHeapAllocation GetAllocation() const { return m_Allocation; }
+
+private:
+    DX12Device* m_Device = nullptr;
+    DX12Texture* m_Texture = nullptr;
+    DescriptorHeapAllocation m_Allocation;
+
+};
+
+class DX12ShaderResourceView : public ShaderResourceView {
+public:
+    DX12ShaderResourceView(DX12Texture* texture, DX12Device* device);
+    ~DX12ShaderResourceView();
+
+    DX12Texture* GetDXTexture() const { return m_Texture; }
+    D3D12_SHADER_RESOURCE_VIEW_DESC GetDXView() const { return m_View; }
+
+private:
+    DX12Device* m_Device = nullptr;
+    DX12Texture* m_Texture = nullptr;
+    D3D12_SHADER_RESOURCE_VIEW_DESC m_View;
 
 };
 
@@ -76,6 +107,22 @@ private:
     ID3D12Resource* m_Resource = nullptr;
     uint64_t m_Offset = 0;
     void* m_Mapped = nullptr;
+
+};
+
+class DX12Sampler : public Sampler {
+public:
+    DX12Sampler(SamplerDesc desc, DX12Device* device);
+    ~DX12Sampler();
+
+    SamplerDesc GetDesc() override;
+
+    D3D12_SAMPLER_DESC GetDXSampler() const { return m_Sampler; }
+
+private:
+    DX12Device* m_Device = nullptr;
+    SamplerDesc m_Desc;
+    D3D12_SAMPLER_DESC m_Sampler;
 
 };
 

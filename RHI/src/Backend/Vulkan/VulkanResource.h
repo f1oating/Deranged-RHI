@@ -12,6 +12,9 @@
 namespace vk {
 
 class VulkanDevice;
+class VulkanRenderTargetView;
+class VulkanDepthStencilView;
+class VulkanShaderResourceView;
 
 class VulkanTexture : public Texture {
 public:
@@ -19,7 +22,9 @@ public:
     VulkanTexture(TextureDesc desc, VulkanDevice* device, VkImage image);
     ~VulkanTexture() override;
 
-    TextureView* GetView() override;
+    RenderTargetView* GetRTV() override;
+    DepthStencilView* GetDSV() override;
+    ShaderResourceView* GetSRV() override;
 
     TextureDesc GetDesc() override;
 
@@ -37,27 +42,56 @@ private:
     TextureDesc m_Desc;
     VkImage m_Image = nullptr;
     VkDeviceMemory m_Memory = nullptr;
-    TextureView* m_View = nullptr;
+    VulkanRenderTargetView* m_RTV = nullptr;
+    VulkanDepthStencilView* m_DSV = nullptr;
+    VulkanShaderResourceView* m_SRV = nullptr;
     ImageLayout m_Layout = ImageLayout::Undefined;
     uint64_t m_SizeInBytes = 0;
 
 };
 
-class VulkanTextureView : public TextureView {
+class VulkanRenderTargetView : public RenderTargetView {
 public:
-    VulkanTextureView(TextureViewDesc desc, VulkanDevice* device);
-    ~VulkanTextureView() override;
+    VulkanRenderTargetView(VulkanTexture* texture, VulkanDevice* device);
+    ~VulkanRenderTargetView();
 
-    TextureViewDesc GetDesc() override;
-
-    VkImageView GetVkImageView() const { return m_ImageView; }
-    VulkanTexture* GetTexture() const { return m_Texture; }
+    VkImageView GetVkImageView() const { return m_View; }
+    VulkanTexture* GetVkTexture() const { return m_Texture; }
 
 private:
     VulkanDevice* m_Device = nullptr;
-    TextureViewDesc m_Desc;
-    VkImageView m_ImageView = nullptr;
     VulkanTexture* m_Texture = nullptr;
+    VkImageView m_View = nullptr;
+
+};
+
+class VulkanDepthStencilView : public DepthStencilView {
+public:
+    VulkanDepthStencilView(VulkanTexture* texture, VulkanDevice* device);
+    ~VulkanDepthStencilView();
+
+    VkImageView GetVkImageView() const { return m_View; }
+    VulkanTexture* GetVkTexture() const { return m_Texture; }
+
+private:
+    VulkanDevice* m_Device = nullptr;
+    VulkanTexture* m_Texture = nullptr;
+    VkImageView m_View = nullptr;
+
+};
+
+class VulkanShaderResourceView : public ShaderResourceView {
+public:
+    VulkanShaderResourceView(VulkanTexture* texture, VulkanDevice* device);
+    ~VulkanShaderResourceView();
+
+    VkImageView GetVkImageView() const { return m_View; }
+    VulkanTexture* GetVkTexture() const { return m_Texture; }
+
+private:
+    VulkanDevice* m_Device = nullptr;
+    VulkanTexture* m_Texture = nullptr;
+    VkImageView m_View = nullptr;
 
 };
 
