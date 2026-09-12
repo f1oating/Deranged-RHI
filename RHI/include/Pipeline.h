@@ -88,17 +88,6 @@ enum ColorWriteFlags : uint8_t {
     COLOR_COMPONENT_A = 1 << 3
 };
 
-enum class CompareOp {
-    Never,
-    Less,
-    Equal,
-    LessOrEqual,
-    Greater,
-    NotEqual,
-    GreaterOrEqual,
-    Always
-};
-
 enum class StencilOp {
     Keep,
     Zero,

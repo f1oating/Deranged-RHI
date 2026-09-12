@@ -41,7 +41,9 @@ public:
 
     void SetVertexBuffer(Buffer* buffer, uint32_t stride) override;
 
-    void SetConstantBuffer(std::string name, Buffer* buffer) override;
+    void SetBuffer(std::string name, Buffer* buffer) override;
+    void SetTexture(std::string name, TextureView* textureView) override;
+    void SetSampler(std::string name, Sampler* sampler) override;
 
     void DrawInstansed(uint32_t VertexCountPerInstance, uint32_t InstanceCount = 1,
         uint32_t StartVertexLocation = 0, uint32_t StartInstanceLocation = 0) override;

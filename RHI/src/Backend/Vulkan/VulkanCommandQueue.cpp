@@ -169,7 +169,7 @@ void VulkanCommandQueue::SetVertexBuffer(Buffer* buffer, uint32_t stride) {
     vkCmdBindVertexBuffers(m_CommandBuffer, 0, 1, &vkBuffers, &offset);
 }
 
-void VulkanCommandQueue::SetConstantBuffer(std::string name, Buffer* buffer) {
+void VulkanCommandQueue::SetBuffer(std::string name, Buffer* buffer) {
     VulkanBuffer* vkBuffer = static_cast<VulkanBuffer*>(buffer);
     const auto [set, binding] = m_BoundPipeline->GetBindingPlace(name);
 
@@ -179,7 +179,30 @@ void VulkanCommandQueue::SetConstantBuffer(std::string name, Buffer* buffer) {
         .range = VK_WHOLE_SIZE
     };
 
-    m_DescriptorManager.SetConstantBuffer(set, binding, bufferInfo);
+    m_DescriptorManager.WriteBufferInfo(set, binding, bufferInfo);
+}
+
+void VulkanCommandQueue::SetTexture(std::string name, TextureView* textureView) {
+    VulkanTextureView* vkTextureView = static_cast<VulkanTextureView*>(textureView);
+    const auto [set, binding] = m_BoundPipeline->GetBindingPlace(name);
+
+    VkDescriptorImageInfo imageInfo = {
+        .imageView = vkTextureView->GetVkImageView(),
+        .imageLayout = ToVkImageLayout(vkTextureView->GetTexture()->GetLayout())
+    };
+
+    m_DescriptorManager.WriteImageInfo(set, binding, imageInfo);
+}
+
+void VulkanCommandQueue::SetSampler(std::string name, Sampler* sampler) {
+    VulkanSampler* vkSampler = static_cast<VulkanSampler*>(sampler);
+    const auto [set, binding] = m_BoundPipeline->GetBindingPlace(name);
+
+    VkDescriptorImageInfo imageInfo = {
+        .sampler = vkSampler->GetVkSampler()
+    };
+
+    m_DescriptorManager.WriteImageInfo(set, binding, imageInfo);
 }
 
 void VulkanCommandQueue::DrawInstansed(uint32_t VertexCountPerInstance, uint32_t InstanceCount,

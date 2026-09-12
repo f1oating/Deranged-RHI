@@ -59,6 +59,10 @@ Buffer* VulkanDevice::CreateBuffer(BufferDesc desc) {
     return new VulkanBuffer(desc, this);
 }
 
+Sampler* VulkanDevice::CreateSampler(SamplerDesc desc) {
+    return new VulkanSampler(desc, this);
+}
+
 void VulkanDevice::ReleaseResource(ReleaseResourceBase *resource) {
     m_Queue->ReleaseResource(new ReleaseResourceWrapper(resource, 1));
 }

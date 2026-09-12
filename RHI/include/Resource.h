@@ -74,7 +74,7 @@ class Texture {
 public:
     virtual ~Texture() = default;
 
-    virtual TextureView* GetRTV() = 0;
+    virtual TextureView* GetView() = 0;
 
     virtual TextureDesc GetDesc() = 0;
 
@@ -155,6 +155,49 @@ struct BufferBarrier {
     Buffer* Buf;
     uint32_t SrcAccessFlags;
     uint32_t DstAccessFlags;
+};
+
+enum class CompareOp {
+    Never,
+    Less,
+    Equal,
+    LessOrEqual,
+    Greater,
+    NotEqual,
+    GreaterOrEqual,
+    Always
+};
+
+enum class AddressMode {
+    Repeat,
+    MirroredRepeat,
+    ClampToEdge,
+    ClampToBorder
+};
+
+enum class Filter {
+    Nearest,
+    Linear
+};
+
+struct SamplerDesc {
+    Filter SampleFilter;
+    CompareOp Compare;
+    AddressMode AddressU;
+    AddressMode AddressV;
+    AddressMode AddressW;
+    float MipLodBias;
+    uint32_t MaxAnisotropy;
+    float MinLod;
+    float MaxLod;
+};
+
+class Sampler {
+public:
+    virtual ~Sampler() = default;
+
+    virtual SamplerDesc GetDesc() = 0;
+
 };
 
 #endif //DERANGED_RHI_RESOURCE_H

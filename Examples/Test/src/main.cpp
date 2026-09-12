@@ -132,6 +132,19 @@ int main() {
     };
     pipelineState = device->CreateGraphicsPipelineState(pipelineDesc);
 
+    SamplerDesc samplerDesc = {
+        .SampleFilter = Filter::Nearest,
+        .Compare = CompareOp::Never,
+        .AddressU = AddressMode::Repeat,
+        .AddressV = AddressMode::Repeat,
+        .AddressW = AddressMode::Repeat,
+        .MipLodBias = 1,
+        .MaxAnisotropy = 0,
+        .MinLod = 1,
+        .MaxLod = 1
+    };
+    Sampler* sampler = device->CreateSampler(samplerDesc);
+
     while(!swapchain->WindowShouldClose()) {
         swapchain->UpdateWindow();
 
@@ -142,7 +155,7 @@ int main() {
             { { currentBackBuffer, ImageLayout::RenderTarget, ACCESS_NONE, ACCESS_COLOR_ATTACHMENT_READ } });
 
         queue->SetGraphicsPipelineState(pipelineState);
-        queue->SetRenderTargets({ swapchain->GetCurrentBackBuffer()->GetRTV() });
+        queue->SetRenderTargets({ swapchain->GetCurrentBackBuffer()->GetView() });
         queue->ClearRenderTargets(0.1f, 0.2f, 0.3f, 1.0f);
 
         queue->SetViewport({ 0, 0, (float)backBufferDesc.Width,
@@ -153,7 +166,7 @@ int main() {
         void* ptr = cbuffer->Map();
         memcpy(ptr, color, 16);
 
-        queue->SetConstantBuffer("Color", cbuffer);
+        queue->SetBuffer("Color", cbuffer);
 
         queue->DrawInstansed(3);
 
@@ -166,6 +179,7 @@ int main() {
         swapchain->Present();
     }
 
+    delete sampler;
     delete cbuffer;
     delete buffer;
     delete textureView;

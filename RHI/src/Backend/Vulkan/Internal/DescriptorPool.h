@@ -47,7 +47,8 @@ public:
 
     void SetDescriptorState(std::vector<DescriptorSet> descriptorState);
 
-    void SetConstantBuffer(uint32_t set, uint32_t binding, VkDescriptorBufferInfo bufferInfo);
+    void WriteBufferInfo(uint32_t set, uint32_t binding, VkDescriptorBufferInfo bufferInfo);
+    void WriteImageInfo(uint32_t set, uint32_t binding, VkDescriptorImageInfo imageInfo);
 
     void WriteAndBind(VkCommandBuffer commandBuffer, VkPipelineLayout layout, uint64_t frame);
 

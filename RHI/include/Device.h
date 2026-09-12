@@ -24,6 +24,7 @@ public:
     virtual Texture* CreateTexture(TextureDesc desc) = 0;
     virtual TextureView* CreateTextureView(TextureViewDesc desc) = 0;
     virtual Buffer* CreateBuffer(BufferDesc desc) = 0;
+    virtual Sampler* CreateSampler(SamplerDesc desc) = 0;
 
 };
 

@@ -24,23 +24,23 @@ VulkanTexture::VulkanTexture(TextureDesc desc, VulkanDevice* device, VkImage ima
 }
 
 VulkanTexture::~VulkanTexture() {
-    if (m_RTV) {
-        delete m_RTV;
+    if (m_View) {
+        delete m_View;
     }
     if (m_Memory) {
         m_Device->ReleaseResource(new ImageReleaseResource(m_Device->GetVkDevice(), m_Image, m_Memory));
     }
 }
 
-TextureView* VulkanTexture::GetRTV() {
-    if (!m_RTV) {
+TextureView* VulkanTexture::GetView() {
+    if (!m_View) {
         TextureViewDesc desc = {
             .Tex = this,
             .Format = TextureFormat::B8G8R8A8_UNORM
         };
-        m_RTV = new VulkanTextureView(desc, m_Device);
+        m_View = new VulkanTextureView(desc, m_Device);
     }
-    return m_RTV;
+    return m_View;
 }
 
 TextureDesc VulkanTexture::GetDesc() {
@@ -88,7 +88,7 @@ VulkanTextureView::VulkanTextureView(TextureViewDesc desc, VulkanDevice* device)
     m_Texture = texture;
 
     VkImageSubresourceRange imageSubresourceRange = {
-        .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
+        .aspectMask = ToVkImageAspectFlags(texture->GetDesc().Format),
         .baseMipLevel = 0,
         .levelCount = 1,
         .baseArrayLayer = 0,
@@ -98,7 +98,7 @@ VulkanTextureView::VulkanTextureView(TextureViewDesc desc, VulkanDevice* device)
     VkImageViewCreateInfo imageViewCreateInfo = {
         .sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
         .image = m_Texture->GetVkImage(),
-        .viewType = VK_IMAGE_VIEW_TYPE_2D,
+        .viewType = ToVkImageViewType(texture->GetDesc().Type),
         .format = ToVkFormat(m_Desc.Format),
         .components = VK_COMPONENT_SWIZZLE_IDENTITY,
         .subresourceRange = imageSubresourceRange
@@ -177,6 +177,42 @@ void VulkanBuffer::CreateMemory() {
     };
 
     vkAllocateMemory(m_Device->GetVkDevice(), &memoryAllocateInfo, nullptr, &m_Memory);
+}
+
+VulkanSampler::VulkanSampler(SamplerDesc desc, VulkanDevice* device) {
+    m_Device = device;
+    m_Desc = desc;
+
+    VkSamplerCreateInfo createInfo = {
+        .sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO,
+        .magFilter = ToVkFilter(m_Desc.SampleFilter),
+        .minFilter = ToVkFilter(m_Desc.SampleFilter),
+        .mipmapMode = VK_SAMPLER_MIPMAP_MODE_NEAREST,
+        .addressModeU = ToVkSamplerAddressMode(m_Desc.AddressU),
+        .addressModeV = ToVkSamplerAddressMode(m_Desc.AddressV),
+        .addressModeW = ToVkSamplerAddressMode(m_Desc.AddressW),
+        .mipLodBias = m_Desc.MipLodBias,
+        .anisotropyEnable = m_Desc.MaxAnisotropy,
+        .maxAnisotropy = (float)m_Desc.MaxAnisotropy,
+        .compareEnable = m_Desc.Compare != CompareOp::Never,
+        .compareOp = ToVkCompareOp(m_Desc.Compare),
+        .minLod = m_Desc.MinLod,
+        .maxLod = m_Desc.MaxLod,
+        .borderColor = VK_BORDER_COLOR_FLOAT_OPAQUE_BLACK,
+        .unnormalizedCoordinates = false
+    };
+
+    vkCreateSampler(m_Device->GetVkDevice(), &createInfo, nullptr, &m_Sampler);
+}
+
+VulkanSampler::~VulkanSampler() {
+    if (m_Sampler) {
+        m_Device->ReleaseResource(new SamplerReleaseResource(m_Device->GetVkDevice(), m_Sampler));
+    }
+}
+
+SamplerDesc VulkanSampler::GetDesc() {
+    return m_Desc;
 }
 
 } // vk

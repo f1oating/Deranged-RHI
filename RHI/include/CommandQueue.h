@@ -48,7 +48,9 @@ public:
 
     virtual void SetVertexBuffer(Buffer* buffer, uint32_t stride) = 0;
 
-    virtual void SetConstantBuffer(std::string name, Buffer* buffer) = 0;
+    virtual void SetBuffer(std::string name, Buffer* buffer) = 0;
+    virtual void SetTexture(std::string name, TextureView* textureView) = 0;
+    virtual void SetSampler(std::string name, Sampler* sampler) = 0;
 
     virtual void DrawInstansed(uint32_t VertexCountPerInstance, uint32_t InstanceCount = 1,
         uint32_t StartVertexLocation = 0, uint32_t StartInstanceLocation = 0) = 0;

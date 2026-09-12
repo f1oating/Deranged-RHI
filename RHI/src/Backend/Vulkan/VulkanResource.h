@@ -19,7 +19,7 @@ public:
     VulkanTexture(TextureDesc desc, VulkanDevice* device, VkImage image);
     ~VulkanTexture() override;
 
-    TextureView* GetRTV() override;
+    TextureView* GetView() override;
 
     TextureDesc GetDesc() override;
 
@@ -37,7 +37,7 @@ private:
     TextureDesc m_Desc;
     VkImage m_Image = nullptr;
     VkDeviceMemory m_Memory = nullptr;
-    TextureView* m_RTV = nullptr;
+    TextureView* m_View = nullptr;
     ImageLayout m_Layout = ImageLayout::Undefined;
     uint64_t m_SizeInBytes = 0;
 
@@ -86,6 +86,22 @@ private:
 
 };
 
+class VulkanSampler : public Sampler {
+public:
+    VulkanSampler(SamplerDesc desc, VulkanDevice* device);
+    ~VulkanSampler() override;
+
+    SamplerDesc GetDesc() override;
+
+    VkSampler GetVkSampler() const { return m_Sampler; }
+
+private:
+    VulkanDevice* m_Device = nullptr;
+    SamplerDesc m_Desc;
+    VkSampler m_Sampler = nullptr;
+    
+};
+
 struct ImageReleaseResource : ReleaseResourceBase {
     VkDevice Device;
     VkImage Image;
@@ -127,6 +143,19 @@ struct BufferReleaseResource : ReleaseResourceBase {
             vkFreeMemory(Device, Memory, nullptr);
         }
         vkDestroyBuffer(Device, Buffer, nullptr);
+    }
+
+};
+
+struct SamplerReleaseResource : ReleaseResourceBase {
+    VkDevice Device;
+    VkSampler Sampler;
+
+    SamplerReleaseResource(VkDevice device, VkSampler sampler)
+        : Device(device), Sampler(sampler) {}
+
+    void Destroy() override {
+        vkDestroySampler(Device, Sampler, nullptr);
     }
 
 };
@@ -271,6 +300,32 @@ inline VkImageType ToVkImageType(TextureType type) {
             return VK_IMAGE_TYPE_3D;
         default:
             return VK_IMAGE_TYPE_2D;
+    }
+}
+
+inline VkImageViewType ToVkImageViewType(TextureType type) {
+    switch (type) {
+        case TextureType::Texture1D:
+            return VK_IMAGE_VIEW_TYPE_1D;
+        case TextureType::Texture2D:
+            return VK_IMAGE_VIEW_TYPE_2D;
+        case TextureType::Texture3D:
+            return VK_IMAGE_VIEW_TYPE_3D;
+        default:
+            return VK_IMAGE_VIEW_TYPE_2D;
+    }
+}
+
+inline VkImageAspectFlags ToVkImageAspectFlags(TextureFormat format) {
+    switch (format) {
+        case TextureFormat::D16_UNORM:
+        case TextureFormat::D32_FLOAT:
+            return VK_IMAGE_ASPECT_DEPTH_BIT;
+        case TextureFormat::D24_UNORM_S8_UINT:
+        case TextureFormat::D32_SFLOAT_S8_UINT:
+            return VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT;
+        default:
+            return VK_IMAGE_ASPECT_COLOR_BIT;
     }
 }
 
@@ -456,6 +511,55 @@ inline VkBufferUsageFlags ToVkBufferUsageFlags(uint8_t flags) {
     }
 
     return vkFlags;
+}
+
+inline VkCompareOp ToVkCompareOp(CompareOp op) {
+    switch (op) {
+        case CompareOp::Never:
+            return VK_COMPARE_OP_NEVER;
+        case CompareOp::Less:
+            return VK_COMPARE_OP_LESS;
+        case CompareOp::Equal:
+            return VK_COMPARE_OP_EQUAL;
+        case CompareOp::LessOrEqual:
+            return VK_COMPARE_OP_LESS_OR_EQUAL;
+        case CompareOp::Greater:
+            return VK_COMPARE_OP_GREATER;
+        case CompareOp::NotEqual:
+            return VK_COMPARE_OP_NOT_EQUAL;
+        case CompareOp::GreaterOrEqual:
+            return VK_COMPARE_OP_GREATER_OR_EQUAL;
+        case CompareOp::Always:
+            return VK_COMPARE_OP_ALWAYS;
+        default:
+            return VK_COMPARE_OP_NEVER;
+    }
+}
+
+inline VkSamplerAddressMode ToVkSamplerAddressMode(AddressMode mode) {
+    switch (mode) {
+        case AddressMode::Repeat:
+            return VK_SAMPLER_ADDRESS_MODE_REPEAT;
+        case AddressMode::MirroredRepeat:
+            return VK_SAMPLER_ADDRESS_MODE_MIRRORED_REPEAT;
+        case AddressMode::ClampToBorder:
+            return VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER;
+        case AddressMode::ClampToEdge:
+            return VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
+        default:
+            return VK_SAMPLER_ADDRESS_MODE_REPEAT;
+    }
+}
+
+inline VkFilter ToVkFilter(Filter filter) {
+    switch (filter) {
+        case Filter::Linear:
+            return VK_FILTER_LINEAR;
+        case Filter::Nearest:
+            return VK_FILTER_NEAREST;
+        default:
+            return VK_FILTER_NEAREST;
+    }
 }
 
 } // vk

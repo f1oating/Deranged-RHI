@@ -11,7 +11,7 @@
 #include <vector>
 #include <unordered_map>
 #include <string>
-
+#include "Backend/Vulkan/VulkanResource.h"
 #include "spirv_reflect.h"
 #include "Backend/Vulkan/Internal/DescriptorPool.h"
 
@@ -82,6 +82,8 @@ inline VkDescriptorType ToVkDescriptorType(SpvReflectDescriptorType type) {
             return VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
         case SPV_REFLECT_DESCRIPTOR_TYPE_SAMPLED_IMAGE:
             return VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
+        case SPV_REFLECT_DESCRIPTOR_TYPE_SAMPLER:
+            return VK_DESCRIPTOR_TYPE_SAMPLER;
         default:
             return VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
     }
@@ -292,29 +294,6 @@ inline VkPrimitiveTopology ToVkPrimitiveTopology(Topology topology) {
             return VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
         default:
             return VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
-    }
-}
-
-inline VkCompareOp ToVkCompareOp(CompareOp op) {
-    switch (op) {
-        case CompareOp::Never:
-            return VK_COMPARE_OP_NEVER;
-        case CompareOp::Less:
-            return VK_COMPARE_OP_LESS;
-        case CompareOp::Equal:
-            return VK_COMPARE_OP_EQUAL;
-        case CompareOp::LessOrEqual:
-            return VK_COMPARE_OP_LESS_OR_EQUAL;
-        case CompareOp::Greater:
-            return VK_COMPARE_OP_GREATER;
-        case CompareOp::NotEqual:
-            return VK_COMPARE_OP_NOT_EQUAL;
-        case CompareOp::GreaterOrEqual:
-            return VK_COMPARE_OP_GREATER_OR_EQUAL;
-        case CompareOp::Always:
-            return VK_COMPARE_OP_ALWAYS;
-        default:
-            return VK_COMPARE_OP_NEVER;
     }
 }
 

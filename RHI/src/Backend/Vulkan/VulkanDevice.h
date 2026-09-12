@@ -26,6 +26,7 @@ public:
     Texture* CreateTexture(TextureDesc desc) override;
     TextureView* CreateTextureView(TextureViewDesc desc) override;
     Buffer* CreateBuffer(BufferDesc desc) override;
+    Sampler* CreateSampler(SamplerDesc desc) override;
 
     void ReleaseResource(ReleaseResourceBase* resource);
 
