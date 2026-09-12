@@ -133,7 +133,7 @@ int main() {
     pipelineState = device->CreateGraphicsPipelineState(pipelineDesc);
 
     SamplerDesc samplerDesc = {
-        .SampleFilter = Filter::Nearest,
+        .Filtering = Filter::Nearest,
         .Compare = CompareOp::Never,
         .AddressU = AddressMode::Repeat,
         .AddressV = AddressMode::Repeat,

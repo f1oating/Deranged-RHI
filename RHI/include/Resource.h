@@ -181,7 +181,7 @@ enum class Filter {
 };
 
 struct SamplerDesc {
-    Filter SampleFilter;
+    Filter Filtering;
     CompareOp Compare;
     AddressMode AddressU;
     AddressMode AddressV;

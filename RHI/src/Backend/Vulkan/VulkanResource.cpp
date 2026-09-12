@@ -185,8 +185,8 @@ VulkanSampler::VulkanSampler(SamplerDesc desc, VulkanDevice* device) {
 
     VkSamplerCreateInfo createInfo = {
         .sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO,
-        .magFilter = ToVkFilter(m_Desc.SampleFilter),
-        .minFilter = ToVkFilter(m_Desc.SampleFilter),
+        .magFilter = ToVkFilter(m_Desc.Filtering),
+        .minFilter = ToVkFilter(m_Desc.Filtering),
         .mipmapMode = VK_SAMPLER_MIPMAP_MODE_NEAREST,
         .addressModeU = ToVkSamplerAddressMode(m_Desc.AddressU),
         .addressModeV = ToVkSamplerAddressMode(m_Desc.AddressV),
