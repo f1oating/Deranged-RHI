@@ -10,6 +10,7 @@
 #include "ReleaseManager.h"
 #include <unordered_map>
 #include <string>
+#include "Backend/DX12/DX12Resource.h"
 #include "Backend/DX12/Internal/DescriptorHeap.h"
 
 namespace dx {
@@ -25,11 +26,11 @@ public:
 
     ID3D12RootSignature* GetRootSignature() { return m_RootSignature; }
     ID3D12PipelineState* GetPipelineState() { return m_PipelineState; };
-    uint32_t GetDescriptorOffset(std::string name) { return m_DescriptorOffsets.at(name); }
-    std::unordered_map<uint32_t, Descriptor> GetDescriptorsState() { return m_DescriptorsState; }
+    std::unordered_map<std::string, Descriptor> GetDescriptorsState() { return m_DescriptorsState; }
 
 private:
-    void ReflexShader(Shader shader, std::vector<D3D12_DESCRIPTOR_RANGE>& descriptorRanges);
+    void ReflexShader(Shader shader, std::vector<D3D12_DESCRIPTOR_RANGE>& descriptorRanges,
+        std::vector<D3D12_DESCRIPTOR_RANGE>& samplerDescriptorRanges);
     void CreateRootSignature();
     void CreatePipeline();
 
@@ -38,8 +39,7 @@ private:
     GraphicsPipelineDesc m_Desc;
     ID3D12RootSignature* m_RootSignature = nullptr;
     ID3D12PipelineState* m_PipelineState = nullptr;
-    std::unordered_map<std::string, uint32_t> m_DescriptorOffsets;
-    std::unordered_map<uint32_t, Descriptor> m_DescriptorsState;
+    std::unordered_map<std::string, Descriptor> m_DescriptorsState;
 
 };
 
@@ -234,29 +234,6 @@ inline D3D12_PRIMITIVE_TOPOLOGY ToD3D12PrimitiveTopology(Topology topology) {
             return D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
         default:
             return D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
-    }
-}
-
-inline D3D12_COMPARISON_FUNC ToD3D12ComparisonFunc(CompareOp op) {
-    switch (op) {
-        case CompareOp::Never:
-            return D3D12_COMPARISON_FUNC_NEVER;
-        case CompareOp::Less:
-            return D3D12_COMPARISON_FUNC_LESS;
-        case CompareOp::Equal:
-            return D3D12_COMPARISON_FUNC_EQUAL;
-        case CompareOp::LessOrEqual:
-            return D3D12_COMPARISON_FUNC_LESS_EQUAL;
-        case CompareOp::Greater:
-            return D3D12_COMPARISON_FUNC_GREATER;
-        case CompareOp::NotEqual:
-            return D3D12_COMPARISON_FUNC_NOT_EQUAL;
-        case CompareOp::GreaterOrEqual:
-            return D3D12_COMPARISON_FUNC_GREATER_EQUAL;
-        case CompareOp::Always:
-            return D3D12_COMPARISON_FUNC_ALWAYS;
-        default:
-            return D3D12_COMPARISON_FUNC_NEVER;
     }
 }
 

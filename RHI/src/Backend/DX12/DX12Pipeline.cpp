@@ -29,7 +29,8 @@ GraphicsPipelineDesc DX12GraphicsPipelineState::GetDesc() {
     return m_Desc;
 }
 
-void DX12GraphicsPipelineState::ReflexShader(Shader shader, std::vector<D3D12_DESCRIPTOR_RANGE>& descriptorRanges) {
+void DX12GraphicsPipelineState::ReflexShader(Shader shader, std::vector<D3D12_DESCRIPTOR_RANGE>& descriptorRanges,
+        std::vector<D3D12_DESCRIPTOR_RANGE>& samplerDescriptorRanges) {
     IDxcUtils* utils = nullptr;
     DxcCreateInstance(CLSID_DxcUtils, IID_PPV_ARGS(&utils));
 
@@ -45,9 +46,17 @@ void DX12GraphicsPipelineState::ReflexShader(Shader shader, std::vector<D3D12_DE
     D3D12_SHADER_DESC desc{};
     shaderReflection->GetDesc(&desc);
 
+    uint32_t offset = 0;
+    uint32_t samplerOffset = 0;
     for (int i = 0; i < desc.BoundResources; i++) {
         D3D12_SHADER_INPUT_BIND_DESC shaderInputBindDesc = {};
         shaderReflection->GetResourceBindingDesc(i, &shaderInputBindDesc);
+
+        Descriptor descriptor = {
+            .Type = ToDescriptorType(shaderInputBindDesc.Type),
+            .Space = shaderInputBindDesc.Space,
+            .Binding = shaderInputBindDesc.BindPoint,
+        };
 
         D3D12_DESCRIPTOR_RANGE descriptorRange = {
             .RangeType = ToD3D12DescriptorRangeType(shaderInputBindDesc.Type),
@@ -58,10 +67,17 @@ void DX12GraphicsPipelineState::ReflexShader(Shader shader, std::vector<D3D12_DE
         };
 
         std::string name = shaderInputBindDesc.Name;
-        if (!m_DescriptorOffsets.contains(name)) {
-            descriptorRanges.push_back(descriptorRange);
-            m_DescriptorOffsets.emplace(name.substr(0, name.find('_')), i);
-            m_DescriptorsState.insert({ (uint32_t)i, { ToDescriptorType(shaderInputBindDesc.Type) } });
+        if (!m_DescriptorsState.contains(name)) {
+            if (descriptor.Type != DescriptorType::Sampler) {
+                descriptorRanges.push_back(descriptorRange);
+                descriptor.Offset = offset;
+                offset++;
+            } else {
+                samplerDescriptorRanges.push_back(descriptorRange);
+                descriptor.Offset = samplerOffset;
+                samplerOffset++;
+            }
+            m_DescriptorsState.emplace(name.substr(0, name.find('_')), descriptor);
         }
     }
 
@@ -71,24 +87,34 @@ void DX12GraphicsPipelineState::ReflexShader(Shader shader, std::vector<D3D12_DE
 
 void DX12GraphicsPipelineState::CreateRootSignature() {
     std::vector<D3D12_DESCRIPTOR_RANGE> descriptorRanges;
+    std::vector<D3D12_DESCRIPTOR_RANGE> samplerDescriptorRanges;
 
-    if (m_Desc.VertexShader.Data) ReflexShader(m_Desc.VertexShader, descriptorRanges);
-    if (m_Desc.FragmentShader.Data) ReflexShader(m_Desc.FragmentShader, descriptorRanges);
+    if (m_Desc.VertexShader.Data) ReflexShader(m_Desc.VertexShader, descriptorRanges, samplerDescriptorRanges);
+    if (m_Desc.FragmentShader.Data) ReflexShader(m_Desc.FragmentShader, descriptorRanges, samplerDescriptorRanges);
+
+    D3D12_ROOT_PARAMETER rootParameters[2];
 
     D3D12_ROOT_DESCRIPTOR_TABLE descriptorTable = {
         .NumDescriptorRanges = (uint32_t)descriptorRanges.size(),
         .pDescriptorRanges = descriptorRanges.data()
     };
 
-    D3D12_ROOT_PARAMETER rootParameter = {
-        .ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE,
-        .DescriptorTable = descriptorTable,
-        .ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL
+    rootParameters[0].ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
+    rootParameters[0].DescriptorTable = descriptorTable;
+    rootParameters[0].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
+
+    D3D12_ROOT_DESCRIPTOR_TABLE samplerDescriptorTable = {
+        .NumDescriptorRanges = (uint32_t)samplerDescriptorRanges.size(),
+        .pDescriptorRanges = samplerDescriptorRanges.data()
     };
 
+    rootParameters[1].ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
+    rootParameters[1].DescriptorTable = samplerDescriptorTable;
+    rootParameters[1].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
+
     D3D12_ROOT_SIGNATURE_DESC rootSignatureDesc = {
-        .NumParameters = 1,
-        .pParameters = &rootParameter,
+        .NumParameters = 2,
+        .pParameters = rootParameters,
         .NumStaticSamplers = 0,
         .pStaticSamplers = nullptr,
         .Flags = D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT

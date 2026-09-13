@@ -293,6 +293,29 @@ inline TextureFormat FromDXGIFormat(DXGI_FORMAT format) {
     }
 }
 
+inline D3D12_COMPARISON_FUNC ToD3D12ComparisonFunc(CompareOp op) {
+    switch (op) {
+        case CompareOp::Never:
+            return D3D12_COMPARISON_FUNC_NEVER;
+        case CompareOp::Less:
+            return D3D12_COMPARISON_FUNC_LESS;
+        case CompareOp::Equal:
+            return D3D12_COMPARISON_FUNC_EQUAL;
+        case CompareOp::LessOrEqual:
+            return D3D12_COMPARISON_FUNC_LESS_EQUAL;
+        case CompareOp::Greater:
+            return D3D12_COMPARISON_FUNC_GREATER;
+        case CompareOp::NotEqual:
+            return D3D12_COMPARISON_FUNC_NOT_EQUAL;
+        case CompareOp::GreaterOrEqual:
+            return D3D12_COMPARISON_FUNC_GREATER_EQUAL;
+        case CompareOp::Always:
+            return D3D12_COMPARISON_FUNC_ALWAYS;
+        default:
+            return D3D12_COMPARISON_FUNC_NEVER;
+    }
+}
+
 inline D3D12_RESOURCE_DIMENSION ToD3D12ResourceDimension(TextureType type) {
     switch (type) {
         case TextureType::Texture1D:
@@ -427,6 +450,28 @@ inline D3D12_RESOURCE_FLAGS ToD3D12BufResourceFlags(uint8_t flags) {
     D3D12_RESOURCE_FLAGS dxFlags = D3D12_RESOURCE_FLAG_NONE;
 
     return dxFlags;
+}
+
+inline D3D12_FILTER ToD3D12Filter(Filter filter) {
+    switch (filter) {
+        case Filter::Nearest:
+            return D3D12_FILTER_MIN_MAG_MIP_POINT;
+        case Filter::Linear:
+            return D3D12_FILTER_MIN_MAG_MIP_LINEAR;
+        default:
+            return D3D12_FILTER_MIN_MAG_MIP_POINT;
+    }
+}
+
+inline D3D12_TEXTURE_ADDRESS_MODE ToD3D12TextureAddressMode(AddressMode mode) {
+    switch (mode) {
+        case AddressMode::Repeat:
+            return D3D12_TEXTURE_ADDRESS_MODE_WRAP;
+        case AddressMode::MirroredRepeat:
+            return D3D12_TEXTURE_ADDRESS_MODE_MIRROR;
+        default:
+            return D3D12_TEXTURE_ADDRESS_MODE_WRAP;
+    }
 }
 
 } // dx

@@ -576,10 +576,6 @@ inline VkSamplerAddressMode ToVkSamplerAddressMode(AddressMode mode) {
             return VK_SAMPLER_ADDRESS_MODE_REPEAT;
         case AddressMode::MirroredRepeat:
             return VK_SAMPLER_ADDRESS_MODE_MIRRORED_REPEAT;
-        case AddressMode::ClampToBorder:
-            return VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER;
-        case AddressMode::ClampToEdge:
-            return VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
         default:
             return VK_SAMPLER_ADDRESS_MODE_REPEAT;
     }

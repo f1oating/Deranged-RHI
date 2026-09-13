@@ -192,26 +192,26 @@ void DX12CommandQueue::SetConstantBuffer(std::string name, Buffer* buffer) {
         .BufferLocation = dxBuffer->GetDX12Resource()->GetGPUVirtualAddress(),
         .SizeInBytes = (uint32_t)dxBuffer->GetDesc().Size,
     };
-    m_DescriptorsStateManager.SetCBV(m_BoundPipeline->GetDescriptorOffset(name), desc);
+    m_DescriptorsStateManager.SetCBV(name, desc);
 }
 
 void DX12CommandQueue::SetTexture(std::string name, ShaderResourceView* textureView) {
     DX12ShaderResourceView* dxTextureView = static_cast<DX12ShaderResourceView*>(textureView);
 
-    m_DescriptorsStateManager.SetSRV(m_BoundPipeline->GetDescriptorOffset(name),
-        dxTextureView->GetDXTexture()->GetDX12Resource(), dxTextureView->GetDXView());
+    m_DescriptorsStateManager.SetSRV(name, dxTextureView->GetDXTexture()->GetDX12Resource(), dxTextureView->GetDXView());
 }
 
 void DX12CommandQueue::SetSampler(std::string name, Sampler* sampler) {
     DX12Sampler* dxSampler = static_cast<DX12Sampler*>(sampler);
 
-    m_DescriptorsStateManager.SetSampler(m_BoundPipeline->GetDescriptorOffset(name), dxSampler->GetDXSampler());
+    m_DescriptorsStateManager.SetSampler(name, dxSampler->GetDXSampler());
 }
 
 void DX12CommandQueue::DrawInstansed(uint32_t VertexCountPerInstance, uint32_t InstanceCount,
         uint32_t StartVertexLocation, uint32_t StartInstanceLocation) {
-    DescriptorHeapAllocation allocation = m_DescriptorsStateManager.WriteAndAllocate(m_CommandAllocatorNumber);
+    auto [allocation, samplerAllocation] = m_DescriptorsStateManager.WriteAndAllocate(m_CommandAllocatorNumber);
     m_CommandList->SetGraphicsRootDescriptorTable(0, allocation.GetGPUHandle(0));
+    m_CommandList->SetGraphicsRootDescriptorTable(1, samplerAllocation.GetGPUHandle(0));
     m_CommandList->DrawInstanced(VertexCountPerInstance, InstanceCount, StartVertexLocation, StartInstanceLocation);
 }
 
@@ -266,8 +266,8 @@ void DX12CommandQueue::EndFrame() {
 void DX12CommandQueue::AcquireCommandAllocator() {
     m_CommandAllocator = m_CommandAllocatorPool.AcquireCommandAllocator();
     m_CommandList->Reset(m_CommandAllocator, nullptr);
-    ID3D12DescriptorHeap* heap = m_DescriptorsStateManager.GetDX12Heap();
-    m_CommandList->SetDescriptorHeaps(1, &heap);
+    ID3D12DescriptorHeap* heaps[2] = { m_DescriptorsStateManager.GetDX12Heap(), m_DescriptorsStateManager.GetDX12SamplerHeap() };
+    m_CommandList->SetDescriptorHeaps(2, heaps);
     m_CommandAllocatorNumber++;
 }
 

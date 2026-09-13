@@ -188,6 +188,20 @@ void DX12Buffer::CreateResource() {
 DX12Sampler::DX12Sampler(SamplerDesc desc, DX12Device* device) {
     m_Device = device;
     m_Desc = desc;
+
+    D3D12_SAMPLER_DESC samplerDesc = {
+        .Filter = ToD3D12Filter(m_Desc.Filtering),
+        .AddressU = ToD3D12TextureAddressMode(m_Desc.AddressU),
+        .AddressV = ToD3D12TextureAddressMode(m_Desc.AddressV),
+        .AddressW = ToD3D12TextureAddressMode(m_Desc.AddressW),
+        .MipLODBias = m_Desc.MipLodBias,
+        .MaxAnisotropy = m_Desc.MaxAnisotropy,
+        .ComparisonFunc = ToD3D12ComparisonFunc(m_Desc.Compare),
+        .BorderColor = { 0.0f, 0.0f, 0.0f, 1.0f },
+        .MinLOD = m_Desc.MinLod,
+        .MaxLOD = m_Desc.MaxLod,
+    };
+    m_Sampler = samplerDesc;
 }
 
 DX12Sampler::~DX12Sampler() {

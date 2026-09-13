@@ -8,6 +8,7 @@
 #include <cstdint>
 #include <d3d12.h>
 #include <deque>
+#include <string>
 #include "VariableSizeAllocationManager.h"
 #include <unordered_map>
 
@@ -67,9 +68,14 @@ enum class DescriptorType {
 
 struct Descriptor {
     DescriptorType Type;
-    D3D12_CONSTANT_BUFFER_VIEW_DESC CBVDesc;
-    D3D12_SHADER_RESOURCE_VIEW_DESC SRVDesc;
-    D3D12_SAMPLER_DESC SamplerDesc;
+    uint32_t Space;
+    uint32_t Binding;
+    uint32_t Offset;
+    union {
+        D3D12_CONSTANT_BUFFER_VIEW_DESC CBVDesc;
+        D3D12_SHADER_RESOURCE_VIEW_DESC SRVDesc;
+        D3D12_SAMPLER_DESC SamplerDesc;
+    };
     ID3D12Resource* Resource;
 };
 
@@ -78,25 +84,28 @@ public:
     void Init(ID3D12Device10* device);
     void Shutdown();
 
-    void SetState(std::unordered_map<uint32_t, Descriptor> descriptorsState);
+    void SetState(std::unordered_map<std::string, Descriptor> descriptorsState);
 
-    void SetCBV(uint32_t offset, D3D12_CONSTANT_BUFFER_VIEW_DESC cbvViewDesc);
-    void SetSRV(uint32_t offset, ID3D12Resource* resource, D3D12_SHADER_RESOURCE_VIEW_DESC srvViewDesc);
-    void SetSampler(uint32_t offset, D3D12_SAMPLER_DESC desc);
+    void SetCBV(std::string name, D3D12_CONSTANT_BUFFER_VIEW_DESC cbvViewDesc);
+    void SetSRV(std::string name, ID3D12Resource* resource, D3D12_SHADER_RESOURCE_VIEW_DESC srvViewDesc);
+    void SetSampler(std::string name, D3D12_SAMPLER_DESC desc);
 
-    DescriptorHeapAllocation WriteAndAllocate(uint64_t frame);
+    std::pair<DescriptorHeapAllocation, DescriptorHeapAllocation> WriteAndAllocate(uint64_t frame);
 
     void Clear();
 
     void FreeFrames(uint64_t frame);
 
     ID3D12DescriptorHeap* GetDX12Heap() { return m_Heap.GetDX12Heap(); }
+    ID3D12DescriptorHeap* GetDX12SamplerHeap() { return m_SamplerHeap.GetDX12Heap(); }
 
 private:
     ID3D12Device10* m_Device = nullptr;
     DescriptorHeap m_Heap;
+    DescriptorHeap m_SamplerHeap;
     std::deque<std::pair<uint64_t, DescriptorHeapAllocation>> m_Allocations;
-    std::unordered_map<uint32_t, Descriptor> m_DescriptorsState;
+    std::deque<std::pair<uint64_t, DescriptorHeapAllocation>> m_SamplerAllocations;
+    std::unordered_map<std::string, Descriptor> m_DescriptorsState;
 
 };
 

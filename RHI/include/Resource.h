@@ -179,9 +179,7 @@ enum class CompareOp {
 
 enum class AddressMode {
     Repeat,
-    MirroredRepeat,
-    ClampToEdge,
-    ClampToBorder
+    MirroredRepeat
 };
 
 enum class Filter {
