@@ -8,6 +8,7 @@
 #include <d3d12shader.h>
 #include <dxcapi.h>
 #include <set>
+#include <spdlog/spdlog.h>
 
 namespace dx {
 
@@ -17,12 +18,16 @@ DX12GraphicsPipelineState::DX12GraphicsPipelineState(GraphicsPipelineDesc desc, 
 
     CreateRootSignature();
     CreatePipeline();
+
+    spdlog::info("DX12GraphicsPipelineState Created.");
 }
 
 DX12GraphicsPipelineState::~DX12GraphicsPipelineState() {
     if (m_RootSignature && m_PipelineState) {
         m_Device->ReleaseResource(new PipelineStateReleaseResource(m_RootSignature, m_PipelineState));
     }
+
+    spdlog::info("DX12GraphicsPipelineState Destroyed.");
 }
 
 GraphicsPipelineDesc DX12GraphicsPipelineState::GetDesc() {

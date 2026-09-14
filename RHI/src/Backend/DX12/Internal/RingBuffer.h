@@ -17,8 +17,12 @@ template<typename T> inline T AlignUp(T val, T alignment)
 
 class RingBuffer {
 public:
-    void Init(ID3D12Device10* device, uint64_t size = 512 * 512 * 4);
-    void Shutdown();
+    RingBuffer(ID3D12Device10* device, uint64_t size = 512 * 512 * 4);
+    ~RingBuffer();
+    RingBuffer(const RingBuffer&) = delete;
+    RingBuffer& operator=(const RingBuffer&) = delete;
+    RingBuffer(RingBuffer&&) = delete;
+    RingBuffer& operator=(RingBuffer&&) = delete;
 
     uint64_t Allocate(uint64_t size);
 

@@ -19,6 +19,39 @@ DescriptorHeapAllocation::DescriptorHeapAllocation(ID3D12DescriptorHeap* heap, D
     m_DescriptorSize = descriptorSize;
 }
 
+DescriptorHeapAllocation::DescriptorHeapAllocation(DescriptorHeapAllocation&& other) {
+    if (this != &other) {
+        m_Heap = other.m_Heap;
+        m_NumHandles = other.m_NumHandles;
+        m_CPUHandle = other.m_CPUHandle;
+        m_GPUHandle = other.m_GPUHandle;
+        m_DescriptorSize = other.m_DescriptorSize;
+
+        other.m_Heap = nullptr;
+        other.m_NumHandles = 0;
+        other.m_CPUHandle = {};
+        other.m_GPUHandle = {};
+        other.m_DescriptorSize = 0;
+    }
+}
+
+DescriptorHeapAllocation& DescriptorHeapAllocation::operator=(DescriptorHeapAllocation&& other) {
+    if (this != &other) {
+        m_Heap = other.m_Heap;
+        m_NumHandles = other.m_NumHandles;
+        m_CPUHandle = other.m_CPUHandle;
+        m_GPUHandle = other.m_GPUHandle;
+        m_DescriptorSize = other.m_DescriptorSize;
+
+        other.m_Heap = nullptr;
+        other.m_NumHandles = 0;
+        other.m_CPUHandle = {};
+        other.m_GPUHandle = {};
+        other.m_DescriptorSize = 0;
+    }
+    return *this;
+}
+
 D3D12_CPU_DESCRIPTOR_HANDLE DescriptorHeapAllocation::GetCPUHandle(uint32_t offset) const {
     D3D12_CPU_DESCRIPTOR_HANDLE cpuHandle = m_CPUHandle;
     if (offset != 0) {
@@ -35,7 +68,7 @@ D3D12_GPU_DESCRIPTOR_HANDLE DescriptorHeapAllocation::GetGPUHandle(uint32_t offs
     return gpuHandle;
 }
 
-void DescriptorHeap::Init(ID3D12Device10* device, D3D12_DESCRIPTOR_HEAP_TYPE type, uint32_t numDescriptors){
+DescriptorHeap::DescriptorHeap(ID3D12Device10* device, D3D12_DESCRIPTOR_HEAP_TYPE type, uint32_t numDescriptors){
     m_Device = device;
     m_NumDescriptors = numDescriptors;
 
@@ -55,7 +88,7 @@ void DescriptorHeap::Init(ID3D12Device10* device, D3D12_DESCRIPTOR_HEAP_TYPE typ
     m_DescriptorSize = m_Device->GetDescriptorHandleIncrementSize(type);
 }
 
-void DescriptorHeap::Shutdown() {
+DescriptorHeap::~DescriptorHeap() {
     if (m_Heap) {
         m_Heap->Release();
     }
@@ -88,15 +121,15 @@ void DescriptorHeap::Free(DescriptorHeapAllocation allocation) {
     m_VariableSizeAllocationManager.Free(offset, allocation.GetNumHandles());
 }
 
-void DescriptorsStateManager::Init(ID3D12Device10* device) {
+DescriptorsStateManager::DescriptorsStateManager(ID3D12Device10* device) {
     m_Device = device;
-    m_Heap.Init(m_Device, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 128);
-    m_SamplerHeap.Init(m_Device, D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER, 12);
+    m_Heap = std::make_unique<DescriptorHeap>(m_Device, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 128);
+    m_SamplerHeap = std::make_unique<DescriptorHeap>(m_Device, D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER, 12);
 }
 
-void DescriptorsStateManager::Shutdown() {
-    m_SamplerHeap.Shutdown();
-    m_Heap.Shutdown();
+DescriptorsStateManager::~DescriptorsStateManager() {
+    m_SamplerHeap.reset();
+    m_Heap.reset();
 }
 
 void DescriptorsStateManager::SetState(std::unordered_map<std::string, Descriptor> descriptorsStruct) {
@@ -117,8 +150,8 @@ void DescriptorsStateManager::SetSampler(std::string name, D3D12_SAMPLER_DESC de
 }
 
 std::pair<DescriptorHeapAllocation, DescriptorHeapAllocation> DescriptorsStateManager::WriteAndAllocate(uint64_t frame) {
-    DescriptorHeapAllocation allocation = m_Heap.Allocate(m_DescriptorsState.size());
-    DescriptorHeapAllocation samplerAllocation = m_SamplerHeap.Allocate(m_DescriptorsState.size());
+    DescriptorHeapAllocation allocation = m_Heap->Allocate(m_DescriptorsState.size());
+    DescriptorHeapAllocation samplerAllocation = m_SamplerHeap->Allocate(m_DescriptorsState.size());
 
     for (auto [key, descriptor] : m_DescriptorsState) {
         if (descriptor.Type == DescriptorType::ConstantBuffer) {
@@ -143,7 +176,7 @@ void DescriptorsStateManager::FreeFrames(uint64_t frame) {
     while (!m_Allocations.empty()) {
         if (m_Allocations.front().first <= frame) {
             DescriptorHeapAllocation allocation = m_Allocations.front().second;
-            m_Heap.Free(allocation);
+            m_Heap->Free(allocation);
             m_Allocations.pop_front();
             continue;
         }
@@ -152,7 +185,7 @@ void DescriptorsStateManager::FreeFrames(uint64_t frame) {
     while (!m_SamplerAllocations.empty()) {
         if (m_SamplerAllocations.front().first <= frame) {
             DescriptorHeapAllocation allocation = m_SamplerAllocations.front().second;
-            m_SamplerHeap.Free(allocation);
+            m_SamplerHeap->Free(allocation);
             m_SamplerAllocations.pop_front();
             continue;
         }

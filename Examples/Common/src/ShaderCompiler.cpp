@@ -37,6 +37,7 @@ std::vector<uint8_t> ShaderCompiler::CompileShader(const char* path) {
         #ifndef WIN32
         { "VULKAN", "1" }
         #endif
+        { "TEST", "1" }
     };
 
     const char* paths[] = {

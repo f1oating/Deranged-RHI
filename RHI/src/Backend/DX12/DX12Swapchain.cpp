@@ -6,6 +6,7 @@
 #define GLFW_EXPOSE_NATIVE_WIN32
 #include <GLFW/glfw3native.h>
 #include "Backend/DX12/DX12Device.h"
+#include <spdlog/spdlog.h>
 
 namespace dx {
 
@@ -65,6 +66,8 @@ DX12Swapchain::DX12Swapchain(DX12Device* device) {
     for (int i = 0; i < 3; i++) {
         m_FrameFenceValues[i] = 0;
     }
+
+    spdlog::info("DX12Swapchain Created.");
 }
 
 DX12Swapchain::~DX12Swapchain() {
@@ -84,6 +87,8 @@ DX12Swapchain::~DX12Swapchain() {
     if (m_Window) {
         glfwDestroyWindow(m_Window);
     }
+
+    spdlog::info("DX12Swapchain Destroyed.");
 }
 
 Texture* DX12Swapchain::GetCurrentBackBuffer() {

@@ -9,6 +9,7 @@
 #include <GLFW/glfw3.h>
 #include "Backend/DX12/DX12Resource.h"
 #include "Backend/DX12/DX12Pipeline.h"
+#include <spdlog/spdlog.h>
 
 namespace dx {
 
@@ -18,7 +19,22 @@ void DebugCallback(
     D3D12_MESSAGE_ID ID,
     LPCSTR pDescription,
     void* pContext) {
-    std::cout << "[" << pDescription << "]" << std::endl;
+    switch (Severity) {
+        case D3D12_MESSAGE_SEVERITY_INFO:
+        case D3D12_MESSAGE_SEVERITY_MESSAGE:
+            spdlog::info(pDescription);
+        case D3D12_MESSAGE_SEVERITY_WARNING:
+            spdlog::warn(pDescription);
+            return;
+        case D3D12_MESSAGE_SEVERITY_ERROR:
+            spdlog::error(pDescription);
+            return;
+        case D3D12_MESSAGE_SEVERITY_CORRUPTION:
+            spdlog::critical(pDescription);
+            return;
+        default:
+            spdlog::info(pDescription);
+    }
 }
 
 DX12Device::DX12Device() {
@@ -48,20 +64,22 @@ DX12Device::DX12Device() {
 
     m_DebugQueue->RegisterMessageCallback(DebugCallback, D3D12_MESSAGE_CALLBACK_FLAG_NONE, nullptr, &m_CallbackCookie);
 
-    m_RingBuffer.Init(m_Device);
-    m_RTVAllocator.Init(m_Device, D3D12_DESCRIPTOR_HEAP_TYPE_RTV, 32);
-    m_DSVAllocator.Init(m_Device, D3D12_DESCRIPTOR_HEAP_TYPE_DSV, 32);
+    m_RingBuffer = std::make_unique<RingBuffer>(m_Device);
+    m_RTVAllocator = std::make_unique<DescriptorHeap>(m_Device, D3D12_DESCRIPTOR_HEAP_TYPE_RTV, 32);
+    m_DSVAllocator = std::make_unique<DescriptorHeap>(m_Device, D3D12_DESCRIPTOR_HEAP_TYPE_DSV, 32);
 
     m_CommandQueue = new DX12CommandQueue(this);
+
+    spdlog::info("DX12Device Created.");
 }
 
 DX12Device::~DX12Device() {
     if (m_CommandQueue) {
         delete m_CommandQueue;
     }
-    m_DSVAllocator.Shutdown();
-    m_RTVAllocator.Shutdown();
-    m_RingBuffer.Shutdown();
+    m_DSVAllocator.reset();
+    m_RTVAllocator.reset();
+    m_RingBuffer.reset();
     m_DebugQueue->UnregisterMessageCallback(m_CallbackCookie);
     if (m_Device) {
         m_Device->Release();
@@ -73,10 +91,12 @@ DX12Device::~DX12Device() {
         m_Debug->Release();
     }
     glfwTerminate();
+
+    spdlog::info("DX12Device Destroyed.");
 }
 
 void DX12Device::EndFrame() {
-    ReleaseResource(new RingBufferReleaseResource(&m_RingBuffer, m_RingBuffer.GetHead()));
+    ReleaseResource(new RingBufferReleaseResource(m_RingBuffer.get(), m_RingBuffer->GetHead()));
     m_CommandQueue->EndFrame();
 }
 

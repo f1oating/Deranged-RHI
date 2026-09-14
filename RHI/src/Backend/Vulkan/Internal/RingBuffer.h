@@ -19,7 +19,7 @@ public:
     ~RingBuffer();
     RingBuffer(const RingBuffer& other) = delete;
     RingBuffer& operator=(const RingBuffer& other) = delete;
-    RingBuffer(const RingBuffer&& other) = delete;
+    RingBuffer(RingBuffer&& other) = delete;
     RingBuffer& operator=(RingBuffer&& other) = delete;
 
     uint64_t Allocate(uint64_t size);

@@ -35,9 +35,9 @@ public:
 
     IDXGIFactory3* GetDXGIFactory() const { return m_Factory;}
     ID3D12Device10* GetDX12Device() const { return m_Device; }
-    DescriptorHeap* GetRTVAllocator() { return &m_RTVAllocator; }
-    DescriptorHeap* GetDSVAllocator() { return &m_DSVAllocator; }
-    RingBuffer* GetRingBuffer() { return &m_RingBuffer; }
+    DescriptorHeap* GetRTVAllocator() { return m_RTVAllocator.get(); }
+    DescriptorHeap* GetDSVAllocator() { return m_DSVAllocator.get(); }
+    RingBuffer* GetRingBuffer() { return m_RingBuffer.get(); }
 
 private:
     ID3D12Debug3* m_Debug = nullptr;
@@ -46,9 +46,9 @@ private:
     DWORD m_CallbackCookie = 0;
     ID3D12InfoQueue1* m_DebugQueue = nullptr;
     DX12CommandQueue* m_CommandQueue = nullptr;
-    RingBuffer m_RingBuffer;
-    DescriptorHeap m_RTVAllocator;
-    DescriptorHeap m_DSVAllocator;
+    std::unique_ptr<RingBuffer> m_RingBuffer = nullptr;
+    std::unique_ptr<DescriptorHeap> m_RTVAllocator = nullptr;
+    std::unique_ptr<DescriptorHeap> m_DSVAllocator = nullptr;
 
 };
 

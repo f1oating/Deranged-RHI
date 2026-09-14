@@ -13,8 +13,12 @@ namespace dx {
 
 class CommandAllocatorPool {
 public:
-    void Init(ID3D12Device10* device);
-    void Shutdown();
+    CommandAllocatorPool(ID3D12Device10* device);
+    ~CommandAllocatorPool();
+    CommandAllocatorPool(const CommandAllocatorPool& other) = delete;
+    CommandAllocatorPool& operator=(const CommandAllocatorPool& other) = delete;
+    CommandAllocatorPool(CommandAllocatorPool&& other) = delete;
+    CommandAllocatorPool operator=(CommandAllocatorPool&& other) = delete;
 
     ID3D12CommandAllocator* AcquireCommandAllocator();
     void ReleaseCommandAllocator(ID3D12CommandAllocator* commandAllocator, uint64_t value);

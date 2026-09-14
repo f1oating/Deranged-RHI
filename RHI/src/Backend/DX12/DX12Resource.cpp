@@ -3,7 +3,7 @@
 //
 
 #include "Backend/DX12/DX12Resource.h"
-
+#include <spdlog/spdlog.h>
 #include "Backend/DX12/DX12Device.h"
 
 namespace dx {
@@ -31,6 +31,8 @@ DX12Texture::DX12Texture(TextureDesc desc, DX12Device* device) {
     HRESULT hr = m_Device->GetDX12Device()->CreateCommittedResource3(&heapProps, D3D12_HEAP_FLAG_NONE,
         &resourceDesc, D3D12_BARRIER_LAYOUT_UNDEFINED, nullptr,
         nullptr, 0, nullptr, IID_PPV_ARGS(&m_Resource));
+
+    spdlog::info("DX12Texture Created.");
 }
 
 DX12Texture::DX12Texture(TextureDesc desc, ID3D12Resource* res, DX12Device* device) {
@@ -38,6 +40,8 @@ DX12Texture::DX12Texture(TextureDesc desc, ID3D12Resource* res, DX12Device* devi
     m_Resource = res;
     m_Device = device;
     m_Layout = ImageLayout::Present;
+
+    spdlog::info("DX12Texture Created.");
 }
 
 DX12Texture::~DX12Texture() {
@@ -51,6 +55,8 @@ DX12Texture::~DX12Texture() {
         delete m_SRV;
     }
     m_Device->ReleaseResource(new TextureReleaseResource(m_Resource));
+
+    spdlog::info("DX12Texture Destroyed.");
 }
 
 RenderTargetView* DX12Texture::GetRTV() {
@@ -89,12 +95,16 @@ DX12RenderTargetView::DX12RenderTargetView(DX12Texture* texture, DX12Device* dev
     };
 
     m_Device->GetDX12Device()->CreateRenderTargetView(m_Texture->GetDX12Resource(), &rtvDesc, m_Allocation.GetCPUHandle(0));
+
+    spdlog::info("DX12RenderTargetView Created.");
 }
 
 DX12RenderTargetView::~DX12RenderTargetView() {
     if (!m_Allocation.IsNull()) {
         m_Device->ReleaseResource(new DescriptorAllocationReleaseResource(m_Device->GetRTVAllocator(), m_Allocation));
     }
+
+    spdlog::info("DX12RenderTargetView Destroyed.");
 }
 
 DX12DepthStencilView::DX12DepthStencilView(DX12Texture* texture, DX12Device* device) {
@@ -108,12 +118,16 @@ DX12DepthStencilView::DX12DepthStencilView(DX12Texture* texture, DX12Device* dev
     };
 
     m_Device->GetDX12Device()->CreateDepthStencilView(m_Texture->GetDX12Resource(), &dsvDesc, m_Allocation.GetCPUHandle(0));
+
+    spdlog::info("DX12DepthStencilView Created.");
 }
 
 DX12DepthStencilView::~DX12DepthStencilView() {
     if (!m_Allocation.IsNull()) {
         m_Device->ReleaseResource(new DescriptorAllocationReleaseResource(m_Device->GetDSVAllocator(), m_Allocation));
     }
+
+    spdlog::info("DX12DepthStencilView Destroyed.");
 }
 
 DX12ShaderResourceView::DX12ShaderResourceView(DX12Texture* texture, DX12Device* device) {
@@ -126,10 +140,12 @@ DX12ShaderResourceView::DX12ShaderResourceView(DX12Texture* texture, DX12Device*
     };
 
     m_View = view;
+
+    spdlog::info("DX12ShaderResourceView Created.");
 }
 
 DX12ShaderResourceView::~DX12ShaderResourceView() {
-
+    spdlog::info("DX12ShaderResourceView Destroyed.");
 }
 
 DX12Buffer::DX12Buffer(BufferDesc desc, DX12Device* device) {
@@ -137,6 +153,8 @@ DX12Buffer::DX12Buffer(BufferDesc desc, DX12Device* device) {
     m_Device = device;
 
     CreateResource();
+
+    spdlog::info("DX12Buffer Created.");
 }
 
 DX12Buffer::~DX12Buffer() {
@@ -144,6 +162,8 @@ DX12Buffer::~DX12Buffer() {
         m_Resource->Unmap(0, nullptr);
     }
     m_Device->ReleaseResource(new BufferReleaseResource(m_Resource));
+
+    spdlog::info("DX12Buffer Destroyed.");
 }
 
 void* DX12Buffer::Map() {
@@ -202,10 +222,12 @@ DX12Sampler::DX12Sampler(SamplerDesc desc, DX12Device* device) {
         .MaxLOD = m_Desc.MaxLod,
     };
     m_Sampler = samplerDesc;
+
+    spdlog::info("DX12Sampler Created.");
 }
 
 DX12Sampler::~DX12Sampler() {
-
+    spdlog::info("DX12Sampler Destroyed.");
 }
 
 SamplerDesc DX12Sampler::GetDesc() {

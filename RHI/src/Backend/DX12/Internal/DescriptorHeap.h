@@ -11,6 +11,7 @@
 #include <string>
 #include "VariableSizeAllocationManager.h"
 #include <unordered_map>
+#include <memory>
 
 namespace dx {
 
@@ -19,6 +20,11 @@ public:
     DescriptorHeapAllocation();
     DescriptorHeapAllocation(ID3D12DescriptorHeap* heap, D3D12_CPU_DESCRIPTOR_HANDLE cpuHandle,
         D3D12_GPU_DESCRIPTOR_HANDLE gpuHandle, uint32_t handlesCount, uint32_t descriptorSize);
+    ~DescriptorHeapAllocation() = default;
+    DescriptorHeapAllocation(const DescriptorHeapAllocation& other) = default;
+    DescriptorHeapAllocation& operator=(const DescriptorHeapAllocation& other) = default;
+    DescriptorHeapAllocation(DescriptorHeapAllocation&& other);
+    DescriptorHeapAllocation& operator=(DescriptorHeapAllocation&& other);
 
     D3D12_CPU_DESCRIPTOR_HANDLE GetCPUHandle(uint32_t offset) const;
     D3D12_GPU_DESCRIPTOR_HANDLE GetGPUHandle(uint32_t offset) const;
@@ -41,9 +47,13 @@ private:
 
 class DescriptorHeap {
 public:
-    void Init(ID3D12Device10* device, D3D12_DESCRIPTOR_HEAP_TYPE type,
+    DescriptorHeap(ID3D12Device10* device, D3D12_DESCRIPTOR_HEAP_TYPE type,
         uint32_t numDescriptors);
-    void Shutdown();
+    ~DescriptorHeap();
+    DescriptorHeap(const DescriptorHeap& other) = delete;
+    DescriptorHeap& operator=(const DescriptorHeap& other) = delete;
+    DescriptorHeap(DescriptorHeap&& other) = delete;
+    DescriptorHeap& operator=(DescriptorHeap&& other) = delete;
 
     DescriptorHeapAllocation Allocate(uint32_t numHandles);
     void Free(DescriptorHeapAllocation allocation);
@@ -81,8 +91,12 @@ struct Descriptor {
 
 class DescriptorsStateManager {
 public:
-    void Init(ID3D12Device10* device);
-    void Shutdown();
+    DescriptorsStateManager(ID3D12Device10* device);
+    ~DescriptorsStateManager();
+    DescriptorsStateManager(const DescriptorsStateManager& other) = delete;
+    DescriptorsStateManager& operator=(const DescriptorsStateManager& other) = delete;
+    DescriptorsStateManager(DescriptorsStateManager&& other) = delete;
+    DescriptorsStateManager& operator=(DescriptorsStateManager&& other) = delete;
 
     void SetState(std::unordered_map<std::string, Descriptor> descriptorsState);
 
@@ -96,13 +110,13 @@ public:
 
     void FreeFrames(uint64_t frame);
 
-    ID3D12DescriptorHeap* GetDX12Heap() { return m_Heap.GetDX12Heap(); }
-    ID3D12DescriptorHeap* GetDX12SamplerHeap() { return m_SamplerHeap.GetDX12Heap(); }
+    ID3D12DescriptorHeap* GetDX12Heap() { return m_Heap->GetDX12Heap(); }
+    ID3D12DescriptorHeap* GetDX12SamplerHeap() { return m_SamplerHeap->GetDX12Heap(); }
 
 private:
     ID3D12Device10* m_Device = nullptr;
-    DescriptorHeap m_Heap;
-    DescriptorHeap m_SamplerHeap;
+    std::unique_ptr<DescriptorHeap> m_Heap = nullptr;
+    std::unique_ptr<DescriptorHeap> m_SamplerHeap = nullptr;
     std::deque<std::pair<uint64_t, DescriptorHeapAllocation>> m_Allocations;
     std::deque<std::pair<uint64_t, DescriptorHeapAllocation>> m_SamplerAllocations;
     std::unordered_map<std::string, Descriptor> m_DescriptorsState;

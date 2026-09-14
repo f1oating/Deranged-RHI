@@ -18,8 +18,8 @@ public:
     ~DescriptorPool();
     DescriptorPool(const DescriptorPool& other) = delete;
     DescriptorPool& operator=(const DescriptorPool& other) = delete;
-    DescriptorPool(const DescriptorPool&& other) = delete;
-    DescriptorPool& operator=(const DescriptorPool&& other) = delete;
+    DescriptorPool(DescriptorPool&& other) = delete;
+    DescriptorPool& operator=(DescriptorPool&& other) = delete;
 
     VkDescriptorSet Allocate(VkDescriptorSetLayout layout);
     void Free(VkDescriptorSet set);
@@ -51,8 +51,8 @@ public:
     ~DescriptorManager();
     DescriptorManager(const DescriptorManager& other) = delete;
     DescriptorManager& operator=(const DescriptorManager& other) = delete;
-    DescriptorManager(const DescriptorManager&& other) = delete;
-    DescriptorManager& operator=(const DescriptorManager&& other) = delete;
+    DescriptorManager(DescriptorManager&& other) = delete;
+    DescriptorManager& operator=(DescriptorManager&& other) = delete;
 
     void SetDescriptorState(std::vector<DescriptorSet> descriptorState);
 

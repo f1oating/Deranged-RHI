@@ -5,8 +5,7 @@
 #include "Backend/DX12/Internal/RingBuffer.h"
 
 namespace dx {
-
-void RingBuffer::Init(ID3D12Device10* device, uint64_t size) {
+    RingBuffer::RingBuffer(ID3D12Device10* device, uint64_t size) {
     m_Device = device;
     m_Size = size;
 
@@ -23,6 +22,12 @@ void RingBuffer::Init(ID3D12Device10* device, uint64_t size) {
     m_Device->CreateHeap(&heapDesc, IID_PPV_ARGS(&m_Heap));
 }
 
+RingBuffer::~RingBuffer() {
+    if (m_Heap) {
+        m_Heap->Release();
+    }
+}
+
 uint64_t RingBuffer::Allocate(uint64_t size) {
     uint64_t alignedSize = AlignUp(size, (uint64_t)256);
 
@@ -34,12 +39,6 @@ uint64_t RingBuffer::Allocate(uint64_t size) {
     m_Head += alignedSize;
 
     return offset;
-}
-
-void RingBuffer::Shutdown() {
-    if (m_Heap) {
-        m_Heap->Release();
-    }
 }
 
 } // dx

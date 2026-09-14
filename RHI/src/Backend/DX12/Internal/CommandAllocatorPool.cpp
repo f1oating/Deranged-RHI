@@ -6,11 +6,11 @@
 
 namespace dx {
 
-void CommandAllocatorPool::Init(ID3D12Device10* device) {
+CommandAllocatorPool::CommandAllocatorPool(ID3D12Device10* device) {
     m_Device = device;
 }
 
-void CommandAllocatorPool::Shutdown() {
+CommandAllocatorPool::~CommandAllocatorPool() {
     Poll(UINT64_MAX);
     while (!m_AcquireQueue.empty()) {
         m_AcquireQueue.front()->Release();

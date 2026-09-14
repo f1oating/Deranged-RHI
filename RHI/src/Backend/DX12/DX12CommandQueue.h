@@ -63,7 +63,7 @@ private:
 private:
     DX12Device* m_Device = nullptr;
     ID3D12CommandQueue* m_Queue = nullptr;
-    CommandAllocatorPool m_CommandAllocatorPool;
+    std::unique_ptr<CommandAllocatorPool> m_CommandAllocatorPool = nullptr;
     DX12Fence* m_Fence = nullptr;
     std::vector<std::pair<ID3D12Fence*, uint64_t>> m_WaitFences;
     std::vector<std::pair<ID3D12Fence*, uint64_t>> m_SignalFences;
@@ -73,7 +73,7 @@ private:
     ReleaseManager m_ReleaseManager;
     std::vector<D3D12_CPU_DESCRIPTOR_HANDLE> m_RTVs;
     DX12GraphicsPipelineState* m_BoundPipeline = nullptr;
-    DescriptorsStateManager m_DescriptorsStateManager;
+    std::unique_ptr<DescriptorsStateManager> m_DescriptorsStateManager = nullptr;
 
 };
 
