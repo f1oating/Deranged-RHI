@@ -35,10 +35,14 @@ public:
     void SetResourceLayout(ImageLayout layout) { m_Layout = layout; }
 
 private:
-    TextureDesc m_Desc;
     DX12Device* m_Device = nullptr;
+
+    TextureDesc m_Desc;
+
     ID3D12Resource* m_Resource = nullptr;
+
     ImageLayout m_Layout = ImageLayout::Undefined;
+
     DX12RenderTargetView* m_RTV = nullptr;
     DX12DepthStencilView* m_DSV = nullptr;
     DX12ShaderResourceView* m_SRV = nullptr;
@@ -54,7 +58,9 @@ public:
 
 private:
     DX12Device* m_Device = nullptr;
+
     DX12Texture* m_Texture = nullptr;
+
     DescriptorHeapAllocation m_Allocation;
 
 };
@@ -69,6 +75,7 @@ public:
 private:
     DX12Device* m_Device = nullptr;
     DX12Texture* m_Texture = nullptr;
+
     DescriptorHeapAllocation m_Allocation;
 
 };
@@ -84,6 +91,7 @@ public:
 private:
     DX12Device* m_Device = nullptr;
     DX12Texture* m_Texture = nullptr;
+
     D3D12_SHADER_RESOURCE_VIEW_DESC m_View;
 
 };
@@ -102,9 +110,12 @@ private:
     void CreateResource();
 
 private:
-    BufferDesc m_Desc;
     DX12Device* m_Device = nullptr;
+
+    BufferDesc m_Desc;
+
     ID3D12Resource* m_Resource = nullptr;
+
     uint64_t m_Offset = 0;
     void* m_Mapped = nullptr;
 
@@ -121,7 +132,9 @@ public:
 
 private:
     DX12Device* m_Device = nullptr;
+
     SamplerDesc m_Desc;
+
     D3D12_SAMPLER_DESC m_Sampler;
 
 };
@@ -390,13 +403,13 @@ inline D3D12_BARRIER_ACCESS ToD3D12BarrierAccess(uint32_t flags) {
         dxFlags = D3D12_BARRIER_ACCESS_COPY_DEST;
     }
     if (flags & ACCESS_VERTEX_READ) {
-        vkFlags |= D3D12_BARRIER_ACCESS_VERTEX_BUFFER;
+        dxFlags |= D3D12_BARRIER_ACCESS_VERTEX_BUFFER;
     }
     if (flags & ACCESS_INDEX_READ) {
-        vkFlags |= D3D12_BARRIER_ACCESS_INDEX_BUFFER;
+        dxFlags |= D3D12_BARRIER_ACCESS_INDEX_BUFFER;
     }
     if (flags & ACCESS_UNIFORM_READ) {
-        vkFlags |= D3D12_BARRIER_ACCESS_CONSTANT_BUFFER;
+        dxFlags |= D3D12_BARRIER_ACCESS_CONSTANT_BUFFER;
     }
 
     return dxFlags;

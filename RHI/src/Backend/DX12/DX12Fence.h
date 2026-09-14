@@ -26,6 +26,7 @@ public:
 
 private:
     DX12Device* m_Device = nullptr;
+
     ID3D12Fence* m_Fence = nullptr;
 
 };

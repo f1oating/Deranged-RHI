@@ -36,9 +36,12 @@ private:
 
 private:
     DX12Device* m_Device = nullptr;
+
     GraphicsPipelineDesc m_Desc;
+
     ID3D12RootSignature* m_RootSignature = nullptr;
     ID3D12PipelineState* m_PipelineState = nullptr;
+
     std::unordered_map<std::string, Descriptor> m_DescriptorsState;
 
 };

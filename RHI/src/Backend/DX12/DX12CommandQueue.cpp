@@ -191,6 +191,17 @@ void DX12CommandQueue::SetVertexBuffer(Buffer* buffer) {
     m_CommandList->IASetVertexBuffers(0, 1, &vertexBufferView);
 }
 
+void DX12CommandQueue::SetIndexBuffer(Buffer* buffer) {
+    DX12Buffer* dxBuffer = static_cast<DX12Buffer*>(buffer);
+
+    D3D12_INDEX_BUFFER_VIEW indexBufferView = {
+        .BufferLocation = dxBuffer->GetDX12Resource()->GetGPUVirtualAddress(),
+        .SizeInBytes = (uint32_t)dxBuffer->GetDesc().Size,
+        .Format = DXGI_FORMAT_R32_UINT
+    };
+    m_CommandList->IASetIndexBuffer(&indexBufferView);
+}
+
 void DX12CommandQueue::SetConstantBuffer(std::string name, Buffer* buffer) {
     DX12Buffer* dxBuffer = static_cast<DX12Buffer*>(buffer);
     D3D12_CONSTANT_BUFFER_VIEW_DESC desc = {
@@ -212,7 +223,7 @@ void DX12CommandQueue::SetSampler(std::string name, Sampler* sampler) {
     m_DescriptorsStateManager->SetSampler(name, dxSampler->GetDXSampler());
 }
 
-void DX12CommandQueue::DrawInstansed(uint32_t VertexCountPerInstance, uint32_t InstanceCount,
+void DX12CommandQueue::DrawInstanced(uint32_t VertexCountPerInstance, uint32_t InstanceCount,
         uint32_t StartVertexLocation, uint32_t StartInstanceLocation) {
     auto [allocation, samplerAllocation] = m_DescriptorsStateManager->WriteAndAllocate(m_CommandAllocatorNumber);
     m_CommandList->SetGraphicsRootDescriptorTable(0, allocation.GetGPUHandle(0));
@@ -222,6 +233,38 @@ void DX12CommandQueue::DrawInstansed(uint32_t VertexCountPerInstance, uint32_t I
 
 void DX12CommandQueue::CopyToBuffer(Buffer* dst, uint64_t size, void* data) {
     DX12Buffer* dxDst = static_cast<DX12Buffer*>(dst);
+
+    ID3D12Resource* src = nullptr;
+
+    D3D12_HEAP_PROPERTIES heapProps = {
+        .Type = D3D12_HEAP_TYPE_UPLOAD
+    };
+
+    D3D12_RESOURCE_DESC1 resourceDesc = {
+        .Dimension = D3D12_RESOURCE_DIMENSION_BUFFER,
+        .Width =  size,
+        .Height = 1,
+        .DepthOrArraySize = 1,
+        .MipLevels = 1,
+        .SampleDesc = { 1, 0 },
+        .Layout = D3D12_TEXTURE_LAYOUT_ROW_MAJOR
+    };
+
+    m_Device->GetDX12Device()->CreateCommittedResource3(&heapProps, D3D12_HEAP_FLAG_NONE, &resourceDesc,
+        D3D12_BARRIER_LAYOUT_UNDEFINED, nullptr, nullptr, 0, nullptr, IID_PPV_ARGS(&src));
+
+    void* mapped = nullptr;
+    src->Map(0, nullptr, &mapped);
+    memcpy(mapped, data, size);
+    src->Unmap(0, nullptr);
+
+    m_CommandList->CopyBufferRegion(dxDst->GetDX12Resource(), 0, src, 0, size);
+
+    ReleaseResource(new ReleaseResourceWrapper(new BufferReleaseResource(src)));
+}
+
+void DX12CommandQueue::CopyToTexture(Texture* dst, uint64_t size, void* data) {
+    DX12Texture* dxDst = static_cast<DX12Texture*>(dst);
 
     ID3D12Resource* src = nullptr;
 
