@@ -58,14 +58,14 @@ enum class BufferUsage {
 };
 
 struct TextureDesc {
-    uint32_t Width;
-    uint32_t Height;
-    uint32_t MipLevels;
-    uint32_t ArrayLayers;
-    uint32_t Samples;
-    TextureFormat Format;
-    TextureType Type;
-    uint8_t BindFlags;
+    uint32_t Width = 1;
+    uint32_t Height = 1;
+    uint32_t MipLevels = 1;
+    uint32_t ArrayLayers = 1;
+    uint32_t Samples = 1;
+    TextureFormat Format = TextureFormat::R8G8B8A8_SNORM;
+    TextureType Type = TextureType::Texture2D;
+    uint8_t BindFlags = TEXTURE_BIND_SHADER_RESOURCE;
 };
 
 class RenderTargetView;
@@ -103,9 +103,10 @@ public:
 };
 
 struct BufferDesc {
-    uint64_t Size;
-    uint8_t BindFlags;
-    BufferUsage Usage;
+    uint64_t Size = 1;
+    uint8_t BindFlags = 0;
+    uint32_t Stride = 1;
+    BufferUsage Usage = BufferUsage::Default;
 };
 
 class Buffer {
@@ -138,7 +139,8 @@ enum AccessFlags : uint32_t {
     ACCESS_TRANSFER_READ = 1 << 7,
     ACCESS_TRANSFER_WRITE = 1 << 8,
     ACCESS_VERTEX_READ = 1 << 9,
-    ACCESS_INDEX_READ= 1 << 10
+    ACCESS_INDEX_READ = 1 << 10,
+    ACCESS_UNIFORM_READ = 1 << 11
 };
 
 enum PipelineStageFlags : uint32_t {
@@ -190,15 +192,15 @@ enum class Filter {
 };
 
 struct SamplerDesc {
-    Filter Filtering;
-    CompareOp Compare;
-    AddressMode AddressU;
-    AddressMode AddressV;
-    AddressMode AddressW;
-    float MipLodBias;
-    uint32_t MaxAnisotropy;
-    float MinLod;
-    float MaxLod;
+    Filter Filtering = Filter::Nearest;
+    CompareOp Compare = CompareOp::Never;
+    AddressMode AddressU = AddressMode::Repeat;
+    AddressMode AddressV = AddressMode::Repeat;
+    AddressMode AddressW = AddressMode::Repeat;
+    float MipLodBias = 0.0f;
+    uint32_t MaxAnisotropy = 0;
+    float MinLod = 0.0f;
+    float MaxLod = 1.0f;
 };
 
 class Sampler {

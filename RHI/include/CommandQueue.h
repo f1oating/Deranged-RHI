@@ -46,16 +46,18 @@ public:
     virtual void SetRenderTargets(std::vector<RenderTargetView*> rtvs) = 0;
     virtual void ClearRenderTargets(float r, float g, float b, float a) = 0;
 
-    virtual void SetVertexBuffer(Buffer* buffer, uint32_t stride) = 0;
+    virtual void SetVertexBuffer(Buffer* buffer) = 0;
+    virtual void SetIndexBuffer(Buffer* buffer) = 0;
 
     virtual void SetConstantBuffer(std::string name, Buffer* buffer) = 0;
     virtual void SetTexture(std::string name, ShaderResourceView* textureView) = 0;
     virtual void SetSampler(std::string name, Sampler* sampler) = 0;
 
-    virtual void DrawInstansed(uint32_t VertexCountPerInstance, uint32_t InstanceCount = 1,
+    virtual void DrawInstanced(uint32_t VertexCountPerInstance, uint32_t InstanceCount = 1,
         uint32_t StartVertexLocation = 0, uint32_t StartInstanceLocation = 0) = 0;
 
     virtual void CopyToBuffer(Buffer* dst, uint64_t size, void* data) = 0;
+    virtual void CopyToTexture(Texture* dst, uint64_t size, void* data) = 0;
 
     virtual void Flush() = 0;
 

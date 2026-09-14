@@ -389,6 +389,15 @@ inline D3D12_BARRIER_ACCESS ToD3D12BarrierAccess(uint32_t flags) {
     if (flags & ACCESS_TRANSFER_WRITE) {
         dxFlags = D3D12_BARRIER_ACCESS_COPY_DEST;
     }
+    if (flags & ACCESS_VERTEX_READ) {
+        vkFlags |= D3D12_BARRIER_ACCESS_VERTEX_BUFFER;
+    }
+    if (flags & ACCESS_INDEX_READ) {
+        vkFlags |= D3D12_BARRIER_ACCESS_INDEX_BUFFER;
+    }
+    if (flags & ACCESS_UNIFORM_READ) {
+        vkFlags |= D3D12_BARRIER_ACCESS_CONSTANT_BUFFER;
+    }
 
     return dxFlags;
 }

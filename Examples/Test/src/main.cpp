@@ -20,19 +20,6 @@ int main() {
     Swapchain* swapchain = device->CreateSwapchain();
     GraphicsPipelineState* pipelineState;
 
-    TextureDesc textureDesc = {
-        .Width = 32,
-        .Height = 32,
-        .MipLevels = 1,
-        .ArrayLayers = 1,
-        .Samples = 1,
-        .Format = TextureFormat::B8G8R8A8_UNORM,
-        .Type = TextureType::Texture2D,
-        .BindFlags = TEXTURE_BIND_RENDER_TARGET | TEXTURE_BIND_SHADER_RESOURCE
-    };
-
-    Texture* texture = device->CreateTexture(textureDesc);
-
     float color[] = {
         0.1f, 0.6f, 0.1f, 1.0f
     };
@@ -52,6 +39,7 @@ int main() {
     BufferDesc bufferDesc = {
         .Size = sizeof(vertices),
         .BindFlags = BUFFER_BIND_VERTEX,
+        .Stride = 8,
         .Usage = BufferUsage::Default
     };
     Buffer* buffer = device->CreateBuffer(bufferDesc);
@@ -74,69 +62,20 @@ int main() {
         { { "POSITION", ValueType::Float2 } }
     };
 
-    RasterizationDesc rasterizationDesc = {
-        .Polygon = PolygonMode::Fill,
-        .Cull = CullMode::None,
-        .Face = FrontFace::CW,
-        .DepthBiasClamp = 0.0f,
-        .DepthBiasConstant = 0.0f,
-        .DepthBiasSlope = 0.0f
-    };
-
-    StencilStateDesc front = {
-
-    };
-
-    StencilStateDesc back = {
-
-    };
-
-    DepthStencilDesc depthStencilDesc = {
-        .DepthEnable = false,
-        .StencilEnable = false,
-        .DepthWriteEnable = false,
-        .DepthCompare = CompareOp::Never,
-        .Front = front,
-        .Back = back,
-        .StencilReadMask = 0xff,
-        .StencilWriteMask = 0xff
-    };
-
-    BlendAttachmentDesc blendAttachmentDesc = {
-        .BlendEnable = false,
-        .ColorWriteMask = COLOR_COMPONENT_R | COLOR_COMPONENT_G | COLOR_COMPONENT_B | COLOR_COMPONENT_A,
-    };
-
     BlendDesc blendDesc = {
-        .LogicOpEnable = false,
-        .ColorAttachments = { blendAttachmentDesc }
+        .ColorAttachments = { {} }
     };
 
     GraphicsPipelineDesc pipelineDesc = {
         .VertexShader = vertexShader,
         .FragmentShader = fragmentShader,
         .VertexInput = inputDesc,
-        .Rasterization = rasterizationDesc,
-        .DepthStencil = depthStencilDesc,
         .Blend = blendDesc,
         .ColorFormats = { TextureFormat::B8G8R8A8_UNORM },
         .DepthStencilFormat = TextureFormat::Unknown,
         .PrimitiveTopology = Topology::TriangleList
     };
     pipelineState = device->CreateGraphicsPipelineState(pipelineDesc);
-
-    SamplerDesc samplerDesc = {
-        .Filtering = Filter::Nearest,
-        .Compare = CompareOp::Never,
-        .AddressU = AddressMode::Repeat,
-        .AddressV = AddressMode::Repeat,
-        .AddressW = AddressMode::Repeat,
-        .MipLodBias = 1,
-        .MaxAnisotropy = 0,
-        .MinLod = 1,
-        .MaxLod = 1
-    };
-    Sampler* sampler = device->CreateSampler(samplerDesc);
 
     while(!swapchain->WindowShouldClose()) {
         swapchain->UpdateWindow();
@@ -155,27 +94,23 @@ int main() {
             (float)backBufferDesc.Height, 0.0f, 1.0f });
         queue->SetScissor({ 0, 0, (int)backBufferDesc.Width, (int)backBufferDesc.Height });
 
-        queue->SetVertexBuffer(buffer, 8);
+        queue->SetVertexBuffer(buffer);
         void* ptr = cbuffer->Map();
         memcpy(ptr, color, 16);
 
         queue->SetConstantBuffer("Color", cbuffer);
 
-        queue->DrawInstansed(3);
+        queue->DrawInstanced(3);
 
         queue->Barrier(PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT, PIPELINE_STAGE_NONE, {},
             { { currentBackBuffer, ImageLayout::Present, ACCESS_COLOR_ATTACHMENT_WRITE, ACCESS_NONE } });
-
-        buffer->Map();
 
         device->EndFrame();
         swapchain->Present();
     }
 
-    delete sampler;
     delete cbuffer;
     delete buffer;
-    delete texture;
     delete pipelineState;
     delete swapchain;
     delete device;

@@ -109,46 +109,46 @@ struct VertexInputDesc {
 };
 
 struct RasterizationDesc {
-    PolygonMode Polygon;
-    CullMode Cull;
-    FrontFace Face;
-    float DepthBiasClamp;
-    float DepthBiasConstant;
-    float DepthBiasSlope;
+    PolygonMode Polygon = PolygonMode::Fill;
+    CullMode Cull = CullMode::None;
+    FrontFace Face = FrontFace::CW;
+    float DepthBiasClamp = 0.0f;
+    float DepthBiasConstant = 0.0f;
+    float DepthBiasSlope = 0.0f;
 };
 
 struct StencilStateDesc {
-    StencilOp DepthFail;
-    StencilOp Fail;
-    StencilOp Pass;
-    CompareOp StencilFunc;
+    StencilOp DepthFail = StencilOp::Keep;
+    StencilOp Fail = StencilOp::Keep;
+    StencilOp Pass = StencilOp::Keep;
+    CompareOp StencilFunc = CompareOp::Never;
 };
 
 struct DepthStencilDesc {
-    bool DepthEnable;
-    bool StencilEnable;
-    bool DepthWriteEnable;
-    CompareOp DepthCompare;
+    bool DepthEnable = false;
+    bool StencilEnable = false;
+    bool DepthWriteEnable = false;
+    CompareOp DepthCompare = CompareOp::Never;
     StencilStateDesc Front;
     StencilStateDesc Back;
-    uint8_t StencilReadMask;
-    uint8_t StencilWriteMask;
+    uint8_t StencilReadMask = 0xff;
+    uint8_t StencilWriteMask = 0xff;
 };
 
 struct BlendAttachmentDesc {
-    bool BlendEnable;
-    BlendFactor SrcColorBlend;
-    BlendFactor DstColorBlend;
-    BlendFactor SrcAlphaBlend;
-    BlendFactor DstAlphaBlend;
-    BlendOp ColorBlend;
-    BlendOp AlphaBlend;
-    uint32_t ColorWriteMask;
+    bool BlendEnable = false;
+    BlendFactor SrcColorBlend = BlendFactor::Zero;
+    BlendFactor DstColorBlend = BlendFactor::Zero;
+    BlendFactor SrcAlphaBlend = BlendFactor::Zero;
+    BlendFactor DstAlphaBlend = BlendFactor::Zero;
+    BlendOp ColorBlend = BlendOp::Add;
+    BlendOp AlphaBlend = BlendOp::Add;
+    uint32_t ColorWriteMask = COLOR_COMPONENT_R | COLOR_COMPONENT_G | COLOR_COMPONENT_B | COLOR_COMPONENT_A;
 };
 
 struct BlendDesc {
-    bool LogicOpEnable;
-    LogicOp Logic;
+    bool LogicOpEnable = false;
+    LogicOp Logic = LogicOp::Copy;
     std::vector<BlendAttachmentDesc> ColorAttachments;
 };
 
@@ -160,8 +160,8 @@ struct GraphicsPipelineDesc {
     DepthStencilDesc DepthStencil;
     BlendDesc Blend;
     std::vector<TextureFormat> ColorFormats;
-    TextureFormat DepthStencilFormat;
-    Topology PrimitiveTopology;
+    TextureFormat DepthStencilFormat = TextureFormat::Unknown;
+    Topology PrimitiveTopology = Topology::TriangleList;
 };
 
 class GraphicsPipelineState {

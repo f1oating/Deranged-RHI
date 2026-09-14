@@ -166,11 +166,17 @@ void VulkanCommandQueue::ClearRenderTargets(float r, float g, float b, float a) 
         attachments.data(), 1, &clearRect);
 }
 
-void VulkanCommandQueue::SetVertexBuffer(Buffer* buffer, uint32_t stride) {
+void VulkanCommandQueue::SetVertexBuffer(Buffer* buffer) {
     VulkanBuffer* vkBuffer = static_cast<VulkanBuffer*>(buffer);
     VkBuffer vkBuffers = { vkBuffer->GetVkBuffer() };
     VkDeviceSize offset = 0;
     vkCmdBindVertexBuffers(m_CommandBuffer, 0, 1, &vkBuffers, &offset);
+}
+
+void VulkanCommandQueue::SetIndexBuffer(Buffer* buffer) {
+    VulkanBuffer* vkBuffer = static_cast<VulkanBuffer*>(buffer);
+    VkDeviceSize offset = 0;
+    vkCmdBindIndexBuffer(m_CommandBuffer, vkBuffer->GetVkBuffer(), offset, VK_INDEX_TYPE_UINT32);
 }
 
 void VulkanCommandQueue::SetConstantBuffer(std::string name, Buffer* buffer) {
@@ -209,7 +215,7 @@ void VulkanCommandQueue::SetSampler(std::string name, Sampler* sampler) {
     m_DescriptorManager->WriteImageInfo(set, binding, imageInfo);
 }
 
-void VulkanCommandQueue::DrawInstansed(uint32_t VertexCountPerInstance, uint32_t InstanceCount,
+void VulkanCommandQueue::DrawInstanced(uint32_t VertexCountPerInstance, uint32_t InstanceCount,
     uint32_t StartVertexLocation, uint32_t StartInstanceLocation) {
     if (!m_InsideRendering) {
         BeginRendering();
@@ -258,6 +264,55 @@ void VulkanCommandQueue::CopyToBuffer(Buffer* dst, uint64_t size, void* data) {
         .size = size
     };
     vkCmdCopyBuffer(m_CommandBuffer, staging, vkDst->GetVkBuffer(), 1, &copyRegion);
+
+    ReleaseResource(new ReleaseResourceWrapper(new BufferReleaseResource(m_Device->GetVkDevice(), staging, memory)));
+}
+
+void  VulkanCommandQueue::CopyToTexture(Texture* dst, uint64_t size, void* data) {
+    VulkanTexture* vkDst = static_cast<VulkanTexture*>(dst);
+
+    VkBuffer staging = nullptr;
+    VkDeviceMemory memory = nullptr;
+
+    VkBufferCreateInfo bufferCreateInfo = {
+        .sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO,
+        .size = size,
+        .usage = VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+        .sharingMode = VK_SHARING_MODE_EXCLUSIVE
+    };
+    vkCreateBuffer(m_Device->GetVkDevice(), &bufferCreateInfo, nullptr, &staging);
+
+    VkMemoryRequirements memoryRequirements;
+    vkGetBufferMemoryRequirements(m_Device->GetVkDevice(), staging, &memoryRequirements);
+
+    VkMemoryAllocateInfo memoryAllocateInfo = {
+        .sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO,
+        .allocationSize = memoryRequirements.size,
+        .memoryTypeIndex = m_Device->FindMemoryTypeIndex(memoryRequirements.memoryTypeBits,
+            VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT)
+    };
+
+    vkAllocateMemory(m_Device->GetVkDevice(), &memoryAllocateInfo, nullptr, &memory);
+    vkBindBufferMemory(m_Device->GetVkDevice(), staging, memory, 0);
+
+    void* mapped = nullptr;
+    vkMapMemory(m_Device->GetVkDevice(), memory, 0, size, 0, &mapped);
+    memcpy(mapped, data, size);
+    vkUnmapMemory(m_Device->GetVkDevice(), memory);
+
+    VkImageSubresourceLayers subresource = {
+        .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
+        .mipLevel = 0,
+        .baseArrayLayer = 0,
+        .layerCount = 1
+    };
+    VkBufferImageCopy copyRegion = {
+        .bufferOffset = 0,
+        .imageSubresource = subresource,
+        .imageExtent = { vkDst->GetDesc().Width, vkDst->GetDesc().Height, 1 }
+    };
+    vkCmdCopyBufferToImage(m_CommandBuffer, staging,
+        vkDst->GetVkImage(), ToVkImageLayout(vkDst->GetLayout()), 1, &copyRegion);
 
     ReleaseResource(new ReleaseResourceWrapper(new BufferReleaseResource(m_Device->GetVkDevice(), staging, memory)));
 }

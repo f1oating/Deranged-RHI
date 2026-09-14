@@ -91,11 +91,10 @@ void VulkanTexture::CreateTexture() {
 void VulkanTexture::CreateMemory() {
     VkMemoryRequirements imageMemoryRequirements;
     vkGetImageMemoryRequirements(m_Device->GetVkDevice(), m_Image, &imageMemoryRequirements);
-    m_SizeInBytes = imageMemoryRequirements.size;
 
     VkMemoryAllocateInfo memoryAllocateInfo = {
         .sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO,
-        .allocationSize = m_SizeInBytes,
+        .allocationSize = imageMemoryRequirements.size,
         .memoryTypeIndex = m_Device->FindMemoryTypeIndex(imageMemoryRequirements.memoryTypeBits,
             VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT)
     };

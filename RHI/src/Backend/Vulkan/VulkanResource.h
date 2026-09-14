@@ -40,13 +40,15 @@ private:
 private:
     VulkanDevice* m_Device = nullptr;
     TextureDesc m_Desc;
+
     VkImage m_Image = nullptr;
     VkDeviceMemory m_Memory = nullptr;
+
     VulkanRenderTargetView* m_RTV = nullptr;
     VulkanDepthStencilView* m_DSV = nullptr;
     VulkanShaderResourceView* m_SRV = nullptr;
+
     ImageLayout m_Layout = ImageLayout::Undefined;
-    uint64_t m_SizeInBytes = 0;
 
 };
 
@@ -61,6 +63,7 @@ public:
 private:
     VulkanDevice* m_Device = nullptr;
     VulkanTexture* m_Texture = nullptr;
+
     VkImageView m_View = nullptr;
 
 };
@@ -76,6 +79,7 @@ public:
 private:
     VulkanDevice* m_Device = nullptr;
     VulkanTexture* m_Texture = nullptr;
+
     VkImageView m_View = nullptr;
 
 };
@@ -91,6 +95,7 @@ public:
 private:
     VulkanDevice* m_Device = nullptr;
     VulkanTexture* m_Texture = nullptr;
+
     VkImageView m_View = nullptr;
 
 };
@@ -112,10 +117,13 @@ private:
 private:
     VulkanDevice* m_Device = nullptr;
     BufferDesc m_Desc;
+
     VkBuffer m_Buffer = nullptr;
     VkDeviceMemory m_Memory = nullptr;
+
     uint64_t m_SizeInBytes = 0;
     uint64_t m_Offset = 0;
+
     void* m_Mapped = nullptr;
 
 };
@@ -132,6 +140,7 @@ public:
 private:
     VulkanDevice* m_Device = nullptr;
     SamplerDesc m_Desc;
+
     VkSampler m_Sampler = nullptr;
     
 };
@@ -463,6 +472,9 @@ inline VkAccessFlags ToVkAccess(uint32_t flags) {
     }
     if (flags & ACCESS_INDEX_READ) {
         vkFlags |= VK_ACCESS_INDEX_READ_BIT;
+    }
+    if (flags & ACCESS_UNIFORM_READ) {
+        vkFlags |= VK_ACCESS_UNIFORM_READ_BIT;
     }
 
     return vkFlags;

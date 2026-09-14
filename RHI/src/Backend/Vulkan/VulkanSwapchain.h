@@ -43,16 +43,20 @@ private:
 
 private:
     GLFWwindow* m_Window = nullptr;
+
     VulkanDevice* m_Device = nullptr;
     VulkanCommandQueue* m_Queue = nullptr;
+
     VkSurfaceKHR m_Surface = nullptr;
     VkSwapchainKHR m_SwapChain = nullptr;
+
     std::vector<VulkanTexture*> m_Textures;
 
+    VulkanFence* m_Fence = nullptr;
+    std::vector<uint64_t> m_FrameFenceValues;
     std::vector<VkSemaphore> m_AcquireSemaphores;
     std::vector<VkSemaphore> m_RenderSemaphores;
-    std::vector<uint64_t> m_FrameFenceValues;
-    VulkanFence* m_Fence = nullptr;
+
     uint64_t m_FenceValue = 0;
     uint64_t m_CurrentFrame = 0;
     uint32_t m_ImageIndex = 0;

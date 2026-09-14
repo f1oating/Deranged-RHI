@@ -35,9 +35,9 @@ std::vector<uint8_t> ShaderCompiler::CompileShader(const char* path) {
 
     slang::PreprocessorMacroDesc macros[] = {
         #ifndef WIN32
-        { "VULKAN", "1" }
+        { "VULKAN", "1" },
         #endif
-        { "TEST", "1" }
+        { "TEST", "1" },
     };
 
     const char* paths[] = {

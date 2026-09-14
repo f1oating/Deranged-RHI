@@ -51,9 +51,11 @@ private:
 private:
     VkInstance m_Instance = nullptr;
     VkPhysicalDevice m_PhysicalDevice = nullptr;
-    std::optional<uint32_t> m_QueueFamily;
     VkDevice m_Device = nullptr;
+
+    std::optional<uint32_t> m_QueueFamily;
     VulkanCommandQueue* m_Queue = nullptr;
+
     std::unique_ptr<RingBuffer> m_RingBuffer = nullptr;
 
 };

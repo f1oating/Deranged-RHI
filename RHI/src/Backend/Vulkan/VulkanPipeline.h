@@ -38,9 +38,11 @@ private:
 
 private:
     VulkanDevice* m_Device = nullptr;
+    GraphicsPipelineDesc m_Desc;
+
     VkPipelineLayout m_Layout = nullptr;
     VkPipeline m_Pipeline = nullptr;
-    GraphicsPipelineDesc m_Desc;
+
     std::vector<VkDescriptorSetLayout> m_DescriptorSetLayouts;
     std::vector<DescriptorSet> m_DescriptorState;
     std::unordered_map<std::string, std::pair<uint32_t, uint32_t>> m_BindingsPlaceMap;

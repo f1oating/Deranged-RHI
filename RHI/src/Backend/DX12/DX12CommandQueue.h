@@ -38,7 +38,7 @@ public:
     void SetRenderTargets(std::vector<RenderTargetView*> rtvs) override;
     void ClearRenderTargets(float r, float g, float b, float a) override;
 
-    void SetVertexBuffer(Buffer* buffer, uint32_t stride) override;
+    void SetVertexBuffer(Buffer* buffer) override;
 
     void SetConstantBuffer(std::string name, Buffer* buffer) override;
     void SetTexture(std::string name, ShaderResourceView* textureView) override;

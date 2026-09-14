@@ -39,16 +39,18 @@ public:
     void SetRenderTargets(std::vector<RenderTargetView*> rtvs) override;
     void ClearRenderTargets(float r, float g, float b, float a) override;
 
-    void SetVertexBuffer(Buffer* buffer, uint32_t stride) override;
+    void SetVertexBuffer(Buffer* buffer) override;
+    void SetIndexBuffer(Buffer* buffer) override;
 
     void SetConstantBuffer(std::string name, Buffer* buffer) override;
     void SetTexture(std::string name, ShaderResourceView* textureView) override;
     void SetSampler(std::string name, Sampler* sampler) override;
 
-    void DrawInstansed(uint32_t VertexCountPerInstance, uint32_t InstanceCount = 1,
+    void DrawInstanced(uint32_t VertexCountPerInstance, uint32_t InstanceCount = 1,
         uint32_t StartVertexLocation = 0, uint32_t StartInstanceLocation = 0) override;
 
     void CopyToBuffer(Buffer* dst, uint64_t size, void* data) override;
+    void CopyToTexture(Texture* dst, uint64_t size, void* data) override;
 
     void Flush() override;
 
@@ -69,22 +71,26 @@ private:
     void EndRendering();
 
 private:
-    uint32_t m_QueueIndex = 0;
     VulkanDevice* m_Device;
     VkQueue m_Queue = nullptr;
+    uint32_t m_QueueIndex = 0;
+
+    ReleaseManager m_ReleaseManager;
+
     std::unique_ptr<CommandBufferPool> m_CommandBufferPool = nullptr;
     VkCommandBuffer m_CommandBuffer = nullptr;
     uint64_t m_CommandBufferNumber = 0;
+
+    VulkanFence* m_Fence = nullptr;
     std::vector<VkSemaphore> m_WaitSemaphores;
     std::vector<uint64_t> m_WaitSemaphoresValues;
     std::vector<VkSemaphore> m_SignalSemaphores;
     std::vector<uint64_t> m_SignalSemaphoresValues;
-    VulkanFence* m_Fence = nullptr;
-    ReleaseManager m_ReleaseManager;
-    std::vector<VulkanRenderTargetView*> m_RTVs;
-    bool m_InsideRendering = false;
+
     std::unique_ptr<DescriptorManager> m_DescriptorManager = nullptr;
     VulkanGraphicsPipelineState* m_BoundPipeline = nullptr;
+    std::vector<VulkanRenderTargetView*> m_RTVs;
+    bool m_InsideRendering = false;
 
 };
 

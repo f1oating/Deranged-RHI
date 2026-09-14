@@ -27,6 +27,7 @@ public:
 
 private:
     VulkanDevice* m_Device = nullptr;
+
     VkSemaphore m_TimelineSemaphore = nullptr;
 
 };
