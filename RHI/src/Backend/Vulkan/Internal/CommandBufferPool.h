@@ -12,8 +12,12 @@ namespace vk {
 
 class CommandBufferPool {
 public:
-    void Init(VkDevice device, uint32_t queueFamily);
-    void Shutdown();
+    CommandBufferPool(VkDevice device, uint32_t queueFamily);
+    ~CommandBufferPool();
+    CommandBufferPool(const CommandBufferPool& other) = delete;
+    CommandBufferPool& operator=(const CommandBufferPool& other) = delete;
+    CommandBufferPool(CommandBufferPool&& other) = delete;
+    CommandBufferPool& operator=(CommandBufferPool&& other) = delete;
 
     VkCommandBuffer AcquireCommandBuffer();
     void ReleaseCommandBuffer(VkCommandBuffer commandBuffer, uint64_t value);

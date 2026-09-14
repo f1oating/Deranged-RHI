@@ -57,14 +57,14 @@ int main() {
     Buffer* buffer = device->CreateBuffer(bufferDesc);
     queue->CopyToBuffer(buffer, sizeof(vertices), vertices);
     queue->Barrier(PIPELINE_STAGE_TRANSFER, PIPELINE_STAGE_VERTEX_INPUT,
-    { { buffer, ACCESS_TRANSFER_WRITE, ACCESS_SHADER_READ } }, {});
+    { { buffer, ACCESS_TRANSFER_WRITE, ACCESS_VERTEX_READ } }, {});
 
-    auto vertexSource = ShaderCompiler::CompileShader("shaders/vertex.slang");
+    auto vertexSource = ShaderCompiler::CompileShader("vertex.slang");
     Shader vertexShader{
         .Data = vertexSource.data(),
         .Size = vertexSource.size()
     };
-    auto fragmentSource = ShaderCompiler::CompileShader("shaders/fragment.slang");
+    auto fragmentSource = ShaderCompiler::CompileShader("fragment.slang");
     Shader fragmentShader{
         .Data = fragmentSource.data(),
         .Size = fragmentSource.size()

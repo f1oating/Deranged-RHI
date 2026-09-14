@@ -8,13 +8,18 @@
 #include <deque>
 #include <vector>
 #include <volk.h>
+#include <memory>
 
 namespace vk {
 
 class DescriptorPool {
 public:
-    void Init(VkDevice device);
-    void Shutdown();
+    DescriptorPool(VkDevice device);
+    ~DescriptorPool();
+    DescriptorPool(const DescriptorPool& other) = delete;
+    DescriptorPool& operator=(const DescriptorPool& other) = delete;
+    DescriptorPool(const DescriptorPool&& other) = delete;
+    DescriptorPool& operator=(const DescriptorPool&& other) = delete;
 
     VkDescriptorSet Allocate(VkDescriptorSetLayout layout);
     void Free(VkDescriptorSet set);
@@ -42,8 +47,12 @@ struct DescriptorSet {
 
 class DescriptorManager {
 public:
-    void Init(VkDevice device);
-    void Shutdown();
+    DescriptorManager(VkDevice device);
+    ~DescriptorManager();
+    DescriptorManager(const DescriptorManager& other) = delete;
+    DescriptorManager& operator=(const DescriptorManager& other) = delete;
+    DescriptorManager(const DescriptorManager&& other) = delete;
+    DescriptorManager& operator=(const DescriptorManager&& other) = delete;
 
     void SetDescriptorState(std::vector<DescriptorSet> descriptorState);
 
@@ -56,7 +65,7 @@ public:
 
 private:
     VkDevice m_Device = nullptr;
-    DescriptorPool m_DescriptorPool;
+    std::unique_ptr<DescriptorPool> m_DescriptorPool = nullptr;
     std::vector<DescriptorSet> m_DescriptorState;
     std::deque<std::pair<VkDescriptorSet, uint64_t>> m_ReleaseQueue;
 

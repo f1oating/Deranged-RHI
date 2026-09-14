@@ -8,6 +8,7 @@
 #include <GLFW/glfw3.h>
 #include "Backend/Vulkan/VulkanResource.h"
 #include "Backend/Vulkan/VulkanPipeline.h"
+#include <spdlog/spdlog.h>
 
 namespace vk {
 
@@ -17,21 +18,25 @@ VulkanDevice::VulkanDevice() {
     PickPhysicalDevice();
     FindQueueFamilyIndex();
     CreateLogicalDevice();
-    m_RingBuffer.Init(m_Device, m_PhysicalDevice);
+    m_RingBuffer = std::make_unique<RingBuffer>(m_Device, m_PhysicalDevice);
     m_Queue = new VulkanCommandQueue(m_QueueFamily.value(), this);
+
+    spdlog::info("VulkanDevice Created.");
 }
 
 VulkanDevice::~VulkanDevice() {
     vkDeviceWaitIdle(m_Device);
     delete m_Queue;
-    m_RingBuffer.Shutdown();
+    m_RingBuffer.reset();
     DestroyLogicalDevice();
     DestroyInstance();
     glfwTerminate();
+
+    spdlog::info("VulkanDevice Destroyed.");
 }
 
 void VulkanDevice::EndFrame() {
-    ReleaseResource(new RingBufferReleaseResource(&m_RingBuffer, m_RingBuffer.GetHead()));
+    ReleaseResource(new RingBufferReleaseResource(m_RingBuffer.get(), m_RingBuffer->GetHead()));
     m_Queue->EndFrame();
 }
 

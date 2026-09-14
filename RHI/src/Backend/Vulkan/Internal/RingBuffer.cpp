@@ -6,7 +6,7 @@
 
 namespace vk {
 
-void RingBuffer::Init(VkDevice device, VkPhysicalDevice physDevice, uint64_t size) {
+RingBuffer::RingBuffer(VkDevice device, VkPhysicalDevice physDevice, uint64_t size) {
     m_Device = device;
     m_PhysDevice = physDevice;
     m_Size = size;
@@ -33,7 +33,7 @@ void RingBuffer::Init(VkDevice device, VkPhysicalDevice physDevice, uint64_t siz
     vkMapMemory(m_Device, m_Memory, 0, m_Size, 0, &m_Mapped);
 }
 
-void RingBuffer::Shutdown() {
+RingBuffer::~RingBuffer() {
     if (m_Memory) {
         vkUnmapMemory(m_Device, m_Memory);
         vkFreeMemory(m_Device, m_Memory, nullptr);

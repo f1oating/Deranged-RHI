@@ -72,7 +72,7 @@ private:
     uint32_t m_QueueIndex = 0;
     VulkanDevice* m_Device;
     VkQueue m_Queue = nullptr;
-    vk::CommandBufferPool m_CommandBufferPool;
+    std::unique_ptr<CommandBufferPool> m_CommandBufferPool = nullptr;
     VkCommandBuffer m_CommandBuffer = nullptr;
     uint64_t m_CommandBufferNumber = 0;
     std::vector<VkSemaphore> m_WaitSemaphores;
@@ -83,7 +83,7 @@ private:
     ReleaseManager m_ReleaseManager;
     std::vector<VulkanRenderTargetView*> m_RTVs;
     bool m_InsideRendering = false;
-    DescriptorManager m_DescriptorManager;
+    std::unique_ptr<DescriptorManager> m_DescriptorManager = nullptr;
     VulkanGraphicsPipelineState* m_BoundPipeline = nullptr;
 
 };

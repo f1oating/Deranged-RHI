@@ -136,7 +136,9 @@ enum AccessFlags : uint32_t {
     ACCESS_DEPTH_STENCIL_ATTACHMENT_READ = 1 << 5,
     ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE = 1 << 6,
     ACCESS_TRANSFER_READ = 1 << 7,
-    ACCESS_TRANSFER_WRITE = 1 << 8
+    ACCESS_TRANSFER_WRITE = 1 << 8,
+    ACCESS_VERTEX_READ = 1 << 9,
+    ACCESS_INDEX_READ= 1 << 10
 };
 
 enum PipelineStageFlags : uint32_t {

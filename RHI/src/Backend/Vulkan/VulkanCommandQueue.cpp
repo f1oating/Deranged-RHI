@@ -5,7 +5,7 @@
 #include "Backend/Vulkan/VulkanCommandQueue.h"
 
 #include <cstring>
-
+#include <spdlog/spdlog.h>
 #include "VulkanResource.h"
 #include "Backend/Vulkan/VulkanDevice.h"
 
@@ -15,20 +15,24 @@ VulkanCommandQueue::VulkanCommandQueue(uint32_t queueIndex, VulkanDevice* device
     m_QueueIndex = queueIndex;
     m_Device = device;
     vkGetDeviceQueue(m_Device->GetVkDevice(), m_QueueIndex, 0, &m_Queue);
-    m_CommandBufferPool.Init(m_Device->GetVkDevice(), m_QueueIndex);
-    m_DescriptorManager.Init(m_Device->GetVkDevice());
+    m_CommandBufferPool = std::make_unique<CommandBufferPool>(m_Device->GetVkDevice(), m_QueueIndex);
+    m_DescriptorManager = std::make_unique<DescriptorManager>(m_Device->GetVkDevice());
     m_Fence = new VulkanFence(m_Device);
 
     AcquireCommandBuffer();
+
+    spdlog::info("VulkanQueue Created.");
 }
 
 VulkanCommandQueue::~VulkanCommandQueue() {
     if (m_Fence) {
         delete m_Fence;
     }
-    m_DescriptorManager.Shutdown();
-    m_CommandBufferPool.Shutdown();
+    m_DescriptorManager.reset();
+    m_CommandBufferPool.reset();
     m_ReleaseManager.Clear();
+
+    spdlog::info("VulkanQueue Destroyed.");
 }
 
 void VulkanCommandQueue::Wait(Fence* fence, uint64_t value) {
@@ -44,7 +48,7 @@ void VulkanCommandQueue::Signal(Fence* fence, uint64_t value) {
 void VulkanCommandQueue::SetGraphicsPipelineState(GraphicsPipelineState* graphicsPipelineState) {
     VulkanGraphicsPipelineState* vkGraphicsPipelineState = static_cast<VulkanGraphicsPipelineState*>(graphicsPipelineState);
 
-    m_DescriptorManager.SetDescriptorState(vkGraphicsPipelineState->GetDescriptorState());
+    m_DescriptorManager->SetDescriptorState(vkGraphicsPipelineState->GetDescriptorState());
     vkCmdBindPipeline(m_CommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, vkGraphicsPipelineState->GetVkPipeline());
     m_BoundPipeline = vkGraphicsPipelineState;
 }
@@ -179,7 +183,7 @@ void VulkanCommandQueue::SetConstantBuffer(std::string name, Buffer* buffer) {
         .range = VK_WHOLE_SIZE
     };
 
-    m_DescriptorManager.WriteBufferInfo(set, binding, bufferInfo);
+    m_DescriptorManager->WriteBufferInfo(set, binding, bufferInfo);
 }
 
 void VulkanCommandQueue::SetTexture(std::string name, ShaderResourceView* textureView) {
@@ -191,7 +195,7 @@ void VulkanCommandQueue::SetTexture(std::string name, ShaderResourceView* textur
         .imageLayout = ToVkImageLayout(vkTextureView->GetVkTexture()->GetLayout())
     };
 
-    m_DescriptorManager.WriteImageInfo(set, binding, imageInfo);
+    m_DescriptorManager->WriteImageInfo(set, binding, imageInfo);
 }
 
 void VulkanCommandQueue::SetSampler(std::string name, Sampler* sampler) {
@@ -202,7 +206,7 @@ void VulkanCommandQueue::SetSampler(std::string name, Sampler* sampler) {
         .sampler = vkSampler->GetVkSampler()
     };
 
-    m_DescriptorManager.WriteImageInfo(set, binding, imageInfo);
+    m_DescriptorManager->WriteImageInfo(set, binding, imageInfo);
 }
 
 void VulkanCommandQueue::DrawInstansed(uint32_t VertexCountPerInstance, uint32_t InstanceCount,
@@ -211,7 +215,7 @@ void VulkanCommandQueue::DrawInstansed(uint32_t VertexCountPerInstance, uint32_t
         BeginRendering();
     }
 
-    m_DescriptorManager.WriteAndBind(m_CommandBuffer, m_BoundPipeline->GetVkLayout(), m_CommandBufferNumber);
+    m_DescriptorManager->WriteAndBind(m_CommandBuffer, m_BoundPipeline->GetVkLayout(), m_CommandBufferNumber);
 
     vkCmdDraw(m_CommandBuffer, VertexCountPerInstance, InstanceCount, StartVertexLocation, StartInstanceLocation);
 }
@@ -279,13 +283,13 @@ void VulkanCommandQueue::ReleaseResource(ReleaseResourceWrapper* releaseResource
 
 void VulkanCommandQueue::EndFrame() {
     uint64_t completedFenceValue = m_Fence->GetCompletedValue();
-    m_CommandBufferPool.Poll(completedFenceValue);
-    m_DescriptorManager.Free(completedFenceValue);
+    m_CommandBufferPool->Poll(completedFenceValue);
+    m_DescriptorManager->Free(completedFenceValue);
     m_ReleaseManager.DiscardResources(completedFenceValue);
 }
 
 void VulkanCommandQueue::AcquireCommandBuffer() {
-    m_CommandBuffer = m_CommandBufferPool.AcquireCommandBuffer();
+    m_CommandBuffer = m_CommandBufferPool->AcquireCommandBuffer();
     vkResetCommandBuffer(m_CommandBuffer, 0);
 
     VkCommandBufferBeginInfo commandBufferBeginInfo = {
@@ -309,13 +313,13 @@ void VulkanCommandQueue::SubmitCommandBuffer() {
         .pSignalSemaphoreValues = m_SignalSemaphoresValues.data()
     };
 
-    VkPipelineStageFlags pipelineStageFlagBits = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
+    std::vector<VkPipelineStageFlags> pipelineStageFlagBits(m_WaitSemaphores.size(), VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT);
     VkSubmitInfo submitInfo = {
         .sType = VK_STRUCTURE_TYPE_SUBMIT_INFO,
         .pNext = &timelineSubmitInfo,
         .waitSemaphoreCount = (uint32_t)m_WaitSemaphores.size(),
         .pWaitSemaphores = m_WaitSemaphores.data(),
-        .pWaitDstStageMask = &pipelineStageFlagBits,
+        .pWaitDstStageMask = pipelineStageFlagBits.data(),
         .commandBufferCount = 1,
         .pCommandBuffers = &m_CommandBuffer,
         .signalSemaphoreCount = (uint32_t)m_SignalSemaphores.size(),
@@ -329,7 +333,7 @@ void VulkanCommandQueue::SubmitCommandBuffer() {
     m_SignalSemaphoresValues.clear();
     m_RTVs.clear();
 
-    m_CommandBufferPool.ReleaseCommandBuffer(m_CommandBuffer, m_CommandBufferNumber);
+    m_CommandBufferPool->ReleaseCommandBuffer(m_CommandBuffer, m_CommandBufferNumber);
     m_ReleaseManager.DiscardStaleResources(m_CommandBufferNumber);
 }
 

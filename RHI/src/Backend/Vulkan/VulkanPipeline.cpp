@@ -6,6 +6,7 @@
 #include "Backend/Vulkan/VulkanDevice.h"
 #include <vector>
 #include <spirv_reflect.h>
+#include <spdlog/spdlog.h>
 
 namespace vk {
 
@@ -15,6 +16,8 @@ VulkanGraphicsPipelineState::VulkanGraphicsPipelineState(GraphicsPipelineDesc de
 
     CreatePipelineLayout();
     CreatePipeline();
+
+    spdlog::info("VulkanGraphicsPipelineState Created.");
 }
 
 VulkanGraphicsPipelineState::~VulkanGraphicsPipelineState() {
@@ -24,6 +27,8 @@ VulkanGraphicsPipelineState::~VulkanGraphicsPipelineState() {
         m_Device->ReleaseResource(
             new DescriptorSetLayoutReleaseResource(m_Device->GetVkDevice(), m_DescriptorSetLayouts));
     }
+
+    spdlog::info("VulkanGraphicsPipelineState Destroyed.");
 }
 
 GraphicsPipelineDesc VulkanGraphicsPipelineState::GetDesc() {

@@ -458,6 +458,12 @@ inline VkAccessFlags ToVkAccess(uint32_t flags) {
     if (flags & ACCESS_TRANSFER_WRITE) {
         vkFlags |= VK_ACCESS_TRANSFER_WRITE_BIT;
     }
+    if (flags & ACCESS_VERTEX_READ) {
+        vkFlags |= VK_ACCESS_VERTEX_ATTRIBUTE_READ_BIT;
+    }
+    if (flags & ACCESS_INDEX_READ) {
+        vkFlags |= VK_ACCESS_INDEX_READ_BIT;
+    }
 
     return vkFlags;
 }
@@ -470,7 +476,7 @@ inline VkPipelineStageFlags ToVkStage(uint32_t flags) {
         vkFlags |= VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
     }
     if (flags & PIPELINE_STAGE_VERTEX_INPUT) {
-        vkFlags |= VK_PIPELINE_STAGE_VERTEX_SHADER_BIT;
+        vkFlags |= VK_PIPELINE_STAGE_VERTEX_INPUT_BIT;
     }
     if (flags & PIPELINE_STAGE_VERTEX_SHADER) {
         vkFlags |= VK_PIPELINE_STAGE_VERTEX_SHADER_BIT;

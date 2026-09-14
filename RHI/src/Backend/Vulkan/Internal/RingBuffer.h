@@ -15,8 +15,12 @@ template<typename T> inline T AlignUp(T size, T alignment) {
 
 class RingBuffer {
 public:
-    void Init(VkDevice device, VkPhysicalDevice physDevice, uint64_t size = 512 * 512 * 4);
-    void Shutdown();
+    RingBuffer(VkDevice device, VkPhysicalDevice physDevice, uint64_t size = 512 * 512 * 4);
+    ~RingBuffer();
+    RingBuffer(const RingBuffer& other) = delete;
+    RingBuffer& operator=(const RingBuffer& other) = delete;
+    RingBuffer(const RingBuffer&& other) = delete;
+    RingBuffer& operator=(RingBuffer&& other) = delete;
 
     uint64_t Allocate(uint64_t size);
 

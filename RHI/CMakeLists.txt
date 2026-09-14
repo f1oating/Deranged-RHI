@@ -28,12 +28,19 @@ FetchContent_Declare(
         SOURCE_DIR ${CMAKE_BINARY_DIR}/glfw
 )
 
-set(SPIRV_REFLECT_STATIC_LIB ON CACHE INTERNAL "Turn on static lib for spirv-reflect")
+set(SPIRV_REFLECT_STATIC_LIB ON)
 FetchContent_Declare(
     spirv-reflect
     GIT_REPOSITORY https://github.com/KhronosGroup/SPIRV-Reflect.git
     GIT_TAG 3954c1e89a031cfb1724fa640be4e696558e6e8c
     SOURCE_DIR ${CMAKE_BINARY_DIR}/spirv-reflect
+)
+
+set(SPDLOG_BUILD_PIC ON)
+FetchContent_Declare(
+    spdlog
+    URL https://github.com/gabime/spdlog/archive/refs/tags/v1.17.0.zip
+    SOURCE_DIR ${CMAKE_BINARY_DIR}/spdlog
 )
 
 if(WIN32)
@@ -63,7 +70,7 @@ if(WIN32)
     )
 endif()
 
-FetchContent_MakeAvailable(volk glfw spirv-reflect)
+FetchContent_MakeAvailable(volk glfw spirv-reflect spdlog)
 add_library(RHI SHARED ${SOURCES_CORE} ${SOURCES_VULKAN} ${SOURCES_DX12})
 
 target_include_directories(RHI
@@ -79,6 +86,7 @@ target_link_libraries(RHI
         Vulkan::Vulkan
         glfw
         spirv-reflect-static
+        spdlog
         $<$<PLATFORM_ID:Windows>:agility>
         $<$<PLATFORM_ID:Windows>:d3d12>
         $<$<PLATFORM_ID:Windows>:dxgi>

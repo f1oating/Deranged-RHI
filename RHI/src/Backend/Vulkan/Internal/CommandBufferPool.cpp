@@ -6,7 +6,7 @@
 
 namespace vk {
 
-void CommandBufferPool::Init(VkDevice device, uint32_t queueFamily) {
+CommandBufferPool::CommandBufferPool(VkDevice device, uint32_t queueFamily) {
     m_Device = device;
 
     VkCommandPoolCreateInfo commandPoolCreateInfo = {
@@ -18,7 +18,7 @@ void CommandBufferPool::Init(VkDevice device, uint32_t queueFamily) {
     VkResult res = vkCreateCommandPool(m_Device, &commandPoolCreateInfo, nullptr, &m_CommandPool);
 }
 
-void CommandBufferPool::Shutdown() {
+CommandBufferPool::~CommandBufferPool() {
     if (m_CommandPool) {
         vkDestroyCommandPool(m_Device, m_CommandPool, nullptr);
     }

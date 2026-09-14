@@ -33,9 +33,23 @@ std::vector<uint8_t> ShaderCompiler::CompileShader(const char* path) {
         .profile = m_GlobalSession->findProfile(PROFILE)
     };
 
+    slang::PreprocessorMacroDesc macros[] = {
+        #ifndef WIN32
+        { "VULKAN", "1" }
+        #endif
+    };
+
+    const char* paths[] = {
+        "shaders"
+    };
+
     slang::SessionDesc sessionDesc = {
         .targets = &targetDesc,
-        .targetCount = 1
+        .targetCount = 1,
+        .searchPaths = paths,
+        .searchPathCount = sizeof(paths) / sizeof(char*),
+        .preprocessorMacros = macros,
+        .preprocessorMacroCount = sizeof(macros) / sizeof(slang::PreprocessorMacroDesc),
     };
 
     slang::ISession* session = nullptr;

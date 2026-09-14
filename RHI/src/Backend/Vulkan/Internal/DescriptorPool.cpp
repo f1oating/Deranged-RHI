@@ -6,7 +6,7 @@
 
 namespace vk {
 
-void DescriptorPool::Init(VkDevice device) {
+DescriptorPool::DescriptorPool(VkDevice device) {
     m_Device = device;
 
     VkDescriptorPoolSize sizes[] = {
@@ -24,7 +24,7 @@ void DescriptorPool::Init(VkDevice device) {
     vkCreateDescriptorPool(m_Device, &createInfo, nullptr, &m_DescriptorPool);
 }
 
-void DescriptorPool::Shutdown() {
+DescriptorPool::~DescriptorPool() {
     if (m_DescriptorPool) {
         vkDestroyDescriptorPool(m_Device, m_DescriptorPool, nullptr);
     }
@@ -50,13 +50,13 @@ void DescriptorPool::Free(VkDescriptorSet set) {
     ++m_Size;
 }
 
-void DescriptorManager::Init(VkDevice device) {
+DescriptorManager::DescriptorManager(VkDevice device) {
     m_Device = device;
-    m_DescriptorPool.Init(m_Device);
+    m_DescriptorPool = std::make_unique<DescriptorPool>(m_Device);
 }
 
-void DescriptorManager::Shutdown() {
-    m_DescriptorPool.Shutdown();
+DescriptorManager::~DescriptorManager() {
+    m_DescriptorPool.reset();
 }
 
 void DescriptorManager::SetDescriptorState(std::vector<DescriptorSet> descriptorState) {
@@ -74,7 +74,7 @@ void DescriptorManager::WriteImageInfo(uint32_t set, uint32_t binding, VkDescrip
 void DescriptorManager::WriteAndBind(VkCommandBuffer commandBuffer, VkPipelineLayout layout, uint64_t frame) {
     std::vector<VkDescriptorSet> descriptorSets;
     for (int i = 0; i < m_DescriptorState.size(); i++) {
-        descriptorSets.push_back(m_DescriptorPool.Allocate(m_DescriptorState[i].Layout));
+        descriptorSets.push_back(m_DescriptorPool->Allocate(m_DescriptorState[i].Layout));
     }
 
     std::vector<VkWriteDescriptorSet> writes;
@@ -116,7 +116,7 @@ void DescriptorManager::Free(uint64_t frame) {
     while (!m_ReleaseQueue.empty()) {
         const auto& [set, value] = m_ReleaseQueue.front();
         if (value <= frame) {
-            m_DescriptorPool.Free(set);
+            m_DescriptorPool->Free(set);
             m_ReleaseQueue.pop_front();
             continue;
         }

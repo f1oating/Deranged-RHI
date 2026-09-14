@@ -35,6 +35,7 @@ private:
     void CheckQueueSupport();
     void CreateSwapchain();
     void CreateSync();
+
     void DestroySync();
     void DestroySwapchain();
     void DestroySurface();

@@ -37,7 +37,7 @@ public:
     VkInstance GetVkInstance() { return m_Instance; }
     VkDevice GetVkDevice() const { return m_Device; }
     VkPhysicalDevice GetVkPhysicalDevice() const { return m_PhysicalDevice; }
-    RingBuffer* GetRingBuffer() { return &m_RingBuffer; }
+    RingBuffer* GetRingBuffer() { return m_RingBuffer.get(); }
 
 private:
     void CreateInstance();
@@ -54,7 +54,7 @@ private:
     std::optional<uint32_t> m_QueueFamily;
     VkDevice m_Device = nullptr;
     VulkanCommandQueue* m_Queue = nullptr;
-    RingBuffer m_RingBuffer;
+    std::unique_ptr<RingBuffer> m_RingBuffer = nullptr;
 
 };
 
