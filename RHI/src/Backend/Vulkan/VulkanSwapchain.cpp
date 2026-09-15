@@ -9,11 +9,11 @@
 
 namespace vk {
 
-VulkanSwapchain::VulkanSwapchain(VulkanCommandQueue* queue, VulkanDevice* device) {
+VulkanSwapchain::VulkanSwapchain(WindowInfo window, VulkanCommandQueue* queue, VulkanDevice* device) {
+    m_Window = window;
     m_Queue = queue;
     m_Device = device;
 
-    CreateWindow();
     CreateSurface();
     CheckQueueSupport();
     CreateSwapchain();
@@ -39,21 +39,12 @@ VulkanSwapchain::~VulkanSwapchain() {
     DestroySync();
     DestroySwapchain();
     DestroySurface();
-    DestroyWindow();
 
     spdlog::info("VulkanSwapchain Destroyed.");
 }
 
 Texture* VulkanSwapchain::GetCurrentBackBuffer() {
     return m_Textures[m_ImageIndex];
-}
-
-void VulkanSwapchain::UpdateWindow() {
-    glfwPollEvents();
-}
-
-bool VulkanSwapchain::WindowShouldClose() {
-    return glfwWindowShouldClose(m_Window);
 }
 
 void VulkanSwapchain::Present() {
@@ -103,14 +94,25 @@ void VulkanSwapchain::AcquireImage() {
     m_Queue->AddWaitSemaphore(m_AcquireSemaphores[m_CurrentFrame]);
 }
 
-void VulkanSwapchain::CreateWindow() {
-
-    glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
-    m_Window = glfwCreateWindow(800, 600, "RHI", nullptr, nullptr);
-}
-
 void VulkanSwapchain::CreateSurface() {
-    VkResult res = glfwCreateWindowSurface(m_Device->GetVkInstance(), m_Window, nullptr, &m_Surface);
+#ifdef WIN32
+#else
+    if (m_Device->GetDesc().WindowProtocol == DeviceDesc::DISPLAY_SERVER_PROTOCOL_WAYLAND) {
+        VkWaylandSurfaceCreateInfoKHR waylandCreateInfo = {
+            .sType = VK_STRUCTURE_TYPE_WAYLAND_SURFACE_CREATE_INFO_KHR,
+            .display = static_cast<wl_display*>(m_Window.Wayland.Display),
+            .surface = static_cast<wl_surface*>(m_Window.Wayland.Surface)
+        };
+        vkCreateWaylandSurfaceKHR(m_Device->GetVkInstance(), &waylandCreateInfo, nullptr, &m_Surface);
+    } else {
+        VkXcbSurfaceCreateInfoKHR xcbCreateInfo = {
+            .sType = VK_STRUCTURE_TYPE_XCB_SURFACE_CREATE_INFO_KHR,
+            .connection = static_cast<xcb_connection_t*>(m_Window.Xcb.Connection),
+            .window = m_Window.Xcb.Window
+        };
+        vkCreateXcbSurfaceKHR(m_Device->GetVkInstance(), &xcbCreateInfo, nullptr, &m_Surface);
+    }
+#endif
 }
 
 void VulkanSwapchain::CheckQueueSupport() {
@@ -204,10 +206,6 @@ void VulkanSwapchain::DestroySurface() {
     if (m_Surface) {
         vkDestroySurfaceKHR(m_Device->GetVkInstance(), m_Surface, nullptr);
     }
-}
-
-void VulkanSwapchain::DestroyWindow() {
-    glfwDestroyWindow(m_Window);
 }
 
 } // vk

@@ -10,16 +10,26 @@
 #include "Swapchain.h"
 #include "Resource.h"
 
+struct DeviceDesc {
+#ifdef WIN32
+#else
+    enum {
+        DISPLAY_SERVER_PROTOCOL_XCB,
+        DISPLAY_SERVER_PROTOCOL_WAYLAND
+    } WindowProtocol;
+#endif
+};
+
 class Device {
 public:
     virtual ~Device() = default;
 
-    static Device* Create();
+    static Device* Create(DeviceDesc desc);
 
     virtual void EndFrame() = 0;
 
     virtual CommandQueue* GetCommandQueue() = 0;
-    virtual Swapchain* CreateSwapchain() = 0;
+    virtual Swapchain* CreateSwapchain(WindowInfo window) = 0;
     virtual GraphicsPipelineState* CreateGraphicsPipelineState(GraphicsPipelineDesc desc) = 0;
     virtual Texture* CreateTexture(TextureDesc desc) = 0;
     virtual RenderTargetView* CreateRenderTargetView(Texture* texture) = 0;
@@ -27,6 +37,8 @@ public:
     virtual ShaderResourceView* CreateShaderResourceView(Texture* texture) = 0;
     virtual Buffer* CreateBuffer(BufferDesc desc) = 0;
     virtual Sampler* CreateSampler(SamplerDesc desc) = 0;
+
+    virtual DeviceDesc GetDesc() = 0;
 
 };
 

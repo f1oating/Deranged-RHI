@@ -45,7 +45,6 @@ void VulkanGraphicsPipelineState::ReflectShader(Shader shader) {
     sets.resize(setsCount);
     spvReflectEnumerateDescriptorSets(&module, &setsCount, sets.data());
 
-    m_DescriptorState.resize(setsCount);
     for (int i = 0; i < setsCount; i++) {
         m_DescriptorState[i].Descriptors.resize(sets[i]->binding_count);
         for (int j = 0; j < sets[i]->binding_count; j++) {
@@ -62,6 +61,7 @@ void VulkanGraphicsPipelineState::ReflectShader(Shader shader) {
 }
 
 void VulkanGraphicsPipelineState::CreatePipelineLayout() {
+    m_DescriptorState.resize(1);
     if (m_Desc.VertexShader.Data) {
         ReflectShader(m_Desc.VertexShader);
     }

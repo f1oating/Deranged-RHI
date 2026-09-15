@@ -10,10 +10,10 @@
     #include "Backend/Vulkan/VulkanDevice.h"
 #endif
 
-Device* Device::Create() {
+Device* Device::Create(DeviceDesc desc) {
 #ifdef WIN32
-    return new dx::DX12Device();
+    return new dx::DX12Device(desc);
 #else
-    return new vk::VulkanDevice();
+    return new vk::VulkanDevice(desc);
 #endif
 }

@@ -7,14 +7,29 @@
 
 #include "Resource.h"
 
+struct WindowInfo {
+#ifdef WIN32
+    void* Window;
+#else
+    union {
+        struct {
+            uint32_t Window;
+            void* Connection;
+        } Xcb;
+        struct {
+            void* Display;
+            void* Surface;
+        } Wayland;
+    };
+#endif
+};
+
 class Swapchain {
 public:
     virtual ~Swapchain() = default;
 
     virtual Texture* GetCurrentBackBuffer() = 0;
 
-    virtual void UpdateWindow() = 0;
-    virtual bool WindowShouldClose() = 0;
     virtual void Present() = 0;
 
 };

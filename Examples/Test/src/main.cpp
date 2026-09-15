@@ -2,9 +2,9 @@
 // Created by alan on 12/08/2026.
 //
 
-#include "Device.h"
 #include "ShaderCompiler.h"
 #include <cstring>
+#include "Application.h"
 
 #ifdef WIN32
 #include <windows.h>
@@ -13,16 +13,13 @@ extern "C" { __declspec(dllexport) extern const char* D3D12SDKPath = ".\\D3D12\\
 #endif
 
 int main() {
-    ShaderCompiler::Init();
+    Application application;
 
-    Device* device = Device::Create();
-    CommandQueue* queue = device->GetCommandQueue();
-    Swapchain* swapchain = device->CreateSwapchain();
-    GraphicsPipelineState* pipelineState;
+    Device* device = application.GetDevice();
+    CommandQueue* queue = application.GetQueue();
+    Swapchain* swapchain = application.GetSwapchain();
+    GraphicsPipelineState* pipelineState = nullptr;
 
-    float color[] = {
-        0.1f, 0.6f, 0.1f, 1.0f
-    };
     BufferDesc cbufferDesc = {
         .Size = 256,
         .BindFlags = BUFFER_BIND_UNIFORM,
@@ -77,8 +74,8 @@ int main() {
     };
     pipelineState = device->CreateGraphicsPipelineState(pipelineDesc);
 
-    while(!swapchain->WindowShouldClose()) {
-        swapchain->UpdateWindow();
+    while(!application.WindowShouldClose()) {
+        application.BeginFrame();
 
         Texture* currentBackBuffer = swapchain->GetCurrentBackBuffer();
         TextureDesc backBufferDesc = currentBackBuffer->GetDesc();
@@ -94,28 +91,27 @@ int main() {
             (float)backBufferDesc.Height, 0.0f, 1.0f });
         queue->SetScissor({ 0, 0, (int)backBufferDesc.Width, (int)backBufferDesc.Height });
 
-        queue->SetVertexBuffer(buffer);
+        Mesh cube = application.GetCubeMesh();
+        queue->SetVertexBuffer(cube.Vertex);
+        queue->SetIndexBuffer(cube.Index);
+
+        glm::mat4 viewProj = application.GetCamera()->GetViewMatrix() * application.GetCamera()->GetProjectionMatrix();
         void* ptr = cbuffer->Map();
-        memcpy(ptr, color, 16);
+        memcpy(ptr, &viewProj, sizeof(glm::mat4));
 
-        queue->SetConstantBuffer("Color", cbuffer);
+        //queue->SetConstantBuffer("ViewProj", cbuffer);
 
-        queue->DrawInstanced(3);
+        queue->DrawIndexedInstanced(cube.NumIndices);
 
         queue->Barrier(PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT, PIPELINE_STAGE_NONE, {},
             { { currentBackBuffer, ImageLayout::Present, ACCESS_COLOR_ATTACHMENT_WRITE, ACCESS_NONE } });
 
-        device->EndFrame();
-        swapchain->Present();
+        application.EndFrame();
     }
 
     delete cbuffer;
     delete buffer;
     delete pipelineState;
-    delete swapchain;
-    delete device;
-
-    ShaderCompiler::Shutdown();
 
     return 0;
 }

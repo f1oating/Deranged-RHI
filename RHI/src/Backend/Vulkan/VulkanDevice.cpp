@@ -5,15 +5,15 @@
 #include "Backend/Vulkan/VulkanDevice.h"
 #include <vector>
 #include "Backend/Vulkan/VulkanSwapchain.h"
-#include <GLFW/glfw3.h>
 #include "Backend/Vulkan/VulkanResource.h"
 #include "Backend/Vulkan/VulkanPipeline.h"
 #include <spdlog/spdlog.h>
 
 namespace vk {
 
-VulkanDevice::VulkanDevice() {
-    glfwInit();
+VulkanDevice::VulkanDevice(DeviceDesc desc) {
+    m_Desc = desc;
+
     CreateInstance();
     PickPhysicalDevice();
     FindQueueFamilyIndex();
@@ -30,7 +30,6 @@ VulkanDevice::~VulkanDevice() {
     m_RingBuffer.reset();
     DestroyLogicalDevice();
     DestroyInstance();
-    glfwTerminate();
 
     spdlog::info("VulkanDevice Destroyed.");
 }
@@ -44,8 +43,8 @@ CommandQueue* VulkanDevice::GetCommandQueue() {
     return m_Queue;
 }
 
-Swapchain* VulkanDevice::CreateSwapchain() {
-    return new VulkanSwapchain(m_Queue, this);
+Swapchain* VulkanDevice::CreateSwapchain(WindowInfo window) {
+    return new VulkanSwapchain(window, m_Queue, this);
 }
 
 GraphicsPipelineState* VulkanDevice::CreateGraphicsPipelineState(GraphicsPipelineDesc desc) {
@@ -74,6 +73,10 @@ Buffer* VulkanDevice::CreateBuffer(BufferDesc desc) {
 
 Sampler* VulkanDevice::CreateSampler(SamplerDesc desc) {
     return new VulkanSampler(desc, this);
+}
+
+DeviceDesc VulkanDevice::GetDesc() {
+    return m_Desc;
 }
 
 void VulkanDevice::ReleaseResource(ReleaseResourceBase *resource) {
@@ -115,8 +118,15 @@ void VulkanDevice::CreateInstance() {
         "VK_LAYER_KHRONOS_validation"
     };
 
-    uint32_t extensionCount;
-    const char** extensions = glfwGetRequiredInstanceExtensions(&extensionCount);
+    std::vector<const char*> extensions = {
+        "VK_KHR_surface",
+    };
+
+    if (m_Desc.WindowProtocol == DeviceDesc::DISPLAY_SERVER_PROTOCOL_XCB) {
+        extensions.push_back("VK_KHR_xcb_surface");
+    } else {
+        extensions.push_back("VK_KHR_wayland_surface");
+    }
 
     VkInstanceCreateInfo createInfo = {
         .sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO,
@@ -124,8 +134,8 @@ void VulkanDevice::CreateInstance() {
         .pApplicationInfo = &appInfo,
         .enabledLayerCount = (uint32_t)layers.size(),
         .ppEnabledLayerNames = layers.data(),
-        .enabledExtensionCount = extensionCount,
-        .ppEnabledExtensionNames = extensions
+        .enabledExtensionCount = (uint32_t)extensions.size(),
+        .ppEnabledExtensionNames = extensions.data()
     };
 
     VkResult res = vkCreateInstance(&createInfo, nullptr, &m_Instance);

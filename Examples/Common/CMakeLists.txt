@@ -22,7 +22,19 @@ FetchContent_Declare(
     SOURCE_DIR ${CMAKE_BINARY_DIR}/slang
 )
 
-FetchContent_MakeAvailable(slang)
+FetchContent_Declare(
+    glm
+    URL https://github.com/g-truc/glm/archive/refs/tags/1.0.3.zip
+    SOURCE_DIR ${CMAKE_BINARY_DIR}/glm
+)
+
+FetchContent_Declare(
+    glfw
+    URL https://github.com/glfw/glfw/releases/download/3.5.1/glfw-3.5.1.zip
+    SOURCE_DIR ${CMAKE_BINARY_DIR}/glfw
+)
+
+FetchContent_MakeAvailable(slang glm glfw)
 
 add_library(slang SHARED IMPORTED)
 set_target_properties(slang PROPERTIES
@@ -51,4 +63,7 @@ target_link_libraries(Common
     PUBLIC
         RHI
         slang
+        glm
+        glfw
+        $<$<PLATFORM_ID:Linux>:X11-xcb>
 )

@@ -16,16 +16,15 @@ include(FetchContent)
 
 find_package(Vulkan REQUIRED)
 
+if(WIN32)
+    set(VOLK_STATIC_DEFINES VK_USE_PLATFORM_XCB_KHR VK_USE_PLATFORM_WAYLAND_KHR VK_USE_PLATFORM_WIN32_KHR)
+else()
+    set(VOLK_STATIC_DEFINES VK_USE_PLATFORM_XCB_KHR VK_USE_PLATFORM_WAYLAND_KHR)
+endif ()
 FetchContent_Declare(
-        volk
-        URL https://github.com/zeux/volk/archive/refs/tags/1.4.350.zip
-        SOURCE_DIR ${CMAKE_BINARY_DIR}/volk
-)
-
-FetchContent_Declare(
-        glfw
-        URL https://github.com/glfw/glfw/releases/download/3.5.1/glfw-3.5.1.zip
-        SOURCE_DIR ${CMAKE_BINARY_DIR}/glfw
+    volk
+    URL https://github.com/zeux/volk/archive/refs/tags/1.4.350.zip
+    SOURCE_DIR ${CMAKE_BINARY_DIR}/volk
 )
 
 set(SPIRV_REFLECT_STATIC_LIB ON)
@@ -70,7 +69,7 @@ if(WIN32)
     )
 endif()
 
-FetchContent_MakeAvailable(volk glfw spirv-reflect spdlog)
+FetchContent_MakeAvailable(volk spirv-reflect spdlog)
 add_library(RHI SHARED ${SOURCES_CORE} ${SOURCES_VULKAN} ${SOURCES_DX12})
 
 target_include_directories(RHI
@@ -84,7 +83,6 @@ target_link_libraries(RHI
     PRIVATE
         volk
         Vulkan::Vulkan
-        glfw
         spirv-reflect-static
         spdlog
         $<$<PLATFORM_ID:Windows>:agility>

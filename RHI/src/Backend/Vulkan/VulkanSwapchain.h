@@ -7,7 +7,6 @@
 
 #include <volk.h>
 #include "Swapchain.h"
-#include <GLFW/glfw3.h>
 #include "Backend/Vulkan/VulkanCommandQueue.h"
 #include "Backend/Vulkan/VulkanFence.h"
 #include "Backend/Vulkan/VulkanResource.h"
@@ -18,19 +17,16 @@ class VulkanDevice;
 
 class VulkanSwapchain : public Swapchain {
 public:
-    VulkanSwapchain(VulkanCommandQueue* queue, VulkanDevice* device);
+    VulkanSwapchain(WindowInfo window, VulkanCommandQueue* queue, VulkanDevice* device);
     ~VulkanSwapchain() override;
 
     Texture* GetCurrentBackBuffer() override;
 
-    void UpdateWindow() override;
-    bool WindowShouldClose() override;
     void Present() override;
 
 private:
     void AcquireImage();
 
-    void CreateWindow();
     void CreateSurface();
     void CheckQueueSupport();
     void CreateSwapchain();
@@ -39,10 +35,9 @@ private:
     void DestroySync();
     void DestroySwapchain();
     void DestroySurface();
-    void DestroyWindow();
 
 private:
-    GLFWwindow* m_Window = nullptr;
+    WindowInfo m_Window;
 
     VulkanDevice* m_Device = nullptr;
     VulkanCommandQueue* m_Queue = nullptr;

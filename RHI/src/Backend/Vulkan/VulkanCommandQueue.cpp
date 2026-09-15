@@ -226,6 +226,17 @@ void VulkanCommandQueue::DrawInstanced(uint32_t VertexCountPerInstance, uint32_t
     vkCmdDraw(m_CommandBuffer, VertexCountPerInstance, InstanceCount, StartVertexLocation, StartInstanceLocation);
 }
 
+void VulkanCommandQueue::DrawIndexedInstanced(uint32_t IndexCountPerInstance, uint32_t InstanceCount,
+        uint32_t StartIndexLocation, uint32_t VertexOffset, uint32_t StartInstanceLocation) {
+    if (!m_InsideRendering) {
+        BeginRendering();
+    }
+
+    m_DescriptorManager->WriteAndBind(m_CommandBuffer, m_BoundPipeline->GetVkLayout(), m_CommandBufferNumber);
+
+    vkCmdDrawIndexed(m_CommandBuffer, IndexCountPerInstance, InstanceCount, StartIndexLocation, VertexOffset, StartInstanceLocation);
+}
+
 void VulkanCommandQueue::CopyToBuffer(Buffer* dst, uint64_t size, void* data) {
     VulkanBuffer* vkDst = static_cast<VulkanBuffer*>(dst);
 

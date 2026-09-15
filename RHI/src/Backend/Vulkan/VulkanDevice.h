@@ -15,13 +15,13 @@ namespace vk {
 
 class VulkanDevice : public Device {
 public:
-    VulkanDevice();
+    VulkanDevice(DeviceDesc desc);
     ~VulkanDevice() override;
 
     void EndFrame() override;
 
     CommandQueue* GetCommandQueue() override;
-    Swapchain* CreateSwapchain() override;
+    Swapchain* CreateSwapchain(WindowInfo window) override;
     GraphicsPipelineState* CreateGraphicsPipelineState(GraphicsPipelineDesc desc) override;
     Texture* CreateTexture(TextureDesc desc) override;
     RenderTargetView* CreateRenderTargetView(Texture* texture) override;
@@ -29,6 +29,8 @@ public:
     ShaderResourceView* CreateShaderResourceView(Texture* texture) override;
     Buffer* CreateBuffer(BufferDesc desc) override;
     Sampler* CreateSampler(SamplerDesc desc) override;
+
+    DeviceDesc GetDesc() override;
 
     void ReleaseResource(ReleaseResourceBase* resource);
 
@@ -49,6 +51,8 @@ private:
     void DestroyLogicalDevice();
 
 private:
+    DeviceDesc m_Desc;
+
     VkInstance m_Instance = nullptr;
     VkPhysicalDevice m_PhysicalDevice = nullptr;
     VkDevice m_Device = nullptr;
