@@ -27,23 +27,6 @@ int main() {
     };
     Buffer* cbuffer = device->CreateBuffer(cbufferDesc);
 
-    float vertices[] = {
-        0.0f, 0.5f,
-        0.5f, -0.5f,
-        -0.5f, -0.5f
-    };
-
-    BufferDesc bufferDesc = {
-        .Size = sizeof(vertices),
-        .BindFlags = BUFFER_BIND_VERTEX,
-        .Stride = 8,
-        .Usage = BufferUsage::Default
-    };
-    Buffer* buffer = device->CreateBuffer(bufferDesc);
-    queue->CopyToBuffer(buffer, sizeof(vertices), vertices);
-    queue->Barrier(PIPELINE_STAGE_TRANSFER, PIPELINE_STAGE_VERTEX_INPUT,
-    { { buffer, ACCESS_TRANSFER_WRITE, ACCESS_VERTEX_READ } }, {});
-
     auto vertexSource = ShaderCompiler::CompileShader("vertex.slang");
     Shader vertexShader{
         .Data = vertexSource.data(),
@@ -56,7 +39,7 @@ int main() {
     };
 
     VertexInputDesc inputDesc = {
-        { { "POSITION", ValueType::Float2 } }
+        { { "POSITION", ValueType::Float3 } }
     };
 
     BlendDesc blendDesc = {
@@ -99,7 +82,7 @@ int main() {
         void* ptr = cbuffer->Map();
         memcpy(ptr, &viewProj, sizeof(glm::mat4));
 
-        //queue->SetConstantBuffer("ViewProj", cbuffer);
+        queue->SetConstantBuffer("ViewProj", cbuffer);
 
         queue->DrawIndexedInstanced(cube.NumIndices);
 
@@ -110,7 +93,6 @@ int main() {
     }
 
     delete cbuffer;
-    delete buffer;
     delete pipelineState;
 
     return 0;

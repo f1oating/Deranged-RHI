@@ -61,16 +61,16 @@ glm::mat4 Camera::GetViewMatrix() {
 }
 
 glm::mat4 Camera::GetProjectionMatrix() {
-    return glm::perspective(glm::radians(m_Zoom), m_Width / m_Height, 0.1f, 100.0f);
+    return glm::perspective(35.0f, m_Width / m_Height, 0.1f, 100.0f);
 }
 
 void Camera::UpdateCameraVectors() {
     glm::vec3 front;
-    front.x = cos(glm::radians(m_Yaw) * cos(glm::radians(m_Pitch)));
+    front.x = cos(glm::radians(m_Yaw)) * cos(glm::radians(m_Pitch));
     front.y = sin(glm::radians(m_Pitch));
-    front.z = sin(glm::radians(m_Yaw) * cos(glm::radians(m_Pitch)));
-    front = glm::normalize(front);
+    front.z = sin(glm::radians(m_Yaw)) * cos(glm::radians(m_Pitch));
+    m_Front = glm::normalize(front);
 
-    m_Right = glm::normalize(glm::cross(front, m_WorldUp));
+    m_Right = glm::normalize(glm::cross(m_Front, m_WorldUp));
     m_Up = glm::normalize(glm::cross(m_Right, m_Front));
 }

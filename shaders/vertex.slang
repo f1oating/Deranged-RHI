@@ -1,5 +1,5 @@
 struct Input {
-    float2 Position : POSITION;
+    float3 Position : POSITION;
 };
 
 [vk::binding(0, 0)]
@@ -12,5 +12,5 @@ float4 main(Input input) : SV_Position {
     #ifdef VULKAN
     input.Position.y = -input.Position.y;
     #endif
-    return float4(input.Position, 0.5, 1.0);
+    return mul(float4(input.Position, 1.0), viewProj);
 }

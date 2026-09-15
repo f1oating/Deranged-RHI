@@ -185,8 +185,8 @@ void VulkanCommandQueue::SetConstantBuffer(std::string name, Buffer* buffer) {
 
     VkDescriptorBufferInfo bufferInfo = {
         .buffer = vkBuffer->GetVkBuffer(),
-        .offset = 0,
-        .range = VK_WHOLE_SIZE
+        .offset = vkBuffer->GetOffset(),
+        .range = vkBuffer->GetDesc().Size
     };
 
     m_DescriptorManager->WriteBufferInfo(set, binding, bufferInfo);

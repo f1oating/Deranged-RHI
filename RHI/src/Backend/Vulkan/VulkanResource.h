@@ -109,6 +109,7 @@ public:
 
     BufferDesc GetDesc() override;
     VkBuffer GetVkBuffer() const { return m_Buffer; }
+    uint64_t GetOffset() const { return m_Offset; }
 
 private:
     void CreateBuffer();

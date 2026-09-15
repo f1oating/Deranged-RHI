@@ -238,7 +238,7 @@ BufferDesc VulkanBuffer::GetDesc() {
 void VulkanBuffer::CreateBuffer() {
     VkBufferCreateInfo bufferCreateInfo = {
         .sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO,
-        .size = m_Desc.Size,
+        .size = 512 * 512 * 4,
         .usage = ToVkBufferUsageFlags(m_Desc.BindFlags),
         .sharingMode = VK_SHARING_MODE_EXCLUSIVE,
     };

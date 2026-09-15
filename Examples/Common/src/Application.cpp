@@ -51,6 +51,19 @@ bool Application::WindowShouldClose() {
 
 void Application::BeginFrame() {
     glfwPollEvents();
+
+    if (glfwGetKey(m_Window, GLFW_KEY_W)) {
+        m_Camera.ProcessKeyboard(CameraMovement::Forward, 0.001f);
+    }
+    if (glfwGetKey(m_Window, GLFW_KEY_S)) {
+        m_Camera.ProcessKeyboard(CameraMovement::Backward, 0.001f);
+    }
+    if (glfwGetKey(m_Window, GLFW_KEY_A)) {
+        m_Camera.ProcessKeyboard(CameraMovement::Left, 0.001f);
+    }
+    if (glfwGetKey(m_Window, GLFW_KEY_D)) {
+        m_Camera.ProcessKeyboard(CameraMovement::Right, 0.001f);
+    }
 }
 
 void Application::EndFrame() {
