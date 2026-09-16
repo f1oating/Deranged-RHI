@@ -18,6 +18,8 @@ Application::Application() {
     ShaderCompiler::Init();
     glfwInit();
 
+    m_Time = glfwGetTime();
+
     CreateWindow();
 
     m_Device = Device::Create({ .WindowProtocol = DeviceDesc::DISPLAY_SERVER_PROTOCOL_XCB });
@@ -52,18 +54,49 @@ bool Application::WindowShouldClose() {
 void Application::BeginFrame() {
     glfwPollEvents();
 
+    double newTime = glfwGetTime();
+    double m_DeltaTime = newTime - m_Time;
+    m_Time = newTime;
+
+    if (glfwGetKey(m_Window, GLFW_KEY_ESCAPE)) {
+        glfwSetInputMode(m_Window, GLFW_CURSOR, m_ShowCursor ? GLFW_CURSOR_DISABLED : GLFW_CURSOR_NORMAL);
+        m_ShowCursor = !m_ShowCursor;
+    }
+
     if (glfwGetKey(m_Window, GLFW_KEY_W)) {
-        m_Camera.ProcessKeyboard(CameraMovement::Forward, 0.001f);
+        m_Camera.ProcessKeyboard(CameraMovement::Forward, m_DeltaTime);
     }
     if (glfwGetKey(m_Window, GLFW_KEY_S)) {
-        m_Camera.ProcessKeyboard(CameraMovement::Backward, 0.001f);
+        m_Camera.ProcessKeyboard(CameraMovement::Backward, m_DeltaTime);
     }
     if (glfwGetKey(m_Window, GLFW_KEY_A)) {
-        m_Camera.ProcessKeyboard(CameraMovement::Left, 0.001f);
+        m_Camera.ProcessKeyboard(CameraMovement::Left, m_DeltaTime);
     }
     if (glfwGetKey(m_Window, GLFW_KEY_D)) {
-        m_Camera.ProcessKeyboard(CameraMovement::Right, 0.001f);
+        m_Camera.ProcessKeyboard(CameraMovement::Right, m_DeltaTime);
     }
+
+    if (glfwGetMouseButton(m_Window, GLFW_MOUSE_BUTTON_LEFT)) {
+        m_Camera.ProcessMouseScroll(10.0f * m_DeltaTime);
+    }
+    if (glfwGetMouseButton(m_Window, GLFW_MOUSE_BUTTON_RIGHT)) {
+        m_Camera.ProcessMouseScroll(-10.0f * m_DeltaTime);
+    }
+
+    static double posX = 0.0f;
+    static double posY = 0.0f;
+    double newPosX = 0.0f;
+    double newPosY = 0.0f;
+    glfwGetCursorPos(m_Window, &newPosX, &newPosY);
+
+    m_Camera.ProcessMouseMovement(newPosX - posX, newPosY - posY, true);
+    posX = newPosX;
+    posY = newPosY;
+
+    int width = 1;
+    int height = 1;
+    glfwGetWindowSize(m_Window, &width, &height);
+    m_Camera.ProcessResize(width, height);
 }
 
 void Application::EndFrame() {

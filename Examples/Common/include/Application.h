@@ -40,6 +40,11 @@ private:
 private:
     GLFWwindow* m_Window = nullptr;
 
+    double m_Time = 0.0f;
+    double m_DeltaTime = 0.0f;
+
+    bool m_ShowCursor = true;
+
     Device* m_Device = nullptr;
     CommandQueue* m_Queue = nullptr;
     Swapchain* m_Swapchain = nullptr;

@@ -5,7 +5,7 @@
 #include "Camera.h"
 
 Camera::Camera(glm::vec3 position, glm::vec3 up, float yaw, float pitch)
-    : m_Position(position), m_Up(up), m_Yaw(yaw), m_Pitch(pitch), m_WorldUp(up),
+    : m_Position(position), m_Yaw(yaw), m_Pitch(pitch), m_WorldUp(up),
     m_Front({0.0f, 0.0f, -1.0f}), m_MovementSpeed(2.5f), m_MouseSensitivity(0.1f),
     m_Zoom(45.0f), m_Width(800), m_Height(600) {
     UpdateCameraVectors();
@@ -56,12 +56,17 @@ void Camera::ProcessMouseScroll(float yoffset) {
     }
 }
 
+void Camera::ProcessResize(float width, float height) {
+    m_Width = width;
+    m_Height = height;
+}
+
 glm::mat4 Camera::GetViewMatrix() {
     return glm::lookAt(m_Position, m_Position + m_Front, m_Up);
 }
 
 glm::mat4 Camera::GetProjectionMatrix() {
-    return glm::perspective(35.0f, m_Width / m_Height, 0.1f, 100.0f);
+    return glm::perspective(glm::radians(m_Zoom), m_Width / m_Height, 0.1f, 100.0f);
 }
 
 void Camera::UpdateCameraVectors() {

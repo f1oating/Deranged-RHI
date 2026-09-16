@@ -3,8 +3,8 @@ struct Input {
 };
 
 [vk::binding(0, 0)]
-cbuffer ViewProj : register(b0) {
-    float4x4 viewProj;
+cbuffer ProjView : register(b0) {
+    column_major float4x4 projView;
 };
 
 [shader("vertex")]
@@ -12,5 +12,5 @@ float4 main(Input input) : SV_Position {
     #ifdef VULKAN
     input.Position.y = -input.Position.y;
     #endif
-    return mul(float4(input.Position, 1.0), viewProj);
+    return mul(projView, float4(input.Position, 1.0));
 }

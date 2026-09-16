@@ -78,11 +78,11 @@ int main() {
         queue->SetVertexBuffer(cube.Vertex);
         queue->SetIndexBuffer(cube.Index);
 
-        glm::mat4 viewProj = application.GetCamera()->GetViewMatrix() * application.GetCamera()->GetProjectionMatrix();
+        glm::mat4 projView = application.GetCamera()->GetProjectionMatrix() * application.GetCamera()->GetViewMatrix();
         void* ptr = cbuffer->Map();
-        memcpy(ptr, &viewProj, sizeof(glm::mat4));
+        memcpy(ptr, &projView, sizeof(glm::mat4));
 
-        queue->SetConstantBuffer("ViewProj", cbuffer);
+        queue->SetConstantBuffer("ProjView", cbuffer);
 
         queue->DrawIndexedInstanced(cube.NumIndices);
 
