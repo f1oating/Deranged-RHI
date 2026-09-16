@@ -105,6 +105,7 @@ public:
 
     BufferDesc GetDesc() override;
     ID3D12Resource* GetDX12Resource() const { return m_Resource; }
+    uint64_t GetOffset() const { return m_Offset; }
 
 private:
     void CreateResource();
@@ -420,6 +421,9 @@ inline D3D12_BARRIER_SYNC ToD3D12BarrierSync(uint32_t flags) {
 
     if (flags & PIPELINE_STAGE_NONE) {
         dxFlags |= D3D12_BARRIER_SYNC_NONE;
+    }
+    if (flags & PIPELINE_STAGE_INDEX_INPUT) {
+        dxFlags |= D3D12_BARRIER_SYNC_INDEX_INPUT;
     }
     if (flags & PIPELINE_STAGE_VERTEX_INPUT) {
         dxFlags |= D3D12_BARRIER_SYNC_VERTEX_SHADING;

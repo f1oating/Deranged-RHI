@@ -3,18 +3,15 @@
 //
 
 #include "Backend/DX12/DX12Swapchain.h"
-#define GLFW_EXPOSE_NATIVE_WIN32
-#include <GLFW/glfw3native.h>
 #include "Backend/DX12/DX12Device.h"
 #include <spdlog/spdlog.h>
 
 namespace dx {
 
-DX12Swapchain::DX12Swapchain(DX12Device* device) {
+DX12Swapchain::DX12Swapchain(WindowInfo window, DX12Device* device) {
     m_Device = device;
 
-    glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
-    m_Window = glfwCreateWindow(800, 600, "RHI", nullptr, nullptr);
+    m_Window = window;
 
     m_CurrentWidth = 800;
     m_CurrentHeight = 600;
@@ -33,7 +30,7 @@ DX12Swapchain::DX12Swapchain(DX12Device* device) {
         .SampleDesc = sampleDesc,
         .BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT,
         .BufferCount = 3,
-        .OutputWindow = glfwGetWin32Window(m_Window),
+        .OutputWindow = static_cast<HWND>(m_Window.Window),
         .Windowed = true,
         .SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD
     };
@@ -84,22 +81,12 @@ DX12Swapchain::~DX12Swapchain() {
         }
         m_SwapChain->Release();
     }
-    if (m_Window) {
-        glfwDestroyWindow(m_Window);
-    }
 
     spdlog::info("DX12Swapchain Destroyed.");
 }
 
 Texture* DX12Swapchain::GetCurrentBackBuffer() {
     return m_Textures[m_CurrentImage];
-}
-
-void DX12Swapchain::UpdateWindow() {
-    glfwPollEvents();
-}
-bool DX12Swapchain::WindowShouldClose() {
-    return glfwWindowShouldClose(m_Window);
 }
 
 void DX12Swapchain::Present() {
@@ -113,9 +100,9 @@ void DX12Swapchain::Present() {
 
     m_Fence->Wait(m_FrameFenceValues[m_CurrentFrame]);
 
-    int width, height;
-    glfwGetWindowSize(m_Window, &width, &height);
-    if (m_CurrentWidth != width || m_CurrentHeight != height) {
+    RECT rect;
+    GetWindowRect(static_cast<HWND>(m_Window.Window), &rect);
+    if (m_CurrentWidth != rect.right || m_CurrentHeight != rect.bottom) {
         m_FenceValue++;
         DX12CommandQueue* dxCommandQueue = static_cast<DX12CommandQueue*>(m_Device->GetCommandQueue());
         dxCommandQueue->Flush();
@@ -126,13 +113,13 @@ void DX12Swapchain::Present() {
         }
         dxCommandQueue->Flush();
         dxCommandQueue->EndFrame();
-        m_SwapChain->ResizeBuffers(3, width, height, DXGI_FORMAT_B8G8R8A8_UNORM, 0);
+        m_SwapChain->ResizeBuffers(3, rect.right, rect.bottom, DXGI_FORMAT_B8G8R8A8_UNORM, 0);
         for (int i = 0; i < 3; i++) {
             ID3D12Resource* resource = nullptr;
             m_SwapChain->GetBuffer(i, IID_PPV_ARGS(&resource));
             TextureDesc desc = {
-                .Width = (uint32_t)width,
-                .Height = (uint32_t)height,
+                .Width = (uint32_t)rect.right,
+                .Height = (uint32_t)rect.bottom,
                 .MipLevels = 1,
                 .ArrayLayers = 1,
                 .Samples = 1,
@@ -142,8 +129,8 @@ void DX12Swapchain::Present() {
             };
             m_Textures[i] = new DX12Texture(desc, resource, m_Device);
         }
-        m_CurrentWidth = width;
-        m_CurrentHeight = height;
+        m_CurrentWidth = rect.right;
+        m_CurrentHeight = rect.bottom;
         m_CurrentImage = m_SwapChain->GetCurrentBackBufferIndex();
     }
 }

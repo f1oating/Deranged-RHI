@@ -205,7 +205,7 @@ void DX12CommandQueue::SetIndexBuffer(Buffer* buffer) {
 void DX12CommandQueue::SetConstantBuffer(std::string name, Buffer* buffer) {
     DX12Buffer* dxBuffer = static_cast<DX12Buffer*>(buffer);
     D3D12_CONSTANT_BUFFER_VIEW_DESC desc = {
-        .BufferLocation = dxBuffer->GetDX12Resource()->GetGPUVirtualAddress(),
+        .BufferLocation = dxBuffer->GetDX12Resource()->GetGPUVirtualAddress() + dxBuffer->GetOffset(),
         .SizeInBytes = (uint32_t)dxBuffer->GetDesc().Size,
     };
     m_DescriptorsStateManager->SetCBV(name, desc);
@@ -229,6 +229,14 @@ void DX12CommandQueue::DrawInstanced(uint32_t VertexCountPerInstance, uint32_t I
     m_CommandList->SetGraphicsRootDescriptorTable(0, allocation.GetGPUHandle(0));
     m_CommandList->SetGraphicsRootDescriptorTable(1, samplerAllocation.GetGPUHandle(0));
     m_CommandList->DrawInstanced(VertexCountPerInstance, InstanceCount, StartVertexLocation, StartInstanceLocation);
+}
+
+void DX12CommandQueue::DrawIndexedInstanced(uint32_t IndexCountPerInstance, uint32_t InstanceCount,
+    uint32_t StartIndexLocation, uint32_t VertexOffset, uint32_t StartInstanceLocation) {
+    auto [allocation, samplerAllocation] = m_DescriptorsStateManager->WriteAndAllocate(m_CommandAllocatorNumber);
+    m_CommandList->SetGraphicsRootDescriptorTable(0, allocation.GetGPUHandle(0));
+    m_CommandList->SetGraphicsRootDescriptorTable(1, samplerAllocation.GetGPUHandle(0));
+    m_CommandList->DrawIndexedInstanced(IndexCountPerInstance, InstanceCount, StartIndexLocation, VertexOffset, StartInstanceLocation);
 }
 
 void DX12CommandQueue::CopyToBuffer(Buffer* dst, uint64_t size, void* data) {

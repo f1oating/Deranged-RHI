@@ -16,13 +16,13 @@ namespace dx {
 
 class DX12Device : public Device {
 public:
-    DX12Device();
+    DX12Device(DeviceDesc desc);
     ~DX12Device() override;
 
     void EndFrame() override;
 
     CommandQueue* GetCommandQueue();
-    Swapchain* CreateSwapchain() override;
+    Swapchain* CreateSwapchain(WindowInfo window) override;
     GraphicsPipelineState* CreateGraphicsPipelineState(GraphicsPipelineDesc desc) override;
     Texture* CreateTexture(TextureDesc desc) override;
     RenderTargetView* CreateRenderTargetView(Texture* texture) override;
@@ -30,6 +30,8 @@ public:
     ShaderResourceView* CreateShaderResourceView(Texture* texture) override;
     Buffer* CreateBuffer(BufferDesc desc) override;
     Sampler* CreateSampler(SamplerDesc desc) override;
+
+    DeviceDesc GetDesc() override;
 
     void ReleaseResource(ReleaseResourceBase* resource);
 
@@ -40,6 +42,8 @@ public:
     RingBuffer* GetRingBuffer() { return m_RingBuffer.get(); }
 
 private:
+    DeviceDesc m_Desc;
+
     ID3D12Debug3* m_Debug = nullptr;
     DWORD m_CallbackCookie = 0;
 

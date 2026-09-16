@@ -34,7 +34,7 @@ public:
     Mesh GetCubeMesh() const { return m_Cube; }
 
 private:
-    void CreateWindow();
+    void CreateGLFWWindow();
     void CreateCubeMesh();
 
 private:

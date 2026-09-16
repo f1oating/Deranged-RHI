@@ -2,17 +2,16 @@
 // Created by alan on 15/09/2026.
 //
 
-#include "Application.h"
-#include "ShaderCompiler.h"
-
 #ifdef WIN32
-
+#define GLFW_EXPOSE_NATIVE_WIN32
 #else
 #define GLFW_EXPOSE_NATIVE_X11
-#include <GLFW/glfw3.h>
-#include <GLFW/glfw3native.h>
 #include <X11/Xlib-xcb.h>
 #endif
+
+#include "Application.h"
+#include "ShaderCompiler.h"
+#include <GLFW/glfw3native.h>
 
 Application::Application() {
     ShaderCompiler::Init();
@@ -20,14 +19,21 @@ Application::Application() {
 
     m_Time = glfwGetTime();
 
-    CreateWindow();
+    CreateGLFWWindow();
 
-    m_Device = Device::Create({ .WindowProtocol = DeviceDesc::DISPLAY_SERVER_PROTOCOL_XCB });
-    m_Queue = m_Device->GetCommandQueue();
-
+    DeviceDesc deviceDesc;
     WindowInfo windowInfo{};
+#ifdef WIN32
+    windowInfo.Window = glfwGetWin32Window(m_Window);
+    windowInfo.Instance = GetModuleHandle(nullptr);
+#else
+    deviceDesc.WindowProtocol = DeviceDesc::DISPLAY_SERVER_PROTOCOL_XCB
     windowInfo.Xcb.Window = glfwGetX11Window(m_Window);;
     windowInfo.Xcb.Connection = XGetXCBConnection(glfwGetX11Display());
+#endif
+
+    m_Device = Device::Create(deviceDesc);
+    m_Queue = m_Device->GetCommandQueue();
 
     m_Swapchain = m_Device->CreateSwapchain(windowInfo);
 
@@ -104,7 +110,7 @@ void Application::EndFrame() {
     m_Swapchain->Present();
 }
 
-void Application::CreateWindow() {
+void Application::CreateGLFWWindow() {
     glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
     m_Window = glfwCreateWindow(800, 600, "RHI", nullptr, nullptr);
 }
@@ -183,6 +189,7 @@ void Application::CreateCubeMesh() {
     m_Queue->CopyToBuffer(m_Cube.Vertex, sizeof(vertices), vertices);
     m_Queue->CopyToBuffer(m_Cube.Index, sizeof(indices), indices);
     m_Queue->Barrier(PIPELINE_STAGE_TRANSFER, PIPELINE_STAGE_VERTEX_INPUT,
-    { { m_Cube.Vertex, ACCESS_TRANSFER_WRITE, ACCESS_VERTEX_READ },
-                { m_Cube.Index, ACCESS_TRANSFER_WRITE, ACCESS_INDEX_READ } }, {});
+    { { m_Cube.Vertex, ACCESS_TRANSFER_WRITE, ACCESS_VERTEX_READ } }, {});
+    m_Queue->Barrier(PIPELINE_STAGE_TRANSFER, PIPELINE_STAGE_INDEX_INPUT,
+    { { m_Cube.Index, ACCESS_TRANSFER_WRITE, ACCESS_INDEX_READ } }, {});
 }

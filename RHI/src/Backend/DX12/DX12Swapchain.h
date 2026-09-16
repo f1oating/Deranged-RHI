@@ -6,7 +6,6 @@
 #define DERANGED_RHI_DX12SWAPCHAIN_H
 
 #include "Swapchain.h"
-#include <GLFW/glfw3.h>
 #include <dxgi1_4.h>
 #include "Backend/DX12/DX12Fence.h"
 #include "Backend/DX12/DX12Resource.h"
@@ -18,19 +17,17 @@ class DX12Device;
 
 class DX12Swapchain : public Swapchain {
 public:
-    DX12Swapchain(DX12Device* device);
+    DX12Swapchain(WindowInfo window, DX12Device* device);
     ~DX12Swapchain() override;
 
     Texture* GetCurrentBackBuffer() override;
 
-    void UpdateWindow() override;
-    bool WindowShouldClose() override;
     void Present() override;
 
 private:
     DX12Device* m_Device = nullptr;
+    WindowInfo m_Window;
 
-    GLFWwindow* m_Window = nullptr;
     uint32_t m_CurrentWidth = 0;
     uint32_t m_CurrentHeight = 0;
 

@@ -10,6 +10,7 @@
 struct WindowInfo {
 #ifdef WIN32
     void* Window;
+    void* Instance;
 #else
     union {
         struct {

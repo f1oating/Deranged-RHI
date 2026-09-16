@@ -96,6 +96,12 @@ void VulkanSwapchain::AcquireImage() {
 
 void VulkanSwapchain::CreateSurface() {
 #ifdef WIN32
+    VkWin32SurfaceCreateInfoKHR createInfo = {
+        .sType = VK_STRUCTURE_TYPE_WIN32_SURFACE_CREATE_INFO_KHR,
+        .hinstance = static_cast<HINSTANCE>(m_Window.Instance),
+        .hwnd = static_cast<HWND>(m_Window.Window)
+    };
+    vkCreateWin32SurfaceKHR(m_Device->GetVkInstance(), &createInfo, nullptr, &m_Surface);
 #else
     if (m_Device->GetDesc().WindowProtocol == DeviceDesc::DISPLAY_SERVER_PROTOCOL_WAYLAND) {
         VkWaylandSurfaceCreateInfoKHR waylandCreateInfo = {

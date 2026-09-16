@@ -488,7 +488,7 @@ inline VkPipelineStageFlags ToVkStage(uint32_t flags) {
     if (flags & PIPELINE_STAGE_NONE) {
         vkFlags |= VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
     }
-    if (flags & PIPELINE_STAGE_VERTEX_INPUT) {
+    if (flags & PIPELINE_STAGE_VERTEX_INPUT || flags & PIPELINE_STAGE_INDEX_INPUT) {
         vkFlags |= VK_PIPELINE_STAGE_VERTEX_INPUT_BIT;
     }
     if (flags & PIPELINE_STAGE_VERTEX_SHADER) {

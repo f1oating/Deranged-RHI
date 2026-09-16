@@ -178,7 +178,7 @@ BufferDesc DX12Buffer::GetDesc() {
 void DX12Buffer::CreateResource() {
     D3D12_RESOURCE_DESC1 resourceDesc = {
         .Dimension = D3D12_RESOURCE_DIMENSION_BUFFER,
-        .Width = m_Desc.Size,
+        .Width = m_Desc.Usage != BufferUsage::Dynamic ? m_Desc.Size : 512 * 512 * 4,
         .Height = 1,
         .DepthOrArraySize = 1,
         .MipLevels = 1,

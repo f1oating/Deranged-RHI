@@ -5,8 +5,6 @@
 #include "Backend/DX12/DX12Device.h"
 #include "Backend/DX12/DX12Swapchain.h"
 #include <iostream>
-#include <ostream>
-#include <GLFW/glfw3.h>
 #include "Backend/DX12/DX12Resource.h"
 #include "Backend/DX12/DX12Pipeline.h"
 #include <spdlog/spdlog.h>
@@ -37,8 +35,8 @@ void DebugCallback(
     }
 }
 
-DX12Device::DX12Device() {
-    glfwInit();
+DX12Device::DX12Device(DeviceDesc desc) {
+    m_Desc = desc;
 
     HRESULT hr = D3D12GetDebugInterface(IID_PPV_ARGS(&m_Debug));
     m_Debug->EnableDebugLayer();
@@ -90,7 +88,6 @@ DX12Device::~DX12Device() {
     if (m_Debug) {
         m_Debug->Release();
     }
-    glfwTerminate();
 
     spdlog::info("DX12Device Destroyed.");
 }
@@ -104,8 +101,8 @@ CommandQueue* DX12Device::GetCommandQueue() {
     return m_CommandQueue;
 }
 
-Swapchain* DX12Device::CreateSwapchain() {
-    return new DX12Swapchain(this);
+Swapchain* DX12Device::CreateSwapchain(WindowInfo window) {
+    return new DX12Swapchain(window, this);
 }
 
 GraphicsPipelineState* DX12Device::CreateGraphicsPipelineState(GraphicsPipelineDesc desc) {
@@ -134,6 +131,10 @@ Buffer* DX12Device::CreateBuffer(BufferDesc desc) {
 
 Sampler* DX12Device::CreateSampler(SamplerDesc desc) {
     return new DX12Sampler(desc, this);
+}
+
+DeviceDesc DX12Device::GetDesc() {
+    return m_Desc;
 }
 
 void DX12Device::ReleaseResource(ReleaseResourceBase* resource) {

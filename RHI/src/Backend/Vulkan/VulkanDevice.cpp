@@ -122,11 +122,15 @@ void VulkanDevice::CreateInstance() {
         "VK_KHR_surface",
     };
 
+#ifdef WIN32
+    extensions.push_back("VK_KHR_win32_surface");
+#else
     if (m_Desc.WindowProtocol == DeviceDesc::DISPLAY_SERVER_PROTOCOL_XCB) {
         extensions.push_back("VK_KHR_xcb_surface");
     } else {
         extensions.push_back("VK_KHR_wayland_surface");
     }
+#endif
 
     VkInstanceCreateInfo createInfo = {
         .sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO,
