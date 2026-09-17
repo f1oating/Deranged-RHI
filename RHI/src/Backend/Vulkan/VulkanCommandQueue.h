@@ -32,14 +32,11 @@ public:
     void SetViewport(Viewport viewport) override;
     void SetScissor(Scissor scissor) override;
 
-    void Barrier(uint32_t srcStage, uint32_t dstStage,
-        std::vector<BufferBarrier> bufBarriers, std::vector<TextureBarrier> texBarriers) override;
-
     void SetRenderTargets(std::vector<RenderTargetView*> rtvs) override;
     void SetDepthStencil(DepthStencilView* dsv) override;
 
     void ClearRenderTargets(float r, float g, float b, float a) override;
-    void ClearDepthStencil(float depth, uint32_t stencil) override;
+    void ClearDepthStencil(float depth, uint8_t stencil) override;
 
     void SetVertexBuffer(Buffer* buffer) override;
     void SetIndexBuffer(Buffer* buffer) override;
@@ -48,10 +45,13 @@ public:
     void SetTexture(std::string name, ShaderResourceView* textureView) override;
     void SetSampler(std::string name, Sampler* sampler) override;
 
-    void DrawInstanced(uint32_t VertexCountPerInstance, uint32_t InstanceCount = 1,
-        uint32_t StartVertexLocation = 0, uint32_t StartInstanceLocation = 0) override;
-    void DrawIndexedInstanced(uint32_t IndexCountPerInstance, uint32_t InstanceCount = 1,
-        uint32_t StartIndexLocation = 0, uint32_t VertexOffset = 0, uint32_t StartInstanceLocation = 0) override;
+    void DrawInstanced(uint32_t vertexCount, uint32_t instanceCount = 1,
+        uint32_t startVertex = 0, uint32_t startInstance = 0) override;
+    void DrawIndexedInstanced(uint32_t indexCount, uint32_t instanceCount = 1,
+        uint32_t startIndex = 0, uint32_t vertexOffset = 0, uint32_t startInstance = 0) override;
+
+    void Barrier(uint32_t srcStage, uint32_t dstStage,
+        std::vector<BufferBarrier> bufBarriers, std::vector<TextureBarrier> texBarriers) override;
 
     void CopyToBuffer(Buffer* dst, uint64_t size, void* data) override;
     void CopyToTexture(Texture* dst, uint64_t size, void* data) override;

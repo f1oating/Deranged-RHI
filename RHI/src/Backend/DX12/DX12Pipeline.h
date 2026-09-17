@@ -24,6 +24,9 @@ public:
 
     GraphicsPipelineDesc GetDesc() override;
 
+    bool HaveResources() const { return m_HaveResources; }
+    bool HaveSamplers() const { return m_HaveSamplers; }
+
     ID3D12RootSignature* GetRootSignature() { return m_RootSignature; }
     ID3D12PipelineState* GetPipelineState() { return m_PipelineState; };
     std::unordered_map<std::string, Descriptor> GetDescriptorsState() { return m_DescriptorsState; }
@@ -43,6 +46,8 @@ private:
     ID3D12PipelineState* m_PipelineState = nullptr;
 
     std::unordered_map<std::string, Descriptor> m_DescriptorsState;
+    bool m_HaveResources = false;
+    bool m_HaveSamplers = false;
 
 };
 

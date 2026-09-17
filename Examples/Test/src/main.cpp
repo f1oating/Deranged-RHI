@@ -34,7 +34,7 @@ int main() {
         .BindFlags = TEXTURE_BIND_DEPTH_STENCIL
     };
     Texture* depthStencil = device->CreateTexture(depthStencilDesc);
-    queue->Barrier(PIPELINE_STAGE_NONE, PIPELINE_STAGE_EARLY_FRAGMENT_TESTS, {},
+    queue->Barrier(PIPELINE_STAGE_NONE, PIPELINE_STAGE_ALL_COMMANDS, {},
         { { depthStencil, ImageLayout::DepthStencil, ACCESS_NONE, ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE } });
 
     auto vertexSource = ShaderCompiler::CompileShader("vertex.slang");
@@ -74,11 +74,25 @@ int main() {
     };
     pipelineState = device->CreateGraphicsPipelineState(pipelineDesc);
 
+    TextureDesc framebufferDesc = swapchain->GetCurrentBackBuffer()->GetDesc();
+
+    int lastWidth = framebufferDesc.Width;
+    int lastHeight = framebufferDesc.Height;
+
     while(!application.WindowShouldClose()) {
         application.BeginFrame();
 
         Texture* currentBackBuffer = swapchain->GetCurrentBackBuffer();
         TextureDesc backBufferDesc = currentBackBuffer->GetDesc();
+
+        if (lastWidth != backBufferDesc.Width || lastHeight != backBufferDesc.Height) {
+            delete depthStencil;
+            depthStencilDesc.Width = backBufferDesc.Width;
+            depthStencilDesc.Height = backBufferDesc.Height;
+            depthStencil = device->CreateTexture(depthStencilDesc);
+            queue->Barrier(PIPELINE_STAGE_NONE, PIPELINE_STAGE_ALL_COMMANDS, {},
+        { { depthStencil, ImageLayout::DepthStencil, ACCESS_NONE, ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE } });
+        }
 
         queue->Barrier(PIPELINE_STAGE_NONE, PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT, {},
             { { currentBackBuffer, ImageLayout::RenderTarget, ACCESS_NONE, ACCESS_COLOR_ATTACHMENT_WRITE } });
@@ -109,6 +123,9 @@ int main() {
             { { currentBackBuffer, ImageLayout::Present, ACCESS_COLOR_ATTACHMENT_WRITE, ACCESS_NONE } });
 
         application.EndFrame();
+
+        lastWidth = backBufferDesc.Width;
+        lastHeight = backBufferDesc.Height;
     }
 
     delete cbuffer;

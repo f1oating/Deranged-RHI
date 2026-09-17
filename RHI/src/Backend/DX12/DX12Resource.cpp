@@ -111,6 +111,7 @@ DX12DepthStencilView::DX12DepthStencilView(DX12Texture* texture, DX12Device* dev
     m_Device = device;
     m_Texture = texture;
     m_Allocation = m_Device->GetDSVAllocator()->Allocate(1);
+    m_ClearFlags = ToD3D12ClearFlags(m_Texture->GetDesc().Format);
 
     D3D12_DEPTH_STENCIL_VIEW_DESC dsvDesc = {
         .Format = ToDXGIFormat(m_Texture->GetDesc().Format),

@@ -58,40 +58,109 @@ void DX12CommandQueue::Signal(Fence* fence, uint64_t value) {
 void DX12CommandQueue::SetGraphicsPipelineState(GraphicsPipelineState* graphicsPipelineState) {
     DX12GraphicsPipelineState* dxGraphicsPipelineState = static_cast<DX12GraphicsPipelineState*>(graphicsPipelineState);
 
-    m_CommandList->SetGraphicsRootSignature(dxGraphicsPipelineState->GetRootSignature());
-    m_CommandList->SetPipelineState(dxGraphicsPipelineState->GetPipelineState());
-    m_CommandList->IASetPrimitiveTopology(ToD3D12PrimitiveTopology(dxGraphicsPipelineState->GetDesc().PrimitiveTopology));
-
-    m_BoundPipeline = dxGraphicsPipelineState;
-    m_DescriptorsStateManager->SetState(m_BoundPipeline->GetDescriptorsState());
+    m_DescriptorsStateManager->SetState(dxGraphicsPipelineState->GetDescriptorsState());
+    m_GraphicsPipeline = dxGraphicsPipelineState;
+    m_GraphicsPipelineBound = false;
 }
 
 void DX12CommandQueue::SetViewport(Viewport viewport) {
-    D3D12_VIEWPORT dxViewport = {
-        .TopLeftX = viewport.TopLeftX,
-        .TopLeftY = viewport.TopLeftY,
-        .Width = viewport.Width,
-        .Height = viewport.Height,
-        .MinDepth = viewport.MinDepth,
-        .MaxDepth = viewport.MaxDepth
-    };
-    m_CommandList->RSSetViewports(1, &dxViewport);
+    m_Viewport = viewport;
+    m_ViewportBound = false;
 }
 
 void DX12CommandQueue::SetScissor(Scissor scissor) {
-    D3D12_RECT dxScissor = {
-        .left = scissor.Left,
-        .top = scissor.Top,
-        .right = scissor.Right,
-        .bottom = scissor.Bottom
-    };
-
-    m_CommandList->RSSetScissorRects(1, &dxScissor);
+    m_Scissor = scissor;
+    m_ScissorBound = false;
 }
 
-void DX12CommandQueue::SetBlendConstants(float r, float g, float b, float a) {
-    float rgba[] = { r, g, b, a };
-    m_CommandList->OMSetBlendFactor(rgba);
+void DX12CommandQueue::SetRenderTargets(std::vector<RenderTargetView*> rtvs) {
+    m_RTVs.resize(rtvs.size());
+    for (int i = 0; i < rtvs.size(); i++) {
+        m_RTVs[i] = static_cast<DX12RenderTargetView*>(rtvs[i]);
+    }
+    m_RenderAttachmentsBound = false;
+}
+
+void DX12CommandQueue::SetDepthStencil(DepthStencilView *dsv) {
+    m_DSV = static_cast<DX12DepthStencilView*>(dsv);
+    m_RenderAttachmentsBound = false;
+}
+
+void DX12CommandQueue::ClearRenderTargets(float r, float g, float b, float a) {
+    m_RTVsClearValue[0] = r;
+    m_RTVsClearValue[1] = g;
+    m_RTVsClearValue[2] = b;
+    m_RTVsClearValue[3] = a;
+    m_ShouldClearRTVs = true;
+}
+
+void DX12CommandQueue::ClearDepthStencil(float depth, uint8_t stencil) {
+    m_DSVDepthClearValue = depth;
+    m_DSVStencilClearValue = stencil;
+    m_ShouldClearDSV = true;
+}
+
+void DX12CommandQueue::SetVertexBuffer(Buffer* buffer) {
+    m_VertexBuffer = static_cast<DX12Buffer*>(buffer);
+    m_VertexBufferBound = false;
+}
+
+void DX12CommandQueue::SetIndexBuffer(Buffer* buffer) {
+    m_IndexBuffer = static_cast<DX12Buffer*>(buffer);
+    m_IndexBufferBound = false;
+}
+
+void DX12CommandQueue::SetConstantBuffer(std::string name, Buffer* buffer) {
+    DX12Buffer* dxBuffer = static_cast<DX12Buffer*>(buffer);
+    D3D12_CONSTANT_BUFFER_VIEW_DESC desc = {
+        .BufferLocation = dxBuffer->GetDX12Resource()->GetGPUVirtualAddress() + dxBuffer->GetOffset(),
+        .SizeInBytes = (uint32_t)dxBuffer->GetDesc().Size,
+    };
+    m_DescriptorsStateManager->SetCBV(name, desc);
+}
+
+void DX12CommandQueue::SetTexture(std::string name, ShaderResourceView* textureView) {
+    DX12ShaderResourceView* dxTextureView = static_cast<DX12ShaderResourceView*>(textureView);
+
+    m_DescriptorsStateManager->SetSRV(name, dxTextureView->GetDXTexture()->GetDX12Resource(), dxTextureView->GetDXView());
+}
+
+void DX12CommandQueue::SetSampler(std::string name, Sampler* sampler) {
+    DX12Sampler* dxSampler = static_cast<DX12Sampler*>(sampler);
+
+    m_DescriptorsStateManager->SetSampler(name, dxSampler->GetDXSampler());
+}
+
+void DX12CommandQueue::DrawInstanced(uint32_t vertexCount, uint32_t instanceCount,
+        uint32_t startVertex, uint32_t startInstance) {
+    BoundDirtyResources();
+    ClearRenderAttachmentsIfNeeded();
+
+    auto [allocation, samplerAllocation] = m_DescriptorsStateManager->WriteAndAllocate(m_CommandAllocatorNumber);
+    if (m_GraphicsPipeline->HaveResources()) {
+        m_CommandList->SetGraphicsRootDescriptorTable(0, allocation.GetGPUHandle(0));
+    }
+    if (m_GraphicsPipeline->HaveSamplers()) {
+        m_CommandList->SetGraphicsRootDescriptorTable(1, samplerAllocation.GetGPUHandle(0));
+    }
+
+    m_CommandList->DrawInstanced(vertexCount, instanceCount, startVertex, startInstance);
+}
+
+void DX12CommandQueue::DrawIndexedInstanced(uint32_t indexCount, uint32_t instanceCount,
+    uint32_t startIndex, uint32_t vertexOffset, uint32_t startInstance) {
+    BoundDirtyResources();
+    ClearRenderAttachmentsIfNeeded();
+
+    auto [allocation, samplerAllocation] = m_DescriptorsStateManager->WriteAndAllocate(m_CommandAllocatorNumber);
+    if (m_GraphicsPipeline->HaveResources()) {
+        m_CommandList->SetGraphicsRootDescriptorTable(0, allocation.GetGPUHandle(0));
+    }
+    if (m_GraphicsPipeline->HaveSamplers()) {
+        m_CommandList->SetGraphicsRootDescriptorTable(1, samplerAllocation.GetGPUHandle(0));
+    }
+
+    m_CommandList->DrawIndexedInstanced(indexCount, instanceCount, startIndex, vertexOffset, startInstance);
 }
 
 void DX12CommandQueue::Barrier(uint32_t srcStage, uint32_t dstStage,
@@ -163,82 +232,6 @@ void DX12CommandQueue::Barrier(uint32_t srcStage, uint32_t dstStage,
     m_CommandList->Barrier(2, barrierGroups);
 }
 
-void DX12CommandQueue::SetRenderTargets(std::vector<RenderTargetView*> rtvs) {
-    for (auto rtv : rtvs) {
-        DX12RenderTargetView* dxRTV = static_cast<DX12RenderTargetView*>(rtv);
-        m_RTVs.push_back(dxRTV->GetAllocation().GetCPUHandle(0));
-    }
-
-    m_CommandList->OMSetRenderTargets(m_RTVs.size(),
-        m_RTVs.data(), false, nullptr);
-}
-
-void DX12CommandQueue::ClearRenderTargets(float r, float g, float b, float a) {
-    const float clear[] = { r, g, b, a };
-    for (auto rtv : m_RTVs) {
-        m_CommandList->ClearRenderTargetView(rtv, clear, 0, nullptr);
-    }
-}
-
-void DX12CommandQueue::SetVertexBuffer(Buffer* buffer) {
-    DX12Buffer* dxBuffer = static_cast<DX12Buffer*>(buffer);
-
-    D3D12_VERTEX_BUFFER_VIEW vertexBufferView = {
-        .BufferLocation = dxBuffer->GetDX12Resource()->GetGPUVirtualAddress(),
-        .SizeInBytes = (uint32_t)dxBuffer->GetDesc().Size,
-        .StrideInBytes = buffer->GetDesc().Stride
-    };
-    m_CommandList->IASetVertexBuffers(0, 1, &vertexBufferView);
-}
-
-void DX12CommandQueue::SetIndexBuffer(Buffer* buffer) {
-    DX12Buffer* dxBuffer = static_cast<DX12Buffer*>(buffer);
-
-    D3D12_INDEX_BUFFER_VIEW indexBufferView = {
-        .BufferLocation = dxBuffer->GetDX12Resource()->GetGPUVirtualAddress(),
-        .SizeInBytes = (uint32_t)dxBuffer->GetDesc().Size,
-        .Format = DXGI_FORMAT_R32_UINT
-    };
-    m_CommandList->IASetIndexBuffer(&indexBufferView);
-}
-
-void DX12CommandQueue::SetConstantBuffer(std::string name, Buffer* buffer) {
-    DX12Buffer* dxBuffer = static_cast<DX12Buffer*>(buffer);
-    D3D12_CONSTANT_BUFFER_VIEW_DESC desc = {
-        .BufferLocation = dxBuffer->GetDX12Resource()->GetGPUVirtualAddress() + dxBuffer->GetOffset(),
-        .SizeInBytes = (uint32_t)dxBuffer->GetDesc().Size,
-    };
-    m_DescriptorsStateManager->SetCBV(name, desc);
-}
-
-void DX12CommandQueue::SetTexture(std::string name, ShaderResourceView* textureView) {
-    DX12ShaderResourceView* dxTextureView = static_cast<DX12ShaderResourceView*>(textureView);
-
-    m_DescriptorsStateManager->SetSRV(name, dxTextureView->GetDXTexture()->GetDX12Resource(), dxTextureView->GetDXView());
-}
-
-void DX12CommandQueue::SetSampler(std::string name, Sampler* sampler) {
-    DX12Sampler* dxSampler = static_cast<DX12Sampler*>(sampler);
-
-    m_DescriptorsStateManager->SetSampler(name, dxSampler->GetDXSampler());
-}
-
-void DX12CommandQueue::DrawInstanced(uint32_t VertexCountPerInstance, uint32_t InstanceCount,
-        uint32_t StartVertexLocation, uint32_t StartInstanceLocation) {
-    auto [allocation, samplerAllocation] = m_DescriptorsStateManager->WriteAndAllocate(m_CommandAllocatorNumber);
-    m_CommandList->SetGraphicsRootDescriptorTable(0, allocation.GetGPUHandle(0));
-    m_CommandList->SetGraphicsRootDescriptorTable(1, samplerAllocation.GetGPUHandle(0));
-    m_CommandList->DrawInstanced(VertexCountPerInstance, InstanceCount, StartVertexLocation, StartInstanceLocation);
-}
-
-void DX12CommandQueue::DrawIndexedInstanced(uint32_t IndexCountPerInstance, uint32_t InstanceCount,
-    uint32_t StartIndexLocation, uint32_t VertexOffset, uint32_t StartInstanceLocation) {
-    auto [allocation, samplerAllocation] = m_DescriptorsStateManager->WriteAndAllocate(m_CommandAllocatorNumber);
-    m_CommandList->SetGraphicsRootDescriptorTable(0, allocation.GetGPUHandle(0));
-    m_CommandList->SetGraphicsRootDescriptorTable(1, samplerAllocation.GetGPUHandle(0));
-    m_CommandList->DrawIndexedInstanced(IndexCountPerInstance, InstanceCount, StartIndexLocation, VertexOffset, StartInstanceLocation);
-}
-
 void DX12CommandQueue::CopyToBuffer(Buffer* dst, uint64_t size, void* data) {
     DX12Buffer* dxDst = static_cast<DX12Buffer*>(dst);
 
@@ -306,6 +299,7 @@ void DX12CommandQueue::CopyToTexture(Texture* dst, uint64_t size, void* data) {
 void DX12CommandQueue::Flush() {
     SubmitCommandList();
     AcquireCommandAllocator();
+    MarkResourcesDirty();
 }
 
 void DX12CommandQueue::ReleaseResource(ReleaseResourceWrapper* resource) {
@@ -317,6 +311,82 @@ void DX12CommandQueue::EndFrame() {
     m_CommandAllocatorPool->Poll(completedValue);
     m_DescriptorsStateManager->FreeFrames(completedValue);
     m_ReleaseManager.DiscardResources(completedValue);
+}
+
+void DX12CommandQueue::MarkResourcesDirty() {
+    m_GraphicsPipelineBound = false;
+    m_ViewportBound = false;
+    m_ScissorBound = false;
+    m_VertexBufferBound = false;
+    m_IndexBufferBound = false;
+}
+
+void DX12CommandQueue::BoundDirtyResources() {
+    if (!m_GraphicsPipelineBound) {
+        m_CommandList->SetGraphicsRootSignature(m_GraphicsPipeline->GetRootSignature());
+        m_CommandList->SetPipelineState(m_GraphicsPipeline->GetPipelineState());
+        m_CommandList->IASetPrimitiveTopology(ToD3D12PrimitiveTopology(m_GraphicsPipeline->GetDesc().PrimitiveTopology));
+    }
+    if (!m_ViewportBound) {
+        D3D12_VIEWPORT dxViewport = {
+            .TopLeftX = m_Viewport.TopLeftX,
+            .TopLeftY = m_Viewport.TopLeftY,
+            .Width = m_Viewport.Width,
+            .Height = m_Viewport.Height,
+            .MinDepth = m_Viewport.MinDepth,
+            .MaxDepth = m_Viewport.MaxDepth
+        };
+        m_CommandList->RSSetViewports(1, &dxViewport);
+    }
+    if (!m_ScissorBound) {
+        D3D12_RECT dxScissor = {
+            .left = m_Scissor.Left,
+            .top = m_Scissor.Top,
+            .right = m_Scissor.Right,
+            .bottom = m_Scissor.Bottom
+        };
+
+        m_CommandList->RSSetScissorRects(1, &dxScissor);
+    }
+    if (!m_VertexBufferBound) {
+        D3D12_VERTEX_BUFFER_VIEW vertexBufferView = {
+            .BufferLocation = m_VertexBuffer->GetDX12Resource()->GetGPUVirtualAddress(),
+            .SizeInBytes = (uint32_t)m_VertexBuffer->GetDesc().Size,
+            .StrideInBytes = m_VertexBuffer->GetDesc().Stride
+        };
+        m_CommandList->IASetVertexBuffers(0, 1, &vertexBufferView);
+    }
+    if (!m_IndexBufferBound) {
+        D3D12_INDEX_BUFFER_VIEW indexBufferView = {
+            .BufferLocation = m_IndexBuffer->GetDX12Resource()->GetGPUVirtualAddress(),
+            .SizeInBytes = (uint32_t)m_IndexBuffer->GetDesc().Size,
+            .Format = DXGI_FORMAT_R32_UINT
+        };
+        m_CommandList->IASetIndexBuffer(&indexBufferView);
+    }
+    if (!m_RenderAttachmentsBound) {
+        std::vector<D3D12_CPU_DESCRIPTOR_HANDLE> rtvHandles;
+        for (auto* view : m_RTVs) {
+            rtvHandles.push_back(view->GetAllocation().GetCPUHandle(0));
+        }
+        D3D12_CPU_DESCRIPTOR_HANDLE dsvHandle = m_DSV->GetAllocation().GetCPUHandle(0);
+        m_CommandList->OMSetRenderTargets(rtvHandles.size(),
+        rtvHandles.data(), false, &dsvHandle);
+    }
+}
+
+void DX12CommandQueue::ClearRenderAttachmentsIfNeeded() {
+    if (m_ShouldClearRTVs) {
+        for (auto rtv : m_RTVs) {
+            m_CommandList->ClearRenderTargetView(rtv->GetAllocation().GetCPUHandle(0), m_RTVsClearValue, 0, nullptr);
+        }
+        m_ShouldClearRTVs = false;
+    }
+    if (m_ShouldClearDSV) {
+        m_CommandList->ClearDepthStencilView(m_DSV->GetAllocation().GetCPUHandle(0), m_DSV->GetDX12ClearFlags(),
+            m_DSVDepthClearValue, m_DSVStencilClearValue, 0, nullptr);
+        m_ShouldClearDSV = false;
+    }
 }
 
 void DX12CommandQueue::AcquireCommandAllocator() {

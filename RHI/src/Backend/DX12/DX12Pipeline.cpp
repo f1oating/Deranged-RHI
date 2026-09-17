@@ -97,29 +97,40 @@ void DX12GraphicsPipelineState::CreateRootSignature() {
     if (m_Desc.VertexShader.Data) ReflexShader(m_Desc.VertexShader, descriptorRanges, samplerDescriptorRanges);
     if (m_Desc.FragmentShader.Data) ReflexShader(m_Desc.FragmentShader, descriptorRanges, samplerDescriptorRanges);
 
-    D3D12_ROOT_PARAMETER rootParameters[2];
+    m_HaveResources = descriptorRanges.size();
+    m_HaveSamplers = samplerDescriptorRanges.size();
 
-    D3D12_ROOT_DESCRIPTOR_TABLE descriptorTable = {
-        .NumDescriptorRanges = (uint32_t)descriptorRanges.size(),
-        .pDescriptorRanges = descriptorRanges.data()
-    };
+    std::vector<D3D12_ROOT_PARAMETER> rootParameters;
 
-    rootParameters[0].ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
-    rootParameters[0].DescriptorTable = descriptorTable;
-    rootParameters[0].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
+    if (m_HaveResources) {
+        D3D12_ROOT_DESCRIPTOR_TABLE descriptorTable = {
+            .NumDescriptorRanges = (uint32_t)descriptorRanges.size(),
+            .pDescriptorRanges = descriptorRanges.data()
+        };
 
-    D3D12_ROOT_DESCRIPTOR_TABLE samplerDescriptorTable = {
-        .NumDescriptorRanges = (uint32_t)samplerDescriptorRanges.size(),
-        .pDescriptorRanges = samplerDescriptorRanges.data()
-    };
+        rootParameters.push_back({
+            .ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE,
+            .DescriptorTable = descriptorTable,
+            .ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL
+        });
+    }
 
-    rootParameters[1].ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
-    rootParameters[1].DescriptorTable = samplerDescriptorTable;
-    rootParameters[1].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
+    if (m_HaveSamplers) {
+        D3D12_ROOT_DESCRIPTOR_TABLE descriptorTable = {
+            .NumDescriptorRanges = (uint32_t)samplerDescriptorRanges.size(),
+            .pDescriptorRanges = samplerDescriptorRanges.data()
+        };
+
+        rootParameters.push_back({
+            .ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE,
+            .DescriptorTable = descriptorTable,
+            .ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL
+        });
+    }
 
     D3D12_ROOT_SIGNATURE_DESC rootSignatureDesc = {
-        .NumParameters = 2,
-        .pParameters = rootParameters,
+        .NumParameters = (uint32_t)rootParameters.size(),
+        .pParameters = rootParameters.data(),
         .NumStaticSamplers = 0,
         .pStaticSamplers = nullptr,
         .Flags = D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT

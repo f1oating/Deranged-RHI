@@ -63,56 +63,6 @@ void VulkanCommandQueue::SetScissor(Scissor scissor) {
     m_ScissorBound = false;
 }
 
-void VulkanCommandQueue::Barrier(uint32_t srcStage, uint32_t dstStage,
-    std::vector<BufferBarrier> bufBarriers, std::vector<TextureBarrier> texBarriers) {
-    if (m_InsideRendering) {
-        EndRendering();
-    }
-
-    std::vector<VkImageMemoryBarrier> imageBarriers;
-    std::vector<VkBufferMemoryBarrier> bufferBarriers;
-
-    for (auto barrier : texBarriers) {
-        VulkanTexture* vkTexture = static_cast<VulkanTexture*>(barrier.Tex);
-        VkImageSubresourceRange range = {
-            .aspectMask = vkTexture->GetVkAspectFlags(),
-            .baseMipLevel = 0,
-            .levelCount = 1,
-            .baseArrayLayer = 0,
-            .layerCount = 1
-        };
-        VkImageMemoryBarrier imageBarrier = {
-            .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER,
-            .srcAccessMask = ToVkAccess(barrier.SrcAccessFlags),
-            .dstAccessMask = ToVkAccess(barrier.DstAccessFlags),
-            .oldLayout = ToVkImageLayout(vkTexture->GetLayout()),
-            .newLayout = ToVkImageLayout(barrier.Layout),
-            .image = vkTexture->GetVkImage(),
-            .subresourceRange = range
-        };
-        imageBarriers.push_back(imageBarrier);
-        vkTexture->SetLayout(barrier.Layout);
-    }
-
-    for (auto barrier : bufBarriers) {
-        VulkanBuffer* vkBuffer = static_cast<VulkanBuffer*>(barrier.Buf);
-
-        VkBufferMemoryBarrier bufferBarrier = {
-            .sType = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER,
-            .srcAccessMask = ToVkAccess(barrier.SrcAccessFlags),
-            .dstAccessMask = ToVkAccess(barrier.DstAccessFlags),
-            .buffer = vkBuffer->GetVkBuffer(),
-            .offset = 0,
-            .size = vkBuffer->GetDesc().Size
-        };
-        bufferBarriers.push_back(bufferBarrier);
-    }
-
-    vkCmdPipelineBarrier(m_CommandBuffer, ToVkStage(srcStage), ToVkStage(dstStage),
-        VK_DEPENDENCY_BY_REGION_BIT, 0, nullptr, bufferBarriers.size(),
-        bufferBarriers.data(), imageBarriers.size(), imageBarriers.data());
-}
-
 void VulkanCommandQueue::SetRenderTargets(std::vector<RenderTargetView*> rtvs) {
     m_RTVs.resize(rtvs.size());
     for (int i = 0; i < m_RTVs.size(); i++) {
@@ -129,7 +79,7 @@ void VulkanCommandQueue::ClearRenderTargets(float r, float g, float b, float a) 
     m_ShouldClearRTVs = true;
 }
 
-void VulkanCommandQueue::ClearDepthStencil(float depth, uint32_t stencil) {
+void VulkanCommandQueue::ClearDepthStencil(float depth, uint8_t stencil) {
     m_DSVClearValue = { depth, stencil };
     m_ShouldClearDSV = true;
 }
@@ -180,8 +130,8 @@ void VulkanCommandQueue::SetSampler(std::string name, Sampler* sampler) {
     m_DescriptorManager->WriteImageInfo(set, binding, imageInfo);
 }
 
-void VulkanCommandQueue::DrawInstanced(uint32_t VertexCountPerInstance, uint32_t InstanceCount,
-    uint32_t StartVertexLocation, uint32_t StartInstanceLocation) {
+void VulkanCommandQueue::DrawInstanced(uint32_t vertexCount, uint32_t instanceCount,
+    uint32_t startVertex, uint32_t startInstance) {
     if (!m_InsideRendering) {
         BeginRendering();
     }
@@ -191,11 +141,11 @@ void VulkanCommandQueue::DrawInstanced(uint32_t VertexCountPerInstance, uint32_t
 
     m_DescriptorManager->WriteAndBind(m_CommandBuffer, m_GraphicsPipeline->GetVkLayout(), m_CommandBufferNumber);
 
-    vkCmdDraw(m_CommandBuffer, VertexCountPerInstance, InstanceCount, StartVertexLocation, StartInstanceLocation);
+    vkCmdDraw(m_CommandBuffer, vertexCount, instanceCount, startVertex, startInstance);
 }
 
-void VulkanCommandQueue::DrawIndexedInstanced(uint32_t IndexCountPerInstance, uint32_t InstanceCount,
-        uint32_t StartIndexLocation, uint32_t VertexOffset, uint32_t StartInstanceLocation) {
+void VulkanCommandQueue::DrawIndexedInstanced(uint32_t indexCount, uint32_t instanceCount,
+        uint32_t startIndex, uint32_t vertexOffset, uint32_t startInstance) {
     if (!m_InsideRendering) {
         BeginRendering();
     }
@@ -205,7 +155,57 @@ void VulkanCommandQueue::DrawIndexedInstanced(uint32_t IndexCountPerInstance, ui
 
     m_DescriptorManager->WriteAndBind(m_CommandBuffer, m_GraphicsPipeline->GetVkLayout(), m_CommandBufferNumber);
 
-    vkCmdDrawIndexed(m_CommandBuffer, IndexCountPerInstance, InstanceCount, StartIndexLocation, VertexOffset, StartInstanceLocation);
+    vkCmdDrawIndexed(m_CommandBuffer, indexCount, instanceCount, startIndex, vertexOffset, startInstance);
+}
+
+void VulkanCommandQueue::Barrier(uint32_t srcStage, uint32_t dstStage,
+    std::vector<BufferBarrier> bufBarriers, std::vector<TextureBarrier> texBarriers) {
+    if (m_InsideRendering) {
+        EndRendering();
+    }
+
+    std::vector<VkImageMemoryBarrier> imageBarriers;
+    std::vector<VkBufferMemoryBarrier> bufferBarriers;
+
+    for (auto barrier : texBarriers) {
+        VulkanTexture* vkTexture = static_cast<VulkanTexture*>(barrier.Tex);
+        VkImageSubresourceRange range = {
+            .aspectMask = vkTexture->GetVkAspectFlags(),
+            .baseMipLevel = 0,
+            .levelCount = 1,
+            .baseArrayLayer = 0,
+            .layerCount = 1
+        };
+        VkImageMemoryBarrier imageBarrier = {
+            .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER,
+            .srcAccessMask = ToVkAccess(barrier.SrcAccessFlags),
+            .dstAccessMask = ToVkAccess(barrier.DstAccessFlags),
+            .oldLayout = ToVkImageLayout(vkTexture->GetLayout()),
+            .newLayout = ToVkImageLayout(barrier.Layout),
+            .image = vkTexture->GetVkImage(),
+            .subresourceRange = range
+        };
+        imageBarriers.push_back(imageBarrier);
+        vkTexture->SetLayout(barrier.Layout);
+    }
+
+    for (auto barrier : bufBarriers) {
+        VulkanBuffer* vkBuffer = static_cast<VulkanBuffer*>(barrier.Buf);
+
+        VkBufferMemoryBarrier bufferBarrier = {
+            .sType = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER,
+            .srcAccessMask = ToVkAccess(barrier.SrcAccessFlags),
+            .dstAccessMask = ToVkAccess(barrier.DstAccessFlags),
+            .buffer = vkBuffer->GetVkBuffer(),
+            .offset = 0,
+            .size = vkBuffer->GetDesc().Size
+        };
+        bufferBarriers.push_back(bufferBarrier);
+    }
+
+    vkCmdPipelineBarrier(m_CommandBuffer, ToVkStage(srcStage), ToVkStage(dstStage),
+        VK_DEPENDENCY_BY_REGION_BIT, 0, nullptr, bufferBarriers.size(),
+        bufferBarriers.data(), imageBarriers.size(), imageBarriers.data());
 }
 
 void VulkanCommandQueue::CopyToBuffer(Buffer* dst, uint64_t size, void* data) {

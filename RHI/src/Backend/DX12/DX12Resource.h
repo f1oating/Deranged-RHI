@@ -71,12 +71,15 @@ public:
     ~DX12DepthStencilView();
 
     DescriptorHeapAllocation GetAllocation() const { return m_Allocation; }
+    D3D12_CLEAR_FLAGS GetDX12ClearFlags() const { return m_ClearFlags; }
 
 private:
     DX12Device* m_Device = nullptr;
     DX12Texture* m_Texture = nullptr;
 
     DescriptorHeapAllocation m_Allocation;
+
+    D3D12_CLEAR_FLAGS m_ClearFlags = D3D12_CLEAR_FLAG_DEPTH;
 
 };
 
@@ -242,71 +245,6 @@ inline DXGI_FORMAT ToDXGIFormat(TextureFormat format) {
     }
 }
 
-inline TextureFormat FromDXGIFormat(DXGI_FORMAT format) {
-    switch (format) {
-        case DXGI_FORMAT_UNKNOWN: return TextureFormat::Unknown;
-
-        case DXGI_FORMAT_R8_UNORM: return TextureFormat::R8_UNORM;
-        case DXGI_FORMAT_R8G8_UNORM: return TextureFormat::R8G8_UNORM;
-        case DXGI_FORMAT_R8G8B8A8_UNORM: return TextureFormat::R8G8B8A8_UNORM;
-        case DXGI_FORMAT_B8G8R8A8_UNORM: return TextureFormat::B8G8R8A8_UNORM;
-
-        case DXGI_FORMAT_R16_UNORM: return TextureFormat::R16_UNORM;
-        case DXGI_FORMAT_R16G16_UNORM: return TextureFormat::R16G16_UNORM;
-        case DXGI_FORMAT_R16G16B16A16_UNORM: return TextureFormat::R16G16B16A16_UNORM;
-
-        case DXGI_FORMAT_R8_SNORM: return TextureFormat::R8_SNORM;
-        case DXGI_FORMAT_R8G8_SNORM: return TextureFormat::R8G8_SNORM;
-        case DXGI_FORMAT_R8G8B8A8_SNORM: return TextureFormat::R8G8B8A8_SNORM;
-
-        case DXGI_FORMAT_R16_SNORM: return TextureFormat::R16_SNORM;
-        case DXGI_FORMAT_R16G16_SNORM: return TextureFormat::R16G16_SNORM;
-        case DXGI_FORMAT_R16G16B16A16_SNORM: return TextureFormat::R16G16B16A16_SNORM;
-
-        case DXGI_FORMAT_R16_FLOAT: return TextureFormat::R16_FLOAT;
-        case DXGI_FORMAT_R16G16_FLOAT: return TextureFormat::R16G16_FLOAT;
-        case DXGI_FORMAT_R16G16B16A16_FLOAT: return TextureFormat::R16G16B16A16_FLOAT;
-
-        case DXGI_FORMAT_R32_FLOAT: return TextureFormat::R32_FLOAT;
-        case DXGI_FORMAT_R32G32_FLOAT: return TextureFormat::R32G32_FLOAT;
-        case DXGI_FORMAT_R32G32B32_FLOAT: return TextureFormat::R32G32B32_FLOAT;
-        case DXGI_FORMAT_R32G32B32A32_FLOAT: return TextureFormat::R32G32B32A32_FLOAT;
-
-        case DXGI_FORMAT_R8_UINT: return TextureFormat::R8_UINT;
-        case DXGI_FORMAT_R8G8_UINT: return TextureFormat::R8G8_UINT;
-        case DXGI_FORMAT_R8G8B8A8_UINT: return TextureFormat::R8G8B8A8_UINT;
-
-        case DXGI_FORMAT_R16_UINT: return TextureFormat::R16_UINT;
-        case DXGI_FORMAT_R16G16_UINT: return TextureFormat::R16G16_UINT;
-        case DXGI_FORMAT_R16G16B16A16_UINT: return TextureFormat::R16G16B16A16_UINT;
-
-        case DXGI_FORMAT_R32_UINT: return TextureFormat::R32_UINT;
-        case DXGI_FORMAT_R32G32_UINT: return TextureFormat::R32G32_UINT;
-        case DXGI_FORMAT_R32G32B32_UINT: return TextureFormat::R32G32B32_UINT;
-        case DXGI_FORMAT_R32G32B32A32_UINT: return TextureFormat::R32G32B32A32_UINT;
-
-        case DXGI_FORMAT_R8_SINT: return TextureFormat::R8_SINT;
-        case DXGI_FORMAT_R8G8_SINT: return TextureFormat::R8G8_SINT;
-        case DXGI_FORMAT_R8G8B8A8_SINT: return TextureFormat::R8G8B8A8_SINT;
-
-        case DXGI_FORMAT_R16_SINT: return TextureFormat::R16_SINT;
-        case DXGI_FORMAT_R16G16_SINT: return TextureFormat::R16G16_SINT;
-        case DXGI_FORMAT_R16G16B16A16_SINT: return TextureFormat::R16G16B16A16_SINT;
-
-        case DXGI_FORMAT_R32_SINT: return TextureFormat::R32_SINT;
-        case DXGI_FORMAT_R32G32_SINT: return TextureFormat::R32G32_SINT;
-        case DXGI_FORMAT_R32G32B32_SINT: return TextureFormat::R32G32B32_SINT;
-        case DXGI_FORMAT_R32G32B32A32_SINT: return TextureFormat::R32G32B32A32_SINT;
-
-        case DXGI_FORMAT_D16_UNORM: return TextureFormat::D16_UNORM;
-        case DXGI_FORMAT_D24_UNORM_S8_UINT: return TextureFormat::D24_UNORM_S8_UINT;
-        case DXGI_FORMAT_D32_FLOAT_S8X24_UINT: return TextureFormat::D32_SFLOAT_S8_UINT;
-        case DXGI_FORMAT_D32_FLOAT: return TextureFormat::D32_FLOAT;
-
-        default: return TextureFormat::Unknown;
-    }
-}
-
 inline D3D12_COMPARISON_FUNC ToD3D12ComparisonFunc(CompareOp op) {
     switch (op) {
         case CompareOp::Never:
@@ -343,19 +281,6 @@ inline D3D12_RESOURCE_DIMENSION ToD3D12ResourceDimension(TextureType type) {
     }
 }
 
-inline TextureType FromD3D12ResourceDimension(D3D12_RESOURCE_DIMENSION dimension) {
-    switch (dimension) {
-        case D3D12_RESOURCE_DIMENSION_TEXTURE1D:
-            return TextureType::Texture1D;
-        case D3D12_RESOURCE_DIMENSION_TEXTURE2D:
-            return TextureType::Texture2D;
-        case D3D12_RESOURCE_DIMENSION_TEXTURE3D:
-            return TextureType::Texture3D;
-        default:
-            return TextureType::Texture2D;
-    }
-}
-
 inline D3D12_BARRIER_LAYOUT ToD3D12BarrierLayout(ImageLayout layout) {
     switch (layout) {
         case ImageLayout::Undefined:
@@ -364,6 +289,8 @@ inline D3D12_BARRIER_LAYOUT ToD3D12BarrierLayout(ImageLayout layout) {
             return  D3D12_BARRIER_LAYOUT_COPY_SOURCE;
         case ImageLayout::TransferDST:
             return  D3D12_BARRIER_LAYOUT_COPY_DEST;
+        case ImageLayout::DepthStencil:
+            return D3D12_BARRIER_LAYOUT_DEPTH_STENCIL_WRITE;
         case ImageLayout::RenderTarget:
             return D3D12_BARRIER_LAYOUT_RENDER_TARGET;
         case ImageLayout::Present:
@@ -438,7 +365,7 @@ inline D3D12_BARRIER_SYNC ToD3D12BarrierSync(uint32_t flags) {
         dxFlags |= D3D12_BARRIER_SYNC_PIXEL_SHADING;
     }
     if (flags & PIPELINE_STAGE_LATE_FRAGMENT_TESTS) {
-        dxFlags |= D3D12_BARRIER_SYNC_PIXEL_SHADING;
+        dxFlags |= D3D12_BARRIER_SYNC_DEPTH_STENCIL;
     }
     if (flags & PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT) {
         dxFlags |= D3D12_BARRIER_SYNC_RENDER_TARGET;
@@ -497,6 +424,19 @@ inline D3D12_TEXTURE_ADDRESS_MODE ToD3D12TextureAddressMode(AddressMode mode) {
             return D3D12_TEXTURE_ADDRESS_MODE_MIRROR;
         default:
             return D3D12_TEXTURE_ADDRESS_MODE_WRAP;
+    }
+}
+
+inline D3D12_CLEAR_FLAGS ToD3D12ClearFlags(TextureFormat format) {
+    switch (format) {
+        case TextureFormat::D16_UNORM:
+        case TextureFormat::D32_FLOAT:
+            return D3D12_CLEAR_FLAG_DEPTH;
+        case TextureFormat::D24_UNORM_S8_UINT:
+        case TextureFormat::D32_SFLOAT_S8_UINT:
+            return D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL;
+        default:
+            return D3D12_CLEAR_FLAG_DEPTH;
     }
 }
 

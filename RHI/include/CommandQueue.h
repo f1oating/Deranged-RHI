@@ -39,14 +39,11 @@ public:
     virtual void SetViewport(Viewport viewport) = 0;
     virtual void SetScissor(Scissor scissor) = 0;
 
-    virtual void Barrier(uint32_t srcStage, uint32_t dstStage,
-        std::vector<BufferBarrier> bufBarriers, std::vector<TextureBarrier> texBarriers) = 0;
-
     virtual void SetRenderTargets(std::vector<RenderTargetView*> rtvs) = 0;
     virtual void SetDepthStencil(DepthStencilView* dsv) = 0;
 
     virtual void ClearRenderTargets(float r, float g, float b, float a) = 0;
-    virtual void ClearDepthStencil(float depth, uint32_t stencil) = 0;
+    virtual void ClearDepthStencil(float depth, uint8_t stencil) = 0;
 
     virtual void SetVertexBuffer(Buffer* buffer) = 0;
     virtual void SetIndexBuffer(Buffer* buffer) = 0;
@@ -55,10 +52,13 @@ public:
     virtual void SetTexture(std::string name, ShaderResourceView* textureView) = 0;
     virtual void SetSampler(std::string name, Sampler* sampler) = 0;
 
-    virtual void DrawInstanced(uint32_t VertexCountPerInstance, uint32_t InstanceCount = 1,
-        uint32_t StartVertexLocation = 0, uint32_t StartInstanceLocation = 0) = 0;
-    virtual void DrawIndexedInstanced(uint32_t IndexCountPerInstance, uint32_t InstanceCount = 1,
-        uint32_t StartIndexLocation = 0, uint32_t VertexOffset = 0, uint32_t StartInstanceLocation = 0) = 0;
+    virtual void DrawInstanced(uint32_t vertexCount, uint32_t instanceCount = 1,
+        uint32_t startVertex = 0, uint32_t startInstance = 0) = 0;
+    virtual void DrawIndexedInstanced(uint32_t indexCount, uint32_t instanceCount = 1,
+        uint32_t startIndex = 0, uint32_t vertexOffset = 0, uint32_t startInstance = 0) = 0;
+
+    virtual void Barrier(uint32_t srcStage, uint32_t dstStage,
+        std::vector<BufferBarrier> bufBarriers, std::vector<TextureBarrier> texBarriers) = 0;
 
     virtual void CopyToBuffer(Buffer* dst, uint64_t size, void* data) = 0;
     virtual void CopyToTexture(Texture* dst, uint64_t size, void* data) = 0;
