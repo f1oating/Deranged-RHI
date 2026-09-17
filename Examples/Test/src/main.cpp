@@ -27,6 +27,16 @@ int main() {
     };
     Buffer* cbuffer = device->CreateBuffer(cbufferDesc);
 
+    TextureDesc depthStencilDesc = {
+        .Width = 800,
+        .Height = 600,
+        .Format = TextureFormat::D32_FLOAT,
+        .BindFlags = TEXTURE_BIND_DEPTH_STENCIL
+    };
+    Texture* depthStencil = device->CreateTexture(depthStencilDesc);
+    queue->Barrier(PIPELINE_STAGE_NONE, PIPELINE_STAGE_EARLY_FRAGMENT_TESTS, {},
+        { { depthStencil, ImageLayout::DepthStencil, ACCESS_NONE, ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE } });
+
     auto vertexSource = ShaderCompiler::CompileShader("vertex.slang");
     Shader vertexShader{
         .Data = vertexSource.data(),
@@ -46,13 +56,20 @@ int main() {
         .ColorAttachments = { {} }
     };
 
+    DepthStencilDesc depthStencilStateDesc = {
+        .DepthEnable = true,
+        .DepthWriteEnable = true,
+        .DepthCompare = CompareOp::Always
+    };
+
     GraphicsPipelineDesc pipelineDesc = {
         .VertexShader = vertexShader,
         .FragmentShader = fragmentShader,
         .VertexInput = inputDesc,
+        .DepthStencil = depthStencilStateDesc,
         .Blend = blendDesc,
         .ColorFormats = { TextureFormat::B8G8R8A8_UNORM },
-        .DepthStencilFormat = TextureFormat::Unknown,
+        .DepthStencilFormat = TextureFormat::D32_FLOAT,
         .PrimitiveTopology = Topology::TriangleList
     };
     pipelineState = device->CreateGraphicsPipelineState(pipelineDesc);
@@ -64,10 +81,12 @@ int main() {
         TextureDesc backBufferDesc = currentBackBuffer->GetDesc();
 
         queue->Barrier(PIPELINE_STAGE_NONE, PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT, {},
-            { { currentBackBuffer, ImageLayout::RenderTarget, ACCESS_NONE, ACCESS_COLOR_ATTACHMENT_READ } });
+            { { currentBackBuffer, ImageLayout::RenderTarget, ACCESS_NONE, ACCESS_COLOR_ATTACHMENT_WRITE } });
 
         queue->SetGraphicsPipelineState(pipelineState);
         queue->SetRenderTargets({ swapchain->GetCurrentBackBuffer()->GetRTV() });
+        queue->SetDepthStencil(depthStencil->GetDSV());
+        queue->ClearDepthStencil(0.0f, 0);
         queue->ClearRenderTargets(0.1f, 0.2f, 0.3f, 1.0f);
 
         queue->SetViewport({ 0, 0, (float)backBufferDesc.Width,
@@ -93,6 +112,7 @@ int main() {
     }
 
     delete cbuffer;
+    delete depthStencil;
     delete pipelineState;
 
     return 0;

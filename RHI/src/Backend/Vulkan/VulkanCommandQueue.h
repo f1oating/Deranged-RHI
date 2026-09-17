@@ -31,13 +31,15 @@ public:
 
     void SetViewport(Viewport viewport) override;
     void SetScissor(Scissor scissor) override;
-    void SetBlendConstants(float r, float g, float b, float a) override;
 
     void Barrier(uint32_t srcStage, uint32_t dstStage,
         std::vector<BufferBarrier> bufBarriers, std::vector<TextureBarrier> texBarriers) override;
 
     void SetRenderTargets(std::vector<RenderTargetView*> rtvs) override;
+    void SetDepthStencil(DepthStencilView* dsv) override;
+
     void ClearRenderTargets(float r, float g, float b, float a) override;
+    void ClearDepthStencil(float depth, uint32_t stencil) override;
 
     void SetVertexBuffer(Buffer* buffer) override;
     void SetIndexBuffer(Buffer* buffer) override;
@@ -69,8 +71,13 @@ private:
     void AcquireCommandBuffer();
     void SubmitCommandBuffer();
 
+    void MarkResourcesDirty();
+    void BoundDirtyResources();
+
     void BeginRendering();
     void EndRendering();
+
+    void ClearDirtyAttachmentsIfInsideRendering();
 
 private:
     VulkanDevice* m_Device;
@@ -90,8 +97,24 @@ private:
     std::vector<uint64_t> m_SignalSemaphoresValues;
 
     std::unique_ptr<DescriptorManager> m_DescriptorManager = nullptr;
-    VulkanGraphicsPipelineState* m_BoundPipeline = nullptr;
+
+    VulkanGraphicsPipelineState* m_GraphicsPipeline = nullptr;
+    bool m_GraphicsPipelineBound = false;
+    Viewport m_Viewport;
+    bool m_ViewportBound = false;
+    Scissor m_Scissor;
+    bool m_ScissorBound = false;
+    VulkanBuffer* m_VertexBuffer = nullptr;
+    bool m_VertexBufferBound = false;
+    VulkanBuffer* m_IndexBuffer = nullptr;
+    bool m_IndexBufferBound = false;
+
     std::vector<VulkanRenderTargetView*> m_RTVs;
+    VkClearColorValue m_RTVsClearValue;
+    bool m_ShouldClearRTVs = false;
+    VulkanDepthStencilView* m_DSV = nullptr;
+    VkClearDepthStencilValue m_DSVClearValue;
+    bool m_ShouldClearDSV = false;
     bool m_InsideRendering = false;
 
 };

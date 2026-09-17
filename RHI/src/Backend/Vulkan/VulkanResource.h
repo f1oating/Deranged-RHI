@@ -30,6 +30,7 @@ public:
 
     VkImage GetVkImage() const { return m_Image; }
     ImageLayout GetLayout() const { return m_Layout; }
+    VkImageAspectFlags GetVkAspectFlags() const { return m_AspectFlags; }
 
     void SetLayout(ImageLayout layout) { m_Layout = layout; }
 
@@ -49,6 +50,7 @@ private:
     VulkanShaderResourceView* m_SRV = nullptr;
 
     ImageLayout m_Layout = ImageLayout::Undefined;
+    VkImageAspectFlags m_AspectFlags = VK_IMAGE_ASPECT_COLOR_BIT;
 
 };
 
@@ -269,71 +271,6 @@ inline VkFormat ToVkFormat(TextureFormat format) {
     }
 }
 
-inline TextureFormat FromVkFormat(VkFormat format) {
-    switch (format) {
-        case VK_FORMAT_UNDEFINED: return TextureFormat::Unknown;
-
-        case VK_FORMAT_R8_UNORM: return TextureFormat::R8_UNORM;
-        case VK_FORMAT_R8G8_UNORM: return TextureFormat::R8G8_UNORM;
-        case VK_FORMAT_R8G8B8A8_UNORM: return TextureFormat::R8G8B8A8_UNORM;
-        case VK_FORMAT_B8G8R8A8_UNORM: return TextureFormat::B8G8R8A8_UNORM;
-
-        case VK_FORMAT_R16_UNORM: return TextureFormat::R16_UNORM;
-        case VK_FORMAT_R16G16_UNORM: return TextureFormat::R16G16_UNORM;
-        case VK_FORMAT_R16G16B16A16_UNORM: return TextureFormat::R16G16B16A16_UNORM;
-
-        case VK_FORMAT_R8_SNORM: return TextureFormat::R8_SNORM;
-        case VK_FORMAT_R8G8_SNORM: return TextureFormat::R8G8_SNORM;
-        case VK_FORMAT_R8G8B8A8_SNORM: return TextureFormat::R8G8B8A8_SNORM;
-
-        case VK_FORMAT_R16_SNORM: return TextureFormat::R16_SNORM;
-        case VK_FORMAT_R16G16_SNORM: return TextureFormat::R16G16_SNORM;
-        case VK_FORMAT_R16G16B16A16_SNORM: return TextureFormat::R16G16B16A16_SNORM;
-
-        case VK_FORMAT_R16_SFLOAT: return TextureFormat::R16_FLOAT;
-        case VK_FORMAT_R16G16_SFLOAT: return TextureFormat::R16G16_FLOAT;
-        case VK_FORMAT_R16G16B16A16_SFLOAT: return TextureFormat::R16G16B16A16_FLOAT;
-
-        case VK_FORMAT_R32_SFLOAT: return TextureFormat::R32_FLOAT;
-        case VK_FORMAT_R32G32_SFLOAT: return TextureFormat::R32G32_FLOAT;
-        case VK_FORMAT_R32G32B32_SFLOAT: return TextureFormat::R32G32B32_FLOAT;
-        case VK_FORMAT_R32G32B32A32_SFLOAT: return TextureFormat::R32G32B32A32_FLOAT;
-
-        case VK_FORMAT_R8_UINT: return TextureFormat::R8_UINT;
-        case VK_FORMAT_R8G8_UINT: return TextureFormat::R8G8_UINT;
-        case VK_FORMAT_R8G8B8A8_UINT: return TextureFormat::R8G8B8A8_UINT;
-
-        case VK_FORMAT_R16_UINT: return TextureFormat::R16_UINT;
-        case VK_FORMAT_R16G16_UINT: return TextureFormat::R16G16_UINT;
-        case VK_FORMAT_R16G16B16A16_UINT: return TextureFormat::R16G16B16A16_UINT;
-
-        case VK_FORMAT_R32_UINT: return TextureFormat::R32_UINT;
-        case VK_FORMAT_R32G32_UINT: return TextureFormat::R32G32_UINT;
-        case VK_FORMAT_R32G32B32_UINT: return TextureFormat::R32G32B32_UINT;
-        case VK_FORMAT_R32G32B32A32_UINT: return TextureFormat::R32G32B32A32_UINT;
-
-        case VK_FORMAT_R8_SINT: return TextureFormat::R8_SINT;
-        case VK_FORMAT_R8G8_SINT: return TextureFormat::R8G8_SINT;
-        case VK_FORMAT_R8G8B8A8_SINT: return TextureFormat::R8G8B8A8_SINT;
-
-        case VK_FORMAT_R16_SINT: return TextureFormat::R16_SINT;
-        case VK_FORMAT_R16G16_SINT: return TextureFormat::R16G16_SINT;
-        case VK_FORMAT_R16G16B16A16_SINT: return TextureFormat::R16G16B16A16_SINT;
-
-        case VK_FORMAT_R32_SINT: return TextureFormat::R32_SINT;
-        case VK_FORMAT_R32G32_SINT: return TextureFormat::R32G32_SINT;
-        case VK_FORMAT_R32G32B32_SINT: return TextureFormat::R32G32B32_SINT;
-        case VK_FORMAT_R32G32B32A32_SINT: return TextureFormat::R32G32B32A32_SINT;
-
-        case VK_FORMAT_D16_UNORM: return TextureFormat::D16_UNORM;
-        case VK_FORMAT_D24_UNORM_S8_UINT: return TextureFormat::D24_UNORM_S8_UINT;
-        case VK_FORMAT_D32_SFLOAT_S8_UINT: return TextureFormat::D32_SFLOAT_S8_UINT;
-        case VK_FORMAT_D32_SFLOAT: return TextureFormat::D32_FLOAT;
-
-        default: return TextureFormat::Unknown;
-    }
-}
-
 inline VkImageType ToVkImageType(TextureType type) {
     switch (type) {
         case TextureType::Texture1D:
@@ -373,19 +310,6 @@ inline VkImageAspectFlags ToVkImageAspectFlags(TextureFormat format) {
     }
 }
 
-inline TextureType FromVkImageType(VkImageType type) {
-    switch (type) {
-        case VK_IMAGE_TYPE_1D:
-            return TextureType::Texture1D;
-        case VK_IMAGE_TYPE_2D:
-            return TextureType::Texture2D;
-        case VK_IMAGE_TYPE_3D:
-            return TextureType::Texture3D;
-        default:
-            return TextureType::Texture2D;
-    }
-}
-
 inline VkSampleCountFlagBits ToVkSampleCountFlagBits(uint32_t sampleCount) {
     switch (sampleCount) {
         case 1:
@@ -415,29 +339,14 @@ inline VkImageLayout ToVkImageLayout(ImageLayout layout) {
             return VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
         case ImageLayout::TransferDST:
             return VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+        case ImageLayout::DepthStencil:
+            return VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL;
         case ImageLayout::RenderTarget:
             return VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
         case ImageLayout::Present:
             return VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
         default:
             return VK_IMAGE_LAYOUT_UNDEFINED;
-    }
-}
-
-inline ImageLayout FromVkImageLayout(VkImageLayout layout) {
-    switch (layout) {
-        case VK_IMAGE_LAYOUT_UNDEFINED:
-            return ImageLayout::Undefined;
-        case VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL:
-            return ImageLayout::TransferSRC;
-        case VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL:
-            return ImageLayout::TransferDST;
-        case VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL:
-            return ImageLayout::RenderTarget;
-        case VK_IMAGE_LAYOUT_PRESENT_SRC_KHR:
-            return ImageLayout::Present;
-        default:
-            return ImageLayout::Undefined;
     }
 }
 

@@ -124,6 +124,7 @@ enum class ImageLayout {
     TransferSRC,
     TransferDST,
     ShaderResource,
+    DepthStencil,
     RenderTarget,
     Present
 };

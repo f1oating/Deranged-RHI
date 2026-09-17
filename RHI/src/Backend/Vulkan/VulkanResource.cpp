@@ -11,6 +11,7 @@ namespace vk {
 VulkanTexture::VulkanTexture(TextureDesc desc, VulkanDevice* device) {
     m_Desc = desc;
     m_Device = device;
+    m_AspectFlags = ToVkImageAspectFlags(m_Desc.Format);
 
     CreateTexture();
     CreateMemory();
@@ -79,7 +80,7 @@ void VulkanTexture::CreateTexture() {
         .mipLevels = m_Desc.MipLevels,
         .arrayLayers = m_Desc.ArrayLayers,
         .samples = ToVkSampleCountFlagBits(m_Desc.Samples),
-        .tiling = VK_IMAGE_TILING_LINEAR,
+        .tiling = VK_IMAGE_TILING_OPTIMAL,
         .usage = ToVkImageUsageFlags(m_Desc.BindFlags),
         .sharingMode = VK_SHARING_MODE_EXCLUSIVE,
         .initialLayout = VK_IMAGE_LAYOUT_UNDEFINED
@@ -107,7 +108,7 @@ VulkanRenderTargetView::VulkanRenderTargetView(VulkanTexture* texture, VulkanDev
     m_Texture = texture;
 
     VkImageSubresourceRange imageSubresourceRange = {
-        .aspectMask = ToVkImageAspectFlags(texture->GetDesc().Format),
+        .aspectMask = texture->GetVkAspectFlags(),
         .baseMipLevel = 0,
         .levelCount = 1,
         .baseArrayLayer = 0,
@@ -141,7 +142,7 @@ VulkanDepthStencilView::VulkanDepthStencilView(VulkanTexture* texture, VulkanDev
     m_Texture = texture;
 
     VkImageSubresourceRange imageSubresourceRange = {
-        .aspectMask = ToVkImageAspectFlags(texture->GetDesc().Format),
+        .aspectMask = texture->GetVkAspectFlags(),
         .baseMipLevel = 0,
         .levelCount = 1,
         .baseArrayLayer = 0,
@@ -175,7 +176,7 @@ VulkanShaderResourceView::VulkanShaderResourceView(VulkanTexture* texture, Vulka
     m_Texture = texture;
 
     VkImageSubresourceRange imageSubresourceRange = {
-        .aspectMask = ToVkImageAspectFlags(texture->GetDesc().Format),
+        .aspectMask = texture->GetVkAspectFlags(),
         .baseMipLevel = 0,
         .levelCount = 1,
         .baseArrayLayer = 0,

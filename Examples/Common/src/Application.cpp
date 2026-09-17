@@ -2,16 +2,17 @@
 // Created by alan on 15/09/2026.
 //
 
+#include "Application.h"
+#include "ShaderCompiler.h"
+
 #ifdef WIN32
 #define GLFW_EXPOSE_NATIVE_WIN32
+#include <GLFW/glfw3native.h>
 #else
 #define GLFW_EXPOSE_NATIVE_X11
 #include <X11/Xlib-xcb.h>
-#endif
-
-#include "Application.h"
-#include "ShaderCompiler.h"
 #include <GLFW/glfw3native.h>
+#endif
 
 Application::Application() {
     ShaderCompiler::Init();
@@ -27,8 +28,8 @@ Application::Application() {
     windowInfo.Window = glfwGetWin32Window(m_Window);
     windowInfo.Instance = GetModuleHandle(nullptr);
 #else
-    deviceDesc.WindowProtocol = DeviceDesc::DISPLAY_SERVER_PROTOCOL_XCB
-    windowInfo.Xcb.Window = glfwGetX11Window(m_Window);;
+    deviceDesc.WindowProtocol = DeviceDesc::DISPLAY_SERVER_PROTOCOL_XCB;
+    windowInfo.Xcb.Window = glfwGetX11Window(m_Window);
     windowInfo.Xcb.Connection = XGetXCBConnection(glfwGetX11Display());
 #endif
 
@@ -64,7 +65,7 @@ void Application::BeginFrame() {
     double m_DeltaTime = newTime - m_Time;
     m_Time = newTime;
 
-    if (glfwGetKey(m_Window, GLFW_KEY_ESCAPE)) {
+    if (glfwGetKey(m_Window, GLFW_KEY_ESCAPE) == GLFW_PRESS) {
         glfwSetInputMode(m_Window, GLFW_CURSOR, m_ShowCursor ? GLFW_CURSOR_DISABLED : GLFW_CURSOR_NORMAL);
         m_ShowCursor = !m_ShowCursor;
     }

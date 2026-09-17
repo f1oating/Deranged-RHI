@@ -38,13 +38,15 @@ public:
 
     virtual void SetViewport(Viewport viewport) = 0;
     virtual void SetScissor(Scissor scissor) = 0;
-    virtual void SetBlendConstants(float r, float g, float b, float a) = 0;
 
     virtual void Barrier(uint32_t srcStage, uint32_t dstStage,
         std::vector<BufferBarrier> bufBarriers, std::vector<TextureBarrier> texBarriers) = 0;
 
     virtual void SetRenderTargets(std::vector<RenderTargetView*> rtvs) = 0;
+    virtual void SetDepthStencil(DepthStencilView* dsv) = 0;
+
     virtual void ClearRenderTargets(float r, float g, float b, float a) = 0;
+    virtual void ClearDepthStencil(float depth, uint32_t stencil) = 0;
 
     virtual void SetVertexBuffer(Buffer* buffer) = 0;
     virtual void SetIndexBuffer(Buffer* buffer) = 0;
