@@ -95,6 +95,8 @@ void VulkanCommandQueue::SetIndexBuffer(Buffer* buffer) {
 }
 
 void VulkanCommandQueue::SetConstantBuffer(std::string name, Buffer* buffer) {
+    if (!m_GraphicsPipeline) return;
+
     VulkanBuffer* vkBuffer = static_cast<VulkanBuffer*>(buffer);
     const auto [set, binding] = m_GraphicsPipeline->GetBindingPlace(name);
 
@@ -108,6 +110,8 @@ void VulkanCommandQueue::SetConstantBuffer(std::string name, Buffer* buffer) {
 }
 
 void VulkanCommandQueue::SetTexture(std::string name, ShaderResourceView* textureView) {
+    if (!m_GraphicsPipeline) return;
+
     VulkanShaderResourceView* vkTextureView = static_cast<VulkanShaderResourceView*>(textureView);
     const auto [set, binding] = m_GraphicsPipeline->GetBindingPlace(name);
 
@@ -120,6 +124,8 @@ void VulkanCommandQueue::SetTexture(std::string name, ShaderResourceView* textur
 }
 
 void VulkanCommandQueue::SetSampler(std::string name, Sampler* sampler) {
+    if (!m_GraphicsPipeline) return;
+
     VulkanSampler* vkSampler = static_cast<VulkanSampler*>(sampler);
     const auto [set, binding] = m_GraphicsPipeline->GetBindingPlace(name);
 

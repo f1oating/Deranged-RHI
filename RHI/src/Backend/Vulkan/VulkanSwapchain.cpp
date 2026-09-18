@@ -43,6 +43,16 @@ VulkanSwapchain::~VulkanSwapchain() {
     spdlog::info("VulkanSwapchain Destroyed.");
 }
 
+void VulkanSwapchain::Resize() {
+    m_Queue->Flush();
+    vkDeviceWaitIdle(m_Device->GetVkDevice());
+    DestroySync();
+    DestroySwapchain();
+    CreateSwapchain();
+    CreateSync();
+    AcquireImage();
+}
+
 Texture* VulkanSwapchain::GetCurrentBackBuffer() {
     return m_Textures[m_ImageIndex];
 }

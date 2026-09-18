@@ -8,22 +8,14 @@
 #include "Device.h"
 #include "Camera.h"
 #include <GLFW/glfw3.h>
-
-struct Mesh {
-    Buffer* Vertex;
-    Buffer* Index;
-    uint32_t NumIndices;
-};
+#include "Renderer.h"
 
 class Application {
 public:
     Application();
     ~Application();
 
-    bool WindowShouldClose();
-
-    void BeginFrame();
-    void EndFrame();
+    void Run();
 
     Device* GetDevice() const { return m_Device; }
     CommandQueue* GetQueue() const { return m_Queue; }
@@ -37,17 +29,24 @@ private:
     void CreateGLFWWindow();
     void CreateCubeMesh();
 
+    void ProceedCameraMovement();
+    void CheckWindowResized();
+
 private:
     GLFWwindow* m_Window = nullptr;
 
     double m_Time = 0.0f;
     double m_DeltaTime = 0.0f;
 
+    int m_WindowWidth = 800;
+    int m_WindowHeight = 600;
     bool m_ShowCursor = true;
 
     Device* m_Device = nullptr;
     CommandQueue* m_Queue = nullptr;
     Swapchain* m_Swapchain = nullptr;
+
+    Renderer* m_Renderer = nullptr;
 
     Camera m_Camera;
 

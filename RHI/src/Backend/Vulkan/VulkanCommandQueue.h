@@ -45,10 +45,10 @@ public:
     void SetTexture(std::string name, ShaderResourceView* textureView) override;
     void SetSampler(std::string name, Sampler* sampler) override;
 
-    void DrawInstanced(uint32_t vertexCount, uint32_t instanceCount = 1,
-        uint32_t startVertex = 0, uint32_t startInstance = 0) override;
-    void DrawIndexedInstanced(uint32_t indexCount, uint32_t instanceCount = 1,
-        uint32_t startIndex = 0, uint32_t vertexOffset = 0, uint32_t startInstance = 0) override;
+    void DrawInstanced(uint32_t vertexCount, uint32_t instanceCount,
+        uint32_t startVertex, uint32_t startInstance) override;
+    void DrawIndexedInstanced(uint32_t indexCount, uint32_t instanceCount,
+        uint32_t startIndex, uint32_t vertexOffset, uint32_t startInstance) override;
 
     void Barrier(uint32_t srcStage, uint32_t dstStage,
         std::vector<BufferBarrier> bufBarriers, std::vector<TextureBarrier> texBarriers) override;
@@ -64,8 +64,8 @@ public:
     void ReleaseResource(ReleaseResourceWrapper* releaseResourceWrapper);
     void EndFrame();
 
-    uint32_t GetQueueFamilyIndex() const { return m_QueueIndex; };
-    VkQueue GetVkQueue() const { return m_Queue; };
+    uint32_t GetQueueFamilyIndex() const { return m_QueueIndex; }
+    VkQueue GetVkQueue() const { return m_Queue; }
 
 private:
     void AcquireCommandBuffer();

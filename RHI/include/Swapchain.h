@@ -29,6 +29,8 @@ class Swapchain {
 public:
     virtual ~Swapchain() = default;
 
+    virtual void Resize() = 0;
+
     virtual Texture* GetCurrentBackBuffer() = 0;
 
     virtual void Present() = 0;

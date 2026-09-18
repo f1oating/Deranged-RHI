@@ -3,7 +3,7 @@ struct Input {
 };
 
 [vk::binding(0, 0)]
-cbuffer ProjView : register(b0) {
+cbuffer Transform : register(b0) {
     column_major float4x4 projView;
 };
 

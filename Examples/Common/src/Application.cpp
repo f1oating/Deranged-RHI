@@ -38,12 +38,17 @@ Application::Application() {
 
     m_Swapchain = m_Device->CreateSwapchain(windowInfo);
 
+    m_Renderer = new Renderer(m_Device, m_Queue, m_Swapchain);
+    m_Renderer->SetCamera(&m_Camera);
+
     CreateCubeMesh();
 }
 
 Application::~Application() {
     delete m_Cube.Index;
     delete m_Cube.Vertex;
+
+    delete m_Renderer;
 
     delete m_Swapchain;
     delete m_Device;
@@ -54,61 +59,24 @@ Application::~Application() {
     ShaderCompiler::Shutdown();
 }
 
-bool Application::WindowShouldClose() {
-    return glfwWindowShouldClose(m_Window);
-}
+void Application::Run() {
+    while (!glfwWindowShouldClose(m_Window)) {
+        glfwPollEvents();
 
-void Application::BeginFrame() {
-    glfwPollEvents();
+        CheckWindowResized();
 
-    double newTime = glfwGetTime();
-    double m_DeltaTime = newTime - m_Time;
-    m_Time = newTime;
+        double newTime = glfwGetTime();
+        m_DeltaTime = newTime - m_Time;
+        m_Time = newTime;
 
-    if (glfwGetKey(m_Window, GLFW_KEY_ESCAPE) == GLFW_PRESS) {
-        glfwSetInputMode(m_Window, GLFW_CURSOR, m_ShowCursor ? GLFW_CURSOR_DISABLED : GLFW_CURSOR_NORMAL);
-        m_ShowCursor = !m_ShowCursor;
+        ProceedCameraMovement();
+
+        m_Renderer->BeginFrame();
+        m_Renderer->Render(m_Cube);
+        m_Renderer->EndFrame();
+
+        m_Device->EndFrame();
     }
-
-    if (glfwGetKey(m_Window, GLFW_KEY_W)) {
-        m_Camera.ProcessKeyboard(CameraMovement::Forward, m_DeltaTime);
-    }
-    if (glfwGetKey(m_Window, GLFW_KEY_S)) {
-        m_Camera.ProcessKeyboard(CameraMovement::Backward, m_DeltaTime);
-    }
-    if (glfwGetKey(m_Window, GLFW_KEY_A)) {
-        m_Camera.ProcessKeyboard(CameraMovement::Left, m_DeltaTime);
-    }
-    if (glfwGetKey(m_Window, GLFW_KEY_D)) {
-        m_Camera.ProcessKeyboard(CameraMovement::Right, m_DeltaTime);
-    }
-
-    if (glfwGetMouseButton(m_Window, GLFW_MOUSE_BUTTON_LEFT)) {
-        m_Camera.ProcessMouseScroll(10.0f * m_DeltaTime);
-    }
-    if (glfwGetMouseButton(m_Window, GLFW_MOUSE_BUTTON_RIGHT)) {
-        m_Camera.ProcessMouseScroll(-10.0f * m_DeltaTime);
-    }
-
-    static double posX = 0.0f;
-    static double posY = 0.0f;
-    double newPosX = 0.0f;
-    double newPosY = 0.0f;
-    glfwGetCursorPos(m_Window, &newPosX, &newPosY);
-
-    m_Camera.ProcessMouseMovement(newPosX - posX, newPosY - posY, true);
-    posX = newPosX;
-    posY = newPosY;
-
-    int width = 1;
-    int height = 1;
-    glfwGetWindowSize(m_Window, &width, &height);
-    m_Camera.ProcessResize(width, height);
-}
-
-void Application::EndFrame() {
-    m_Device->EndFrame();
-    m_Swapchain->Present();
 }
 
 void Application::CreateGLFWWindow() {
@@ -193,4 +161,57 @@ void Application::CreateCubeMesh() {
     { { m_Cube.Vertex, ACCESS_TRANSFER_WRITE, ACCESS_VERTEX_READ } }, {});
     m_Queue->Barrier(PIPELINE_STAGE_TRANSFER, PIPELINE_STAGE_INDEX_INPUT,
     { { m_Cube.Index, ACCESS_TRANSFER_WRITE, ACCESS_INDEX_READ } }, {});
+}
+
+void Application::ProceedCameraMovement() {
+    if (glfwGetKey(m_Window, GLFW_KEY_ESCAPE) == GLFW_PRESS) {
+        glfwSetInputMode(m_Window, GLFW_CURSOR, m_ShowCursor ? GLFW_CURSOR_DISABLED : GLFW_CURSOR_NORMAL);
+        m_ShowCursor = !m_ShowCursor;
+    }
+
+    if (glfwGetKey(m_Window, GLFW_KEY_W)) {
+        m_Camera.ProcessKeyboard(CameraMovement::Forward, m_DeltaTime);
+    }
+    if (glfwGetKey(m_Window, GLFW_KEY_S)) {
+        m_Camera.ProcessKeyboard(CameraMovement::Backward, m_DeltaTime);
+    }
+    if (glfwGetKey(m_Window, GLFW_KEY_A)) {
+        m_Camera.ProcessKeyboard(CameraMovement::Left, m_DeltaTime);
+    }
+    if (glfwGetKey(m_Window, GLFW_KEY_D)) {
+        m_Camera.ProcessKeyboard(CameraMovement::Right, m_DeltaTime);
+    }
+
+    if (glfwGetMouseButton(m_Window, GLFW_MOUSE_BUTTON_LEFT)) {
+        m_Camera.ProcessMouseScroll(10.0f * m_DeltaTime);
+    }
+    if (glfwGetMouseButton(m_Window, GLFW_MOUSE_BUTTON_RIGHT)) {
+        m_Camera.ProcessMouseScroll(-10.0f * m_DeltaTime);
+    }
+
+    static double posX = 0.0f;
+    static double posY = 0.0f;
+    double newPosX = 0.0f;
+    double newPosY = 0.0f;
+    glfwGetCursorPos(m_Window, &newPosX, &newPosY);
+
+    m_Camera.ProcessMouseMovement(newPosX - posX, newPosY - posY, true);
+    posX = newPosX;
+    posY = newPosY;
+
+    int width = 1;
+    int height = 1;
+    glfwGetWindowSize(m_Window, &width, &height);
+    m_Camera.ProcessResize(width, height);
+}
+
+void Application::CheckWindowResized() {
+    int newWidth;
+    int newHeight;
+    glfwGetWindowSize(m_Window, &newWidth, &newHeight);
+    if (m_WindowWidth != newWidth || m_WindowHeight != newHeight) {
+        m_WindowWidth = newWidth;
+        m_WindowHeight = newHeight;
+        m_Renderer->ResizeAttachments();
+    }
 }

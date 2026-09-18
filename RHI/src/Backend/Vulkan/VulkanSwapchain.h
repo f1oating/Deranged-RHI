@@ -20,6 +20,8 @@ public:
     VulkanSwapchain(WindowInfo window, VulkanCommandQueue* queue, VulkanDevice* device);
     ~VulkanSwapchain() override;
 
+    void Resize() override;
+
     Texture* GetCurrentBackBuffer() override;
 
     void Present() override;
