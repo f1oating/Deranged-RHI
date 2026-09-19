@@ -28,8 +28,9 @@ Renderer::~Renderer() {
     delete m_PipelineState;
 }
 
-void Renderer::BeginFrame() {
+void Renderer::Render() {
     Texture* backBuffer = m_Swapchain->GetCurrentBackBuffer();
+    TextureDesc backBufferDesc = backBuffer->GetDesc();
 
     m_Queue->Barrier(PIPELINE_STAGE_NONE, PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT, {},
         { { backBuffer, ImageLayout::RenderTarget, ACCESS_NONE, ACCESS_COLOR_ATTACHMENT_WRITE } });
@@ -38,11 +39,6 @@ void Renderer::BeginFrame() {
     m_Queue->SetDepthStencil(m_DepthStencil->GetDSV());
     m_Queue->ClearDepthStencil(0.0f, 0);
     m_Queue->ClearRenderTargets(0.1f, 0.2f, 0.3f, 1.0f);
-}
-
-void Renderer::EndFrame() {
-    Texture* backBuffer = m_Swapchain->GetCurrentBackBuffer();
-    TextureDesc backBufferDesc = backBuffer->GetDesc();
 
     m_Queue->SetGraphicsPipelineState(m_PipelineState);
     m_Queue->SetViewport({ 0, 0, (float)backBufferDesc.Width, (float)backBufferDesc.Height, 0.0f, 1.0f });
@@ -68,7 +64,7 @@ void Renderer::EndFrame() {
     m_Swapchain->Present();
 }
 
-void Renderer::Render(Mesh mesh) {
+void Renderer::AddMesh(Mesh mesh) {
     m_Meshes.push_back(mesh);
 }
 

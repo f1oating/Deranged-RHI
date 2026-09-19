@@ -92,6 +92,7 @@ void DX12Swapchain::Resize() {
     GetClientRect(static_cast<HWND>(m_Window.Window), &rect);
     m_CurrentWidth = rect.right - rect.left;
     m_CurrentHeight = rect.bottom - rect.top;
+
     m_FenceValue++;
     m_Queue->Flush();
     m_Queue->GetDX12CommandQueue()->Signal(m_Fence->GetDX12Fence(), m_FenceValue);
@@ -101,6 +102,7 @@ void DX12Swapchain::Resize() {
     }
     m_Queue->Flush();
     m_Queue->EndFrame();
+
     m_SwapChain->ResizeBuffers(3, m_CurrentWidth, m_CurrentHeight, DXGI_FORMAT_B8G8R8A8_UNORM, 0);
     for (int i = 0; i < 3; i++) {
         ID3D12Resource* resource = nullptr;
@@ -117,6 +119,7 @@ void DX12Swapchain::Resize() {
         };
         m_Textures[i] = new DX12Texture(desc, resource, m_Device);
     }
+
     m_CurrentImage = m_SwapChain->GetCurrentBackBufferIndex();
 }
 
@@ -137,34 +140,7 @@ void DX12Swapchain::Present() {
     RECT rect;
     GetClientRect(static_cast<HWND>(m_Window.Window), &rect);
     if (m_CurrentWidth != rect.right - rect.left || m_CurrentHeight != rect.bottom - rect.top) {
-        m_CurrentWidth = rect.right - rect.left;
-        m_CurrentHeight = rect.bottom - rect.top;
-        m_FenceValue++;
-        m_Queue->Flush();
-        m_Queue->GetDX12CommandQueue()->Signal(m_Fence->GetDX12Fence(), m_FenceValue);
-        m_Fence->Wait(m_FenceValue);
-        for (int i = 0; i < 3; i++) {
-            delete m_Textures[i];
-        }
-        m_Queue->Flush();
-        m_Queue->EndFrame();
-        m_SwapChain->ResizeBuffers(3, m_CurrentWidth, m_CurrentHeight, DXGI_FORMAT_B8G8R8A8_UNORM, 0);
-        for (int i = 0; i < 3; i++) {
-            ID3D12Resource* resource = nullptr;
-            m_SwapChain->GetBuffer(i, IID_PPV_ARGS(&resource));
-            TextureDesc desc = {
-                .Width = m_CurrentWidth,
-                .Height = m_CurrentHeight,
-                .MipLevels = 1,
-                .ArrayLayers = 1,
-                .Samples = 1,
-                .Format = TextureFormat::B8G8R8A8_UNORM,
-                .Type = TextureType::Texture2D,
-                .BindFlags = TEXTURE_BIND_RENDER_TARGET
-            };
-            m_Textures[i] = new DX12Texture(desc, resource, m_Device);
-        }
-        m_CurrentImage = m_SwapChain->GetCurrentBackBufferIndex();
+        Resize();
     }
 }
 

@@ -71,9 +71,8 @@ void Application::Run() {
 
         ProceedCameraMovement();
 
-        m_Renderer->BeginFrame();
-        m_Renderer->Render(m_Cube);
-        m_Renderer->EndFrame();
+        m_Renderer->AddMesh(m_Cube);
+        m_Renderer->Render();
 
         m_Device->EndFrame();
     }

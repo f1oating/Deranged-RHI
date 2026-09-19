@@ -20,10 +20,9 @@ public:
     Renderer(Device* device, CommandQueue* queue, Swapchain* swapchain);
     ~Renderer();
 
-    void BeginFrame();
-    void EndFrame();
+    void AddMesh(Mesh mesh);
 
-    void Render(Mesh mesh);
+    void Render();
 
     void ResizeAttachments();
 
