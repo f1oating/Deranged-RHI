@@ -65,7 +65,7 @@ struct TextureDesc {
     uint32_t Samples = 1;
     TextureFormat Format = TextureFormat::R8G8B8A8_SNORM;
     TextureType Type = TextureType::Texture2D;
-    uint8_t BindFlags = TEXTURE_BIND_SHADER_RESOURCE;
+    uint8_t BindFlags = TEXTURE_BIND_SHADER_RESOURCE || TEXTURE_BIND_TRANSFER_DST;
 };
 
 class RenderTargetView;

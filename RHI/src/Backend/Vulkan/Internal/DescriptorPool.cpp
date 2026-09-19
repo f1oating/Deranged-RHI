@@ -90,11 +90,14 @@ void DescriptorManager::WriteAndBind(VkCommandBuffer commandBuffer, VkPipelineLa
             writeDescriptorSet.descriptorType = m_DescriptorState[i].Descriptors[j].Type;
 
             if (m_DescriptorState[i].Descriptors[j].Type == VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER) {
-
                 writeDescriptorSet.pBufferInfo = &m_DescriptorState[i].Descriptors[j].BufferInfo;
             }
 
             if (m_DescriptorState[i].Descriptors[j].Type == VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE) {
+                writeDescriptorSet.pImageInfo = &m_DescriptorState[i].Descriptors[j].ImageInfo;
+            }
+
+            if (m_DescriptorState[i].Descriptors[j].Type == VK_DESCRIPTOR_TYPE_SAMPLER) {
                 writeDescriptorSet.pImageInfo = &m_DescriptorState[i].Descriptors[j].ImageInfo;
             }
 

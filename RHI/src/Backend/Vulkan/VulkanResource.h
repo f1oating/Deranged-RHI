@@ -339,6 +339,8 @@ inline VkImageLayout ToVkImageLayout(ImageLayout layout) {
             return VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
         case ImageLayout::TransferDST:
             return VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+        case ImageLayout::ShaderResource:
+            return VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
         case ImageLayout::DepthStencil:
             return VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL;
         case ImageLayout::RenderTarget:

@@ -12,6 +12,7 @@
 struct Mesh {
     Buffer* Vertex;
     Buffer* Index;
+    Texture* Albedo;
     uint32_t NumIndices;
 };
 
@@ -31,6 +32,7 @@ public:
 private:
     void CreateDepthStencil();
     void CreatePipelineState();
+    void CreateSampler();
 
 private:
     Device* m_Device = nullptr;
@@ -43,6 +45,7 @@ private:
     Texture* m_DepthStencil = nullptr;
     GraphicsPipelineState* m_PipelineState = nullptr;
     Buffer* m_TransformCBuffer = nullptr;
+    Sampler* m_Sampler = nullptr;
 
 };
 

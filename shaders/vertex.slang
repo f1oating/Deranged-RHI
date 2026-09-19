@@ -1,6 +1,12 @@
 struct Input {
     float3 Position : POSITION;
+    float2 UV : TEXCOORD;
 };
+
+struct Output {
+    float4 Position : SV_Position;
+    float2 UV;
+}
 
 [vk::binding(0, 0)]
 cbuffer Transform : register(b0) {
@@ -8,9 +14,12 @@ cbuffer Transform : register(b0) {
 };
 
 [shader("vertex")]
-float4 main(Input input) : SV_Position {
+Output main(Input input) {
     #ifdef VULKAN
     input.Position.y = -input.Position.y;
     #endif
-    return mul(projView, float4(input.Position, 1.0));
+    Output output;
+    output.Position = mul(projView, float4(input.Position, 1.0));
+    output.UV = input.UV;
+    return output;
 }

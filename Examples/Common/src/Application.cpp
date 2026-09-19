@@ -4,7 +4,8 @@
 
 #include "Application.h"
 #include "ShaderCompiler.h"
-
+#include "ThirdParty/stb_image.h"
+#include <memory>
 #ifdef WIN32
 #define GLFW_EXPOSE_NATIVE_WIN32
 #include <GLFW/glfw3native.h>
@@ -47,6 +48,7 @@ Application::Application() {
 Application::~Application() {
     delete m_Cube.Index;
     delete m_Cube.Vertex;
+    delete m_Cube.Albedo;
 
     delete m_Renderer;
 
@@ -85,47 +87,32 @@ void Application::CreateGLFWWindow() {
 
 void Application::CreateCubeMesh() {
     float vertices[] = {
-        -1.0f,-1.0f,-1.0f,
-        -1.0f,-1.0f, 1.0f,
-        -1.0f, 1.0f, 1.0f,
-        -1.0f, 1.0f, 1.0f,
-        -1.0f, 1.0f,-1.0f,
-        -1.0f,-1.0f,-1.0f,
+        -0.5f, -0.5f, -0.5f,  0.0f, 0.0f,
+        0.5f, -0.5f, -0.5f,  1.0f, 0.0f,
+        0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
+        -0.5f,  0.5f, -0.5f,  0.0f, 1.0f,
+        -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
+        0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
+        0.5f,  0.5f,  0.5f,  1.0f, 1.0f,
+        -0.5f,  0.5f,  0.5f,  0.0f, 1.0f,
 
-        -1.0f,-1.0f,-1.0f,
-         1.0f, 1.0f,-1.0f,
-         1.0f,-1.0f,-1.0f,
-        -1.0f,-1.0f,-1.0f,
-        -1.0f, 1.0f,-1.0f,
-         1.0f, 1.0f,-1.0f,
+        -0.5f,  0.5f, -0.5f,  0.0f, 0.0f,
+        -0.5f, -0.5f, -0.5f,  1.0f, 0.0f,
+        -0.5f, -0.5f,  0.5f,  1.0f, 1.0f,
+        -0.5f,  0.5f,  0.5f,  0.0f, 1.0f,
+        0.5f, -0.5f, -0.5f,  0.0f, 0.0f,
+        0.5f,  0.5f, -0.5f,  1.0f, 0.0f,
+        0.5f,  0.5f,  0.5f,  1.0f, 1.0f,
+        0.5f, -0.5f,  0.5f,  0.0f, 1.0f,
 
-        -1.0f,-1.0f,-1.0f,
-         1.0f,-1.0f,-1.0f,
-         1.0f,-1.0f, 1.0f,
-        -1.0f,-1.0f,-1.0f,
-         1.0f,-1.0f, 1.0f,
-        -1.0f,-1.0f, 1.0f,
-
-        -1.0f, 1.0f,-1.0f,
-        -1.0f, 1.0f, 1.0f,
-         1.0f, 1.0f, 1.0f,
-        -1.0f, 1.0f,-1.0f,
-         1.0f, 1.0f, 1.0f,
-         1.0f, 1.0f,-1.0f,
-
-         1.0f, 1.0f,-1.0f,
-         1.0f, 1.0f, 1.0f,
-         1.0f,-1.0f, 1.0f,
-         1.0f,-1.0f, 1.0f,
-         1.0f,-1.0f,-1.0f,
-         1.0f, 1.0f,-1.0f,
-
-        -1.0f, 1.0f, 1.0f,
-        -1.0f,-1.0f, 1.0f,
-         1.0f, 1.0f, 1.0f,
-        -1.0f,-1.0f, 1.0f,
-         1.0f,-1.0f, 1.0f,
-         1.0f, 1.0f, 1.0f,
+        -0.5f, -0.5f, -0.5f,  0.0f, 0.0f,
+        0.5f, -0.5f, -0.5f,  1.0f, 0.0f,
+        0.5f, -0.5f,  0.5f,  1.0f, 1.0f,
+        -0.5f, -0.5f,  0.5f,  0.0f, 1.0f,
+        0.5f,  0.5f, -0.5f,   0.0f, 0.0f,
+        -0.5f,  0.5f, -0.5f,  1.0f, 0.0f,
+        -0.5f,  0.5f,  0.5f,  1.0f, 1.0f,
+        0.5f,  0.5f,  0.5f,   0.0f, 1.0f,
     };
 
     BufferDesc vertexDesc = {
@@ -136,12 +123,18 @@ void Application::CreateCubeMesh() {
     };
 
     uint32_t indices[] = {
-        0, 1, 2, 3, 4, 5,
-        6, 7, 8, 9, 10, 11,
-        12, 13, 14, 15, 16, 17,
-        18, 19, 20, 21, 22, 23,
-        24, 25, 26, 27, 28, 29,
-        28, 31, 32, 33, 34, 35,
+        0, 3, 2,
+        2, 1, 0,
+        4, 5, 6,
+        6, 7 ,4,
+        11, 8, 9,
+        9, 10, 11,
+        12, 13, 14,
+        14, 15, 12,
+        16, 17, 18,
+        18, 19, 16,
+        20, 21, 22,
+        22, 23, 20
     };
 
     BufferDesc indexDesc = {
@@ -150,16 +143,34 @@ void Application::CreateCubeMesh() {
         .Usage = BufferUsage::Default
     };
 
+    int width, height, channels;
+    unsigned char* loadedData = stbi_load("resources/metal.jpg", &width, &height, &channels, STBI_rgb_alpha);
+
+    TextureDesc textureDesc = {
+        .Width = (uint32_t)width,
+        .Height = (uint32_t)height
+    };
+
     m_Cube.Vertex = m_Device->CreateBuffer(vertexDesc);
     m_Cube.Index = m_Device->CreateBuffer(indexDesc);
+    m_Cube.Albedo = m_Device->CreateTexture(textureDesc);
     m_Cube.NumIndices = sizeof(indices) / sizeof(uint32_t);
+
+    m_Queue->Barrier(PIPELINE_STAGE_NONE, PIPELINE_STAGE_TRANSFER,
+    {}, { { m_Cube.Albedo, ImageLayout::TransferDST, ACCESS_NONE, ACCESS_NONE } });
 
     m_Queue->CopyToBuffer(m_Cube.Vertex, sizeof(vertices), vertices);
     m_Queue->CopyToBuffer(m_Cube.Index, sizeof(indices), indices);
+    m_Queue->CopyToTexture(m_Cube.Albedo, width * height * 4, loadedData);
+
+    stbi_image_free(loadedData);
+
     m_Queue->Barrier(PIPELINE_STAGE_TRANSFER, PIPELINE_STAGE_VERTEX_INPUT,
     { { m_Cube.Vertex, ACCESS_TRANSFER_WRITE, ACCESS_VERTEX_READ } }, {});
     m_Queue->Barrier(PIPELINE_STAGE_TRANSFER, PIPELINE_STAGE_INDEX_INPUT,
     { { m_Cube.Index, ACCESS_TRANSFER_WRITE, ACCESS_INDEX_READ } }, {});
+    m_Queue->Barrier(PIPELINE_STAGE_TRANSFER, PIPELINE_STAGE_FRAGMENT_SHADER,
+    {}, { { m_Cube.Albedo, ImageLayout::ShaderResource, ACCESS_TRANSFER_WRITE, ACCESS_SHADER_READ } });
 }
 
 void Application::ProceedCameraMovement() {

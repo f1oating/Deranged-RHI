@@ -46,14 +46,13 @@ void VulkanGraphicsPipelineState::ReflectShader(Shader shader) {
     spvReflectEnumerateDescriptorSets(&module, &setsCount, sets.data());
 
     for (int i = 0; i < setsCount; i++) {
-        m_DescriptorState[i].Descriptors.resize(sets[i]->binding_count);
         for (int j = 0; j < sets[i]->binding_count; j++) {
             SpvReflectDescriptorBinding* binding = sets[i]->bindings[j];
-            m_DescriptorState[i].Descriptors[j] = {
+            m_DescriptorState[binding->set].Descriptors[binding->binding] = {
                 .Type = ToVkDescriptorType(binding->descriptor_type),
                 .Binding = binding->binding,
             };
-            m_BindingsPlaceMap.insert({ binding->name, { i, j } });
+            m_BindingsPlaceMap.insert({ binding->name, { binding->set, binding->binding } });
         }
     }
 
@@ -62,6 +61,7 @@ void VulkanGraphicsPipelineState::ReflectShader(Shader shader) {
 
 void VulkanGraphicsPipelineState::CreatePipelineLayout() {
     m_DescriptorState.resize(1);
+    m_DescriptorState[0].Descriptors.resize(3);
     if (m_Desc.VertexShader.Data) {
         ReflectShader(m_Desc.VertexShader);
     }

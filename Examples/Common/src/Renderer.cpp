@@ -20,12 +20,14 @@ Renderer::Renderer(Device* device, CommandQueue* queue, Swapchain* swapchain) {
         .Usage = BufferUsage::Dynamic
     };
     m_TransformCBuffer = device->CreateBuffer(transformCBufferDesc);
+    CreateSampler();
 }
 
 Renderer::~Renderer() {
-    delete m_DepthStencil;
+    delete m_Sampler;
     delete m_TransformCBuffer;
     delete m_PipelineState;
+    delete m_DepthStencil;
 }
 
 void Renderer::Render() {
@@ -37,8 +39,8 @@ void Renderer::Render() {
 
     m_Queue->SetRenderTargets({ backBuffer->GetRTV() });
     m_Queue->SetDepthStencil(m_DepthStencil->GetDSV());
-    m_Queue->ClearDepthStencil(0.0f, 0);
-    m_Queue->ClearRenderTargets(0.1f, 0.2f, 0.3f, 1.0f);
+    m_Queue->ClearDepthStencil(1.0f, 0);
+    m_Queue->ClearRenderTargets(0.0f, 0.0f, 0.0f, 1.0f);
 
     m_Queue->SetGraphicsPipelineState(m_PipelineState);
     m_Queue->SetViewport({ 0, 0, (float)backBufferDesc.Width, (float)backBufferDesc.Height, 0.0f, 1.0f });
@@ -53,6 +55,8 @@ void Renderer::Render() {
         memcpy(transformCBufferPtr, &projView, sizeof(glm::mat4));
 
         m_Queue->SetConstantBuffer("Transform", m_TransformCBuffer);
+        m_Queue->SetTexture("Albedo", mesh.Albedo->GetSRV());
+        m_Queue->SetSampler("Sampler", m_Sampler);
 
         m_Queue->DrawIndexedInstanced(mesh.NumIndices);
     }
@@ -74,6 +78,19 @@ void Renderer::ResizeAttachments() {
     CreateDepthStencil();
 }
 
+void Renderer::CreateDepthStencil() {
+    TextureDesc backbufferDesc = m_Swapchain->GetCurrentBackBuffer()->GetDesc();
+    TextureDesc depthStencilDesc = {
+        .Width = backbufferDesc.Width,
+        .Height = backbufferDesc.Height,
+        .Format = TextureFormat::D32_FLOAT,
+        .BindFlags = TEXTURE_BIND_DEPTH_STENCIL
+    };
+    m_DepthStencil = m_Device->CreateTexture(depthStencilDesc);
+    m_Queue->Barrier(PIPELINE_STAGE_NONE, PIPELINE_STAGE_ALL_COMMANDS, {},
+    { { m_DepthStencil, ImageLayout::DepthStencil, ACCESS_NONE, ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE } });
+}
+
 void Renderer::CreatePipelineState() {
     auto vertexSource = ShaderCompiler::CompileShader("vertex.slang");
     Shader vertexShader{
@@ -87,7 +104,7 @@ void Renderer::CreatePipelineState() {
     };
 
     VertexInputDesc inputDesc = {
-        { { "POSITION", ValueType::Float3 } }
+        { { "POSITION", ValueType::Float3 }, { "TEXCOORD", ValueType::Float2 } }
     };
 
     BlendDesc blendDesc = {
@@ -97,7 +114,7 @@ void Renderer::CreatePipelineState() {
     DepthStencilDesc depthStencilStateDesc = {
         .DepthEnable = true,
         .DepthWriteEnable = true,
-        .DepthCompare = CompareOp::Always
+        .DepthCompare = CompareOp::Less
     };
 
     GraphicsPipelineDesc pipelineDesc = {
@@ -113,15 +130,7 @@ void Renderer::CreatePipelineState() {
     m_PipelineState = m_Device->CreateGraphicsPipelineState(pipelineDesc);
 }
 
-void Renderer::CreateDepthStencil() {
-    TextureDesc backbufferDesc = m_Swapchain->GetCurrentBackBuffer()->GetDesc();
-    TextureDesc depthStencilDesc = {
-        .Width = backbufferDesc.Width,
-        .Height = backbufferDesc.Height,
-        .Format = TextureFormat::D32_FLOAT,
-        .BindFlags = TEXTURE_BIND_DEPTH_STENCIL
-    };
-    m_DepthStencil = m_Device->CreateTexture(depthStencilDesc);
-    m_Queue->Barrier(PIPELINE_STAGE_NONE, PIPELINE_STAGE_ALL_COMMANDS, {},
-    { { m_DepthStencil, ImageLayout::DepthStencil, ACCESS_NONE, ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE } });
+void Renderer::CreateSampler() {
+    SamplerDesc samplerDesc = {};
+    m_Sampler = m_Device->CreateSampler(samplerDesc);
 }
