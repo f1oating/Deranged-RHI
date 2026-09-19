@@ -10,6 +10,7 @@
 #include "Backend/DX12/DX12Fence.h"
 #include "Backend/DX12/DX12Resource.h"
 #include <vector>
+#include "Backend/DX12/DX12CommandQueue.h"
 
 namespace dx {
 
@@ -17,8 +18,10 @@ class DX12Device;
 
 class DX12Swapchain : public Swapchain {
 public:
-    DX12Swapchain(WindowInfo window, DX12Device* device);
+    DX12Swapchain(WindowInfo window, DX12Device* device, DX12CommandQueue* queue);
     ~DX12Swapchain() override;
+
+    void Resize() override;
 
     Texture* GetCurrentBackBuffer() override;
 
@@ -26,6 +29,7 @@ public:
 
 private:
     DX12Device* m_Device = nullptr;
+    DX12CommandQueue* m_Queue = nullptr;
     WindowInfo m_Window;
 
     uint32_t m_CurrentWidth = 0;

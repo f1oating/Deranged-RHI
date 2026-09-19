@@ -29,8 +29,8 @@ DX12Texture::DX12Texture(TextureDesc desc, DX12Device* device) {
     };
 
     HRESULT hr = m_Device->GetDX12Device()->CreateCommittedResource3(&heapProps, D3D12_HEAP_FLAG_NONE,
-        &resourceDesc, D3D12_BARRIER_LAYOUT_UNDEFINED, nullptr,
-        nullptr, 0, nullptr, IID_PPV_ARGS(&m_Resource));
+        &resourceDesc, D3D12_BARRIER_LAYOUT_UNDEFINED, nullptr, nullptr, 0,
+        nullptr, IID_PPV_ARGS(&m_Resource));
 
     spdlog::info("DX12Texture Created.");
 }

@@ -29,7 +29,9 @@ uint64_t DX12Fence::GetCompletedValue() {
 }
 
 void DX12Fence::Wait(uint64_t value) {
-    m_Fence->SetEventOnCompletion(value, nullptr);
+    if (value) {
+        m_Fence->SetEventOnCompletion(value, nullptr);
+    }
 }
 
 } // dx

@@ -62,6 +62,16 @@ DX12Device::DX12Device(DeviceDesc desc) {
 
     m_DebugQueue->RegisterMessageCallback(DebugCallback, D3D12_MESSAGE_CALLBACK_FLAG_NONE, nullptr, &m_CallbackCookie);
 
+    D3D12_MESSAGE_SEVERITY severity[] = {
+        D3D12_MESSAGE_SEVERITY_MESSAGE,
+        D3D12_MESSAGE_SEVERITY_INFO,
+        D3D12_MESSAGE_SEVERITY_WARNING
+    };
+    D3D12_INFO_QUEUE_FILTER filter = {};
+    filter.DenyList.NumSeverities = sizeof(severity) / sizeof(D3D12_MESSAGE_SEVERITY);
+    filter.DenyList.pSeverityList = severity;
+    m_DebugQueue->PushStorageFilter(&filter);
+
     m_RingBuffer = std::make_unique<RingBuffer>(m_Device);
     m_RTVAllocator = std::make_unique<DescriptorHeap>(m_Device, D3D12_DESCRIPTOR_HEAP_TYPE_RTV, 32);
     m_DSVAllocator = std::make_unique<DescriptorHeap>(m_Device, D3D12_DESCRIPTOR_HEAP_TYPE_DSV, 32);
@@ -102,7 +112,7 @@ CommandQueue* DX12Device::GetCommandQueue() {
 }
 
 Swapchain* DX12Device::CreateSwapchain(WindowInfo window) {
-    return new DX12Swapchain(window, this);
+    return new DX12Swapchain(window, this, m_CommandQueue);
 }
 
 GraphicsPipelineState* DX12Device::CreateGraphicsPipelineState(GraphicsPipelineDesc desc) {
