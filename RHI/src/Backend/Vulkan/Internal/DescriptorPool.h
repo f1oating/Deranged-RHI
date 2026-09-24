@@ -9,6 +9,7 @@
 #include <vector>
 #include <volk.h>
 #include <memory>
+#include <array>
 
 namespace vk {
 
@@ -37,12 +38,18 @@ struct Descriptor {
         VkDescriptorImageInfo ImageInfo;
         VkDescriptorBufferInfo BufferInfo;
     };
-    uint32_t Binding;
 };
 
 struct DescriptorSet {
     VkDescriptorSetLayout Layout;
-    std::vector<Descriptor> Descriptors;
+    VkDescriptorSet Set;
+    std::array<Descriptor, 32> Descriptors;
+    uint32_t DescriptorIndices;
+};
+
+struct DescriptorState {
+    std::array<DescriptorSet, 8> Sets;
+    uint8_t SetIndices;
 };
 
 class DescriptorManager {
@@ -54,7 +61,7 @@ public:
     DescriptorManager(DescriptorManager&& other) = delete;
     DescriptorManager& operator=(DescriptorManager&& other) = delete;
 
-    void SetDescriptorState(std::vector<DescriptorSet> descriptorState);
+    void SetDescriptorState(DescriptorState descriptorState);
 
     void WriteBufferInfo(uint32_t set, uint32_t binding, VkDescriptorBufferInfo bufferInfo);
     void WriteImageInfo(uint32_t set, uint32_t binding, VkDescriptorImageInfo imageInfo);
@@ -66,7 +73,7 @@ public:
 private:
     VkDevice m_Device = nullptr;
     std::unique_ptr<DescriptorPool> m_DescriptorPool = nullptr;
-    std::vector<DescriptorSet> m_DescriptorState;
+    DescriptorState m_DescriptorState;
     std::deque<std::pair<VkDescriptorSet, uint64_t>> m_ReleaseQueue;
 
 };

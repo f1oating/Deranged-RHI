@@ -59,46 +59,53 @@ DescriptorManager::~DescriptorManager() {
     m_DescriptorPool.reset();
 }
 
-void DescriptorManager::SetDescriptorState(std::vector<DescriptorSet> descriptorState) {
+void DescriptorManager::SetDescriptorState(DescriptorState descriptorState) {
     m_DescriptorState = descriptorState;
 }
 
 void DescriptorManager::WriteBufferInfo(uint32_t set, uint32_t binding, VkDescriptorBufferInfo bufferInfo) {
-    m_DescriptorState[set].Descriptors[binding].BufferInfo = bufferInfo;
+    m_DescriptorState.Sets[set].Descriptors[binding].BufferInfo = bufferInfo;
 }
 
 void DescriptorManager::WriteImageInfo(uint32_t set, uint32_t binding, VkDescriptorImageInfo imageInfo) {
-    m_DescriptorState[set].Descriptors[binding].ImageInfo = imageInfo;
+    m_DescriptorState.Sets[set].Descriptors[binding].ImageInfo = imageInfo;
 }
 
 void DescriptorManager::WriteAndBind(VkCommandBuffer commandBuffer, VkPipelineLayout layout, uint64_t frame) {
     std::vector<VkDescriptorSet> descriptorSets;
-    for (int i = 0; i < m_DescriptorState.size(); i++) {
-        descriptorSets.push_back(m_DescriptorPool->Allocate(m_DescriptorState[i].Layout));
+    for (int i = 0; i < 8; i++) {
+        if (m_DescriptorState.SetIndices & (1 << i)) {
+            m_DescriptorState.Sets[i].Set = m_DescriptorPool->Allocate(m_DescriptorState.Sets[i].Layout);
+            descriptorSets.push_back(m_DescriptorState.Sets[i].Set);
+        }
     }
 
     std::vector<VkWriteDescriptorSet> writes;
 
-    for (int i = 0; i < m_DescriptorState.size(); i++) {
-        for (int j = 0; j < m_DescriptorState[i].Descriptors.size(); j++) {
+    for (int i = 0; i < 8; i++) {
+        if (!(m_DescriptorState.SetIndices & (1 << i))) continue;
+
+        for (int j = 0; j < 32; j++) {
+            if (!(m_DescriptorState.Sets[i].DescriptorIndices & (1 << j))) continue;
+
             VkWriteDescriptorSet writeDescriptorSet{};
             writeDescriptorSet.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
             writeDescriptorSet.descriptorCount = 1;
-            writeDescriptorSet.dstBinding = m_DescriptorState[i].Descriptors[j].Binding;
-            writeDescriptorSet.dstSet = descriptorSets[i];
+            writeDescriptorSet.dstBinding = j;
+            writeDescriptorSet.dstSet = m_DescriptorState.Sets[i].Set;
             writeDescriptorSet.dstArrayElement = 0;
-            writeDescriptorSet.descriptorType = m_DescriptorState[i].Descriptors[j].Type;
+            writeDescriptorSet.descriptorType = m_DescriptorState.Sets[i].Descriptors[j].Type;
 
-            if (m_DescriptorState[i].Descriptors[j].Type == VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER) {
-                writeDescriptorSet.pBufferInfo = &m_DescriptorState[i].Descriptors[j].BufferInfo;
+            if (m_DescriptorState.Sets[i].Descriptors[j].Type == VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER) {
+                writeDescriptorSet.pBufferInfo = &m_DescriptorState.Sets[i].Descriptors[j].BufferInfo;
             }
 
-            if (m_DescriptorState[i].Descriptors[j].Type == VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE) {
-                writeDescriptorSet.pImageInfo = &m_DescriptorState[i].Descriptors[j].ImageInfo;
+            if (m_DescriptorState.Sets[i].Descriptors[j].Type == VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE) {
+                writeDescriptorSet.pImageInfo = &m_DescriptorState.Sets[i].Descriptors[j].ImageInfo;
             }
 
-            if (m_DescriptorState[i].Descriptors[j].Type == VK_DESCRIPTOR_TYPE_SAMPLER) {
-                writeDescriptorSet.pImageInfo = &m_DescriptorState[i].Descriptors[j].ImageInfo;
+            if (m_DescriptorState.Sets[i].Descriptors[j].Type == VK_DESCRIPTOR_TYPE_SAMPLER) {
+                writeDescriptorSet.pImageInfo = &m_DescriptorState.Sets[i].Descriptors[j].ImageInfo;
             }
 
             writes.push_back(writeDescriptorSet);

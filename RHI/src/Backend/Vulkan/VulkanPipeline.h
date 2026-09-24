@@ -28,7 +28,7 @@ public:
 
     VkPipeline GetVkPipeline() const { return m_Pipeline; }
     VkPipelineLayout GetVkLayout() const { return m_Layout; }
-    std::vector<DescriptorSet> GetDescriptorState() const { return m_DescriptorState; }
+    DescriptorState GetDescriptorState() const { return m_DescriptorState; }
     std::pair<uint32_t, uint32_t> GetBindingPlace(std::string name) const { return m_BindingsPlaceMap.at(name); }
 
 private:
@@ -44,7 +44,7 @@ private:
     VkPipeline m_Pipeline = nullptr;
 
     std::vector<VkDescriptorSetLayout> m_DescriptorSetLayouts;
-    std::vector<DescriptorSet> m_DescriptorState;
+    DescriptorState m_DescriptorState{};
     std::unordered_map<std::string, std::pair<uint32_t, uint32_t>> m_BindingsPlaceMap;
 
 };

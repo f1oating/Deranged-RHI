@@ -48,10 +48,12 @@ void VulkanGraphicsPipelineState::ReflectShader(Shader shader) {
     for (int i = 0; i < setsCount; i++) {
         for (int j = 0; j < sets[i]->binding_count; j++) {
             SpvReflectDescriptorBinding* binding = sets[i]->bindings[j];
-            m_DescriptorState[binding->set].Descriptors[binding->binding] = {
-                .Type = ToVkDescriptorType(binding->descriptor_type),
-                .Binding = binding->binding,
+            m_DescriptorState.Sets[binding->set].Descriptors[binding->binding] = {
+                .Type = ToVkDescriptorType(binding->descriptor_type)
             };
+
+            m_DescriptorState.SetIndices |= 1 << binding->set;
+            m_DescriptorState.Sets[binding->set].DescriptorIndices |= 1 << binding->binding;
             m_BindingsPlaceMap.insert({ binding->name, { binding->set, binding->binding } });
         }
     }
@@ -60,8 +62,6 @@ void VulkanGraphicsPipelineState::ReflectShader(Shader shader) {
 }
 
 void VulkanGraphicsPipelineState::CreatePipelineLayout() {
-    m_DescriptorState.resize(1);
-    m_DescriptorState[0].Descriptors.resize(3);
     if (m_Desc.VertexShader.Data) {
         ReflectShader(m_Desc.VertexShader);
     }
@@ -69,18 +69,21 @@ void VulkanGraphicsPipelineState::CreatePipelineLayout() {
         ReflectShader(m_Desc.FragmentShader);
     }
 
-    m_DescriptorSetLayouts.resize(m_DescriptorState.size());
-    for (int i = 0; i < m_DescriptorState.size(); i ++) {
-        std::vector<VkDescriptorSetLayoutBinding> bindings(m_DescriptorState[i].Descriptors.size());
-        for (int j = 0; j < m_DescriptorState[i].Descriptors.size(); j++) {
+    for (int i = 0; i < 8; i ++) {
+        if (!(m_DescriptorState.SetIndices & (1 << i))) continue;
+
+        std::vector<VkDescriptorSetLayoutBinding> bindings;
+        for (int j = 0; j < 32; j++) {
+            if (!(m_DescriptorState.Sets[i].DescriptorIndices & (1 << j))) continue;
+
             VkDescriptorSetLayoutBinding binding = {
-                .binding = m_DescriptorState[i].Descriptors[j].Binding,
-                .descriptorType = m_DescriptorState[i].Descriptors[j].Type,
+                .binding = (uint32_t)j,
+                .descriptorType = m_DescriptorState.Sets[i].Descriptors[j].Type,
                 .descriptorCount = 1,
                 .stageFlags = VK_SHADER_STAGE_ALL,
                 .pImmutableSamplers = nullptr
             };
-            bindings[j] = binding;
+            bindings.push_back(binding);
         }
 
         VkDescriptorSetLayoutCreateInfo descriptorSetLayoutCreateInfo = {
@@ -88,12 +91,12 @@ void VulkanGraphicsPipelineState::CreatePipelineLayout() {
             .bindingCount = (uint32_t)bindings.size(),
             .pBindings = bindings.data()
         };
+        VkDescriptorSetLayout layout = nullptr;
         vkCreateDescriptorSetLayout(m_Device->GetVkDevice(), &descriptorSetLayoutCreateInfo,
-            nullptr, &m_DescriptorSetLayouts[i]);
-    }
+            nullptr, &layout);
 
-    for (int i = 0; i < m_DescriptorState.size(); i++) {
-        m_DescriptorState[i].Layout = m_DescriptorSetLayouts[i];
+        m_DescriptorSetLayouts.push_back(layout);
+        m_DescriptorState.Sets[i].Layout = layout;
     }
 
     VkPipelineLayoutCreateInfo pipelineLayoutCreateInfo = {
