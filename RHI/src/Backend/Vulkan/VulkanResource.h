@@ -271,32 +271,6 @@ inline VkFormat ToVkFormat(TextureFormat format) {
     }
 }
 
-inline VkImageType ToVkImageType(TextureType type) {
-    switch (type) {
-        case TextureType::Texture1D:
-            return VK_IMAGE_TYPE_1D;
-        case TextureType::Texture2D:
-            return VK_IMAGE_TYPE_2D;
-        case TextureType::Texture3D:
-            return VK_IMAGE_TYPE_3D;
-        default:
-            return VK_IMAGE_TYPE_2D;
-    }
-}
-
-inline VkImageViewType ToVkImageViewType(TextureType type) {
-    switch (type) {
-        case TextureType::Texture1D:
-            return VK_IMAGE_VIEW_TYPE_1D;
-        case TextureType::Texture2D:
-            return VK_IMAGE_VIEW_TYPE_2D;
-        case TextureType::Texture3D:
-            return VK_IMAGE_VIEW_TYPE_3D;
-        default:
-            return VK_IMAGE_VIEW_TYPE_2D;
-    }
-}
-
 inline VkImageAspectFlags ToVkImageAspectFlags(TextureFormat format) {
     switch (format) {
         case TextureFormat::D16_UNORM:

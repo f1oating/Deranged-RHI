@@ -74,7 +74,7 @@ TextureDesc VulkanTexture::GetDesc() {
 void VulkanTexture::CreateTexture() {
     VkImageCreateInfo imageCreateInfo = {
         .sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO,
-        .imageType = ToVkImageType(m_Desc.Type),
+        .imageType = VK_IMAGE_TYPE_2D,
         .format = ToVkFormat(m_Desc.Format),
         .extent = { m_Desc.Width, m_Desc.Height, 1 },
         .mipLevels = m_Desc.MipLevels,
@@ -118,7 +118,7 @@ VulkanRenderTargetView::VulkanRenderTargetView(VulkanTexture* texture, VulkanDev
     VkImageViewCreateInfo imageViewCreateInfo = {
         .sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
         .image = m_Texture->GetVkImage(),
-        .viewType = ToVkImageViewType(texture->GetDesc().Type),
+        .viewType = VK_IMAGE_VIEW_TYPE_2D,
         .format = ToVkFormat(m_Texture->GetDesc().Format),
         .components = VK_COMPONENT_SWIZZLE_IDENTITY,
         .subresourceRange = imageSubresourceRange
@@ -152,7 +152,7 @@ VulkanDepthStencilView::VulkanDepthStencilView(VulkanTexture* texture, VulkanDev
     VkImageViewCreateInfo imageViewCreateInfo = {
         .sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
         .image = m_Texture->GetVkImage(),
-        .viewType = ToVkImageViewType(texture->GetDesc().Type),
+        .viewType = VK_IMAGE_VIEW_TYPE_2D,
         .format = ToVkFormat(m_Texture->GetDesc().Format),
         .components = VK_COMPONENT_SWIZZLE_IDENTITY,
         .subresourceRange = imageSubresourceRange
@@ -178,15 +178,15 @@ VulkanShaderResourceView::VulkanShaderResourceView(VulkanTexture* texture, Vulka
     VkImageSubresourceRange imageSubresourceRange = {
         .aspectMask = texture->GetVkAspectFlags(),
         .baseMipLevel = 0,
-        .levelCount = 1,
+        .levelCount = m_Texture->GetDesc().MipLevels,
         .baseArrayLayer = 0,
-        .layerCount = 1
+        .layerCount = m_Texture->GetDesc().ArrayLayers
     };
 
     VkImageViewCreateInfo imageViewCreateInfo = {
         .sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
         .image = m_Texture->GetVkImage(),
-        .viewType = ToVkImageViewType(texture->GetDesc().Type),
+        .viewType = m_Texture->GetDesc().ArrayLayers > 1 ? VK_IMAGE_VIEW_TYPE_2D_ARRAY : VK_IMAGE_VIEW_TYPE_2D,
         .format = ToVkFormat(m_Texture->GetDesc().Format),
         .components = VK_COMPONENT_SWIZZLE_IDENTITY,
         .subresourceRange = imageSubresourceRange
@@ -228,7 +228,7 @@ VulkanBuffer::~VulkanBuffer() {
 }
 
 void* VulkanBuffer::Map() {
-    m_Offset = m_Device->GetRingBuffer()->Allocate(m_SizeInBytes);
+    m_Offset = m_Device->GetRingBuffer()->Allocate(m_Desc.Size);
     return (uint8_t*)m_Mapped + m_Offset;
 }
 

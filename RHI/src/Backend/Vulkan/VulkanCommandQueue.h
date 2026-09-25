@@ -54,7 +54,7 @@ public:
         std::vector<BufferBarrier> bufBarriers, std::vector<TextureBarrier> texBarriers) override;
 
     void CopyToBuffer(Buffer* dst, uint64_t size, void* data) override;
-    void CopyToTexture(Texture* dst, uint64_t size, void* data) override;
+    void CopyToTexture(Texture* dst, uint64_t size, void* data, TextureSubresourceLayers subresource) override;
 
     void Flush() override;
 

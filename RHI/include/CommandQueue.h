@@ -61,7 +61,7 @@ public:
         std::vector<BufferBarrier> bufBarriers, std::vector<TextureBarrier> texBarriers) = 0;
 
     virtual void CopyToBuffer(Buffer* dst, uint64_t size, void* data) = 0;
-    virtual void CopyToTexture(Texture* dst, uint64_t size, void* data) = 0;
+    virtual void CopyToTexture(Texture* dst, uint64_t size, void* data, TextureSubresourceLayers subresource) = 0;
 
     virtual void Flush() = 0;
 

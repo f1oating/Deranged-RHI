@@ -64,6 +64,10 @@ void VulkanCommandQueue::SetScissor(Scissor scissor) {
 }
 
 void VulkanCommandQueue::SetRenderTargets(std::vector<RenderTargetView*> rtvs) {
+    if (m_InsideRendering) {
+        EndRendering();
+    }
+
     m_RTVs.resize(rtvs.size());
     for (int i = 0; i < m_RTVs.size(); i++) {
         m_RTVs[i] = static_cast<VulkanRenderTargetView*>(rtvs[i]);
@@ -71,6 +75,10 @@ void VulkanCommandQueue::SetRenderTargets(std::vector<RenderTargetView*> rtvs) {
 }
 
 void VulkanCommandQueue::SetDepthStencil(DepthStencilView* dsv) {
+    if (m_InsideRendering) {
+        EndRendering();
+    }
+
     m_DSV = static_cast<VulkanDepthStencilView*>(dsv);
 }
 
@@ -180,7 +188,7 @@ void VulkanCommandQueue::Barrier(uint32_t srcStage, uint32_t dstStage,
             .baseMipLevel = 0,
             .levelCount = 1,
             .baseArrayLayer = 0,
-            .layerCount = 1
+            .layerCount = vkTexture->GetDesc().ArrayLayers
         };
         VkImageMemoryBarrier imageBarrier = {
             .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER,
@@ -260,7 +268,7 @@ void VulkanCommandQueue::CopyToBuffer(Buffer* dst, uint64_t size, void* data) {
     ReleaseResource(new ReleaseResourceWrapper(new BufferReleaseResource(m_Device->GetVkDevice(), staging, memory)));
 }
 
-void  VulkanCommandQueue::CopyToTexture(Texture* dst, uint64_t size, void* data) {
+void  VulkanCommandQueue::CopyToTexture(Texture* dst, uint64_t size, void* data, TextureSubresourceLayers subresource) {
     if (m_InsideRendering) {
         EndRendering();
     }
@@ -296,15 +304,15 @@ void  VulkanCommandQueue::CopyToTexture(Texture* dst, uint64_t size, void* data)
     memcpy(mapped, data, size);
     vkUnmapMemory(m_Device->GetVkDevice(), memory);
 
-    VkImageSubresourceLayers subresource = {
+    VkImageSubresourceLayers vkSubresource = {
         .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
         .mipLevel = 0,
-        .baseArrayLayer = 0,
-        .layerCount = 1
+        .baseArrayLayer = subresource.ArrayLayer,
+        .layerCount = subresource.ArraysCount
     };
     VkBufferImageCopy copyRegion = {
         .bufferOffset = 0,
-        .imageSubresource = subresource,
+        .imageSubresource = vkSubresource,
         .imageExtent = { vkDst->GetDesc().Width, vkDst->GetDesc().Height, 1 }
     };
     vkCmdCopyBufferToImage(m_CommandBuffer, staging,

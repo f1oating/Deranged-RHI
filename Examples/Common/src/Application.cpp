@@ -148,7 +148,8 @@ void Application::CreateCubeMesh() {
 
     TextureDesc textureDesc = {
         .Width = (uint32_t)width,
-        .Height = (uint32_t)height
+        .Height = (uint32_t)height,
+        .BindFlags = TEXTURE_BIND_TRANSFER_DST | TEXTURE_BIND_SHADER_RESOURCE
     };
 
     m_Cube.Vertex = m_Device->CreateBuffer(vertexDesc);
@@ -161,7 +162,7 @@ void Application::CreateCubeMesh() {
 
     m_Queue->CopyToBuffer(m_Cube.Vertex, sizeof(vertices), vertices);
     m_Queue->CopyToBuffer(m_Cube.Index, sizeof(indices), indices);
-    m_Queue->CopyToTexture(m_Cube.Albedo, width * height * 4, loadedData);
+    m_Queue->CopyToTexture(m_Cube.Albedo, width * height * 4, loadedData, {});
 
     stbi_image_free(loadedData);
 

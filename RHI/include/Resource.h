@@ -31,10 +31,6 @@ enum class TextureFormat {
     D32_SFLOAT_S8_UINT, D32_FLOAT
 };
 
-enum class TextureType {
-    Texture1D, Texture2D, Texture3D
-};
-
 enum TextureBind : uint8_t {
     TEXTURE_BIND_SHADER_RESOURCE = 1 << 0,
     TEXTURE_BIND_RENDER_TARGET = 1 << 1,
@@ -64,7 +60,6 @@ struct TextureDesc {
     uint32_t ArrayLayers = 1;
     uint32_t Samples = 1;
     TextureFormat Format = TextureFormat::R8G8B8A8_SNORM;
-    TextureType Type = TextureType::Texture2D;
     uint8_t BindFlags = TEXTURE_BIND_SHADER_RESOURCE || TEXTURE_BIND_TRANSFER_DST;
 };
 
@@ -157,6 +152,11 @@ enum PipelineStageFlags : uint32_t {
     PIPELINE_STAGE_TRANSFER = 1 << 9,
     PIPELINE_STAGE_ALL_GRAPHICS = 1 << 10,
     PIPELINE_STAGE_ALL_COMMANDS = 1 << 11
+};
+
+struct TextureSubresourceLayers {
+    uint32_t ArrayLayer = 0;
+    uint32_t ArraysCount = 1;
 };
 
 struct TextureBarrier {
