@@ -442,6 +442,71 @@ inline D3D12_CLEAR_FLAGS ToD3D12ClearFlags(TextureFormat format) {
     }
 }
 
+inline uint32_t GetFormatSize(TextureFormat format) {
+    switch (format) {
+        case TextureFormat::Unknown: return 0;
+
+        case TextureFormat::R8_UNORM: return 1;
+        case TextureFormat::R8G8_UNORM: return 2;
+        case TextureFormat::R8G8B8A8_UNORM: return 3;
+        case TextureFormat::B8G8R8A8_UNORM: return 4;
+
+        case TextureFormat::R16_UNORM: return 2;
+        case TextureFormat::R16G16_UNORM: return 4;
+        case TextureFormat::R16G16B16A16_UNORM: return 8;
+
+        case TextureFormat::R8_SNORM: return 1;
+        case TextureFormat::R8G8_SNORM: return 2;
+        case TextureFormat::R8G8B8A8_SNORM: return 4;
+
+        case TextureFormat::R16_SNORM: return 2;
+        case TextureFormat::R16G16_SNORM: return 4;
+        case TextureFormat::R16G16B16A16_SNORM: return 8;
+
+        case TextureFormat::R16_FLOAT: return 2;
+        case TextureFormat::R16G16_FLOAT: return 4;
+        case TextureFormat::R16G16B16A16_FLOAT: return 8;
+
+        case TextureFormat::R32_FLOAT: return 4;
+        case TextureFormat::R32G32_FLOAT: return 8;
+        case TextureFormat::R32G32B32_FLOAT: return 12;
+        case TextureFormat::R32G32B32A32_FLOAT: return 16;
+
+        case TextureFormat::R8_UINT: return 1;
+        case TextureFormat::R8G8_UINT: return 2;
+        case TextureFormat::R8G8B8A8_UINT: return 4;
+
+        case TextureFormat::R16_UINT: return 2;
+        case TextureFormat::R16G16_UINT: return 4;
+        case TextureFormat::R16G16B16A16_UINT: return 8;
+
+        case TextureFormat::R32_UINT: return 4;
+        case TextureFormat::R32G32_UINT: return 8;
+        case TextureFormat::R32G32B32_UINT: return 12;
+        case TextureFormat::R32G32B32A32_UINT: return 16;
+
+        case TextureFormat::R8_SINT: return 1;
+        case TextureFormat::R8G8_SINT: return 2;
+        case TextureFormat::R8G8B8A8_SINT: return 4;
+
+        case TextureFormat::R16_SINT: return 2;
+        case TextureFormat::R16G16_SINT: return 4;
+        case TextureFormat::R16G16B16A16_SINT: return 8;
+
+        case TextureFormat::R32_SINT: return 4;
+        case TextureFormat::R32G32_SINT: return 8;
+        case TextureFormat::R32G32B32_SINT: return 12;
+        case TextureFormat::R32G32B32A32_SINT: return 16;
+
+        case TextureFormat::D16_UNORM: return 2;
+        case TextureFormat::D24_UNORM_S8_UINT: return 4;
+        case TextureFormat::D32_SFLOAT_S8_UINT: return 8;
+        case TextureFormat::D32_FLOAT: return 4;
+
+        default: return 0;
+    }
+}
+
 } // dx
 
 #endif //DERANGED_RHI_DX12RESOURCE_H

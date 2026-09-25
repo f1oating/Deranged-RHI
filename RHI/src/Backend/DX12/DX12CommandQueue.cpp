@@ -289,7 +289,7 @@ void DX12CommandQueue::CopyToTexture(Texture* dst, uint64_t size, void* data) {
 
     D3D12_SUBRESOURCE_DATA textureData = {};
     textureData.pData = data;
-    textureData.RowPitch = dxDst->GetDesc().Width * 4;
+    textureData.RowPitch = dxDst->GetDesc().Width * GetFormatSize(dxDst->GetDesc().Format);
     textureData.SlicePitch = textureData.RowPitch * dxDst->GetDesc().Height;
 
     UpdateSubresources(m_CommandList, dxDst->GetDX12Resource(), src, 0, 0, 1, &textureData);
