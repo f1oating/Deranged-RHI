@@ -118,7 +118,7 @@ void Application::CreateCubeMesh() {
     BufferDesc vertexDesc = {
         .Size = sizeof(vertices),
         .BindFlags = BUFFER_BIND_VERTEX | BUFFER_BIND_TRANSFER_DST,
-        .Stride = 12,
+        .Stride = 20,
         .Usage = BufferUsage::Default
     };
 
@@ -157,7 +157,7 @@ void Application::CreateCubeMesh() {
     m_Cube.NumIndices = sizeof(indices) / sizeof(uint32_t);
 
     m_Queue->Barrier(PIPELINE_STAGE_NONE, PIPELINE_STAGE_TRANSFER,
-    {}, { { m_Cube.Albedo, ImageLayout::TransferDST, ACCESS_NONE, ACCESS_NONE } });
+    {}, { { m_Cube.Albedo, ImageLayout::TransferDST, ACCESS_NONE, ACCESS_TRANSFER_WRITE } });
 
     m_Queue->CopyToBuffer(m_Cube.Vertex, sizeof(vertices), vertices);
     m_Queue->CopyToBuffer(m_Cube.Index, sizeof(indices), indices);

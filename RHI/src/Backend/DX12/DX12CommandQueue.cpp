@@ -6,6 +6,7 @@
 #include "Backend/DX12/DX12Device.h"
 #include "Backend/DX12/DX12Resource.h"
 #include <spdlog/spdlog.h>
+#include <d3dx12/d3dx12.h>
 
 namespace dx {
 
@@ -286,12 +287,12 @@ void DX12CommandQueue::CopyToTexture(Texture* dst, uint64_t size, void* data) {
     m_Device->GetDX12Device()->CreateCommittedResource3(&heapProps, D3D12_HEAP_FLAG_NONE, &resourceDesc,
         D3D12_BARRIER_LAYOUT_UNDEFINED, nullptr, nullptr, 0, nullptr, IID_PPV_ARGS(&src));
 
-    void* mapped = nullptr;
-    src->Map(0, nullptr, &mapped);
-    memcpy(mapped, data, size);
-    src->Unmap(0, nullptr);
+    D3D12_SUBRESOURCE_DATA textureData = {};
+    textureData.pData = data;
+    textureData.RowPitch = dxDst->GetDesc().Width * 4;
+    textureData.SlicePitch = textureData.RowPitch * dxDst->GetDesc().Height;
 
-    m_CommandList->CopyBufferRegion(dxDst->GetDX12Resource(), 0, src, 0, size);
+    UpdateSubresources(m_CommandList, dxDst->GetDX12Resource(), src, 0, 0, 1, &textureData);
 
     ReleaseResource(new ReleaseResourceWrapper(new BufferReleaseResource(src)));
 }

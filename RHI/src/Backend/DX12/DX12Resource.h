@@ -289,6 +289,8 @@ inline D3D12_BARRIER_LAYOUT ToD3D12BarrierLayout(ImageLayout layout) {
             return  D3D12_BARRIER_LAYOUT_COPY_SOURCE;
         case ImageLayout::TransferDST:
             return  D3D12_BARRIER_LAYOUT_COPY_DEST;
+        case ImageLayout::ShaderResource:
+            return  D3D12_BARRIER_LAYOUT_SHADER_RESOURCE;
         case ImageLayout::DepthStencil:
             return D3D12_BARRIER_LAYOUT_DEPTH_STENCIL_WRITE;
         case ImageLayout::RenderTarget:

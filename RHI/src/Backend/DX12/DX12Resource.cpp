@@ -135,9 +135,18 @@ DX12ShaderResourceView::DX12ShaderResourceView(DX12Texture* texture, DX12Device*
     m_Device = device;
     m_Texture = texture;
 
+    D3D12_TEX2D_SRV srv = {
+        .MostDetailedMip = 0,
+        .MipLevels = m_Texture->GetDesc().MipLevels,
+        .PlaneSlice = 0,
+        .ResourceMinLODClamp = 0.0f
+    };
+
     D3D12_SHADER_RESOURCE_VIEW_DESC view = {
         .Format = ToDXGIFormat(m_Texture->GetDesc().Format),
-        .ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D
+        .ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D,
+        .Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING,
+        .Texture2D = srv
     };
 
     m_View = view;

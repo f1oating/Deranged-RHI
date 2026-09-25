@@ -33,7 +33,7 @@ public:
 
 private:
     void ReflexShader(Shader shader, std::vector<D3D12_DESCRIPTOR_RANGE>& descriptorRanges,
-        std::vector<D3D12_DESCRIPTOR_RANGE>& samplerDescriptorRanges);
+        std::vector<D3D12_DESCRIPTOR_RANGE>& samplerDescriptorRanges, uint32_t& offset, uint32_t& samplerOffset);
     void CreateRootSignature();
     void CreatePipeline();
 
@@ -274,6 +274,8 @@ inline D3D12_DESCRIPTOR_RANGE_TYPE ToD3D12DescriptorRangeType(D3D_SHADER_INPUT_T
             return D3D12_DESCRIPTOR_RANGE_TYPE_CBV;
         case D3D_SIT_TEXTURE:
             return D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
+        case D3D_SIT_SAMPLER:
+            return D3D12_DESCRIPTOR_RANGE_TYPE_SAMPLER;
         default:
             return D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
     }
@@ -285,6 +287,8 @@ inline DescriptorType ToDescriptorType(D3D_SHADER_INPUT_TYPE type) {
             return DescriptorType::ConstantBuffer;
         case D3D_SIT_TEXTURE:
             return DescriptorType::ShaderResource;
+        case D3D_SIT_SAMPLER:
+            return DescriptorType::Sampler;
         default:
             return DescriptorType::ShaderResource;
     }

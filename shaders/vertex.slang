@@ -5,7 +5,7 @@ struct Input {
 
 struct Output {
     float4 Position : SV_Position;
-    float2 UV;
+    float2 UV : TEXCOORD;
 }
 
 [vk::binding(0, 0)]

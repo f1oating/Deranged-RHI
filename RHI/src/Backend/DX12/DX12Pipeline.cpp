@@ -35,7 +35,7 @@ GraphicsPipelineDesc DX12GraphicsPipelineState::GetDesc() {
 }
 
 void DX12GraphicsPipelineState::ReflexShader(Shader shader, std::vector<D3D12_DESCRIPTOR_RANGE>& descriptorRanges,
-        std::vector<D3D12_DESCRIPTOR_RANGE>& samplerDescriptorRanges) {
+        std::vector<D3D12_DESCRIPTOR_RANGE>& samplerDescriptorRanges, uint32_t& offset, uint32_t& samplerOffset) {
     IDxcUtils* utils = nullptr;
     DxcCreateInstance(CLSID_DxcUtils, IID_PPV_ARGS(&utils));
 
@@ -51,8 +51,6 @@ void DX12GraphicsPipelineState::ReflexShader(Shader shader, std::vector<D3D12_DE
     D3D12_SHADER_DESC desc{};
     shaderReflection->GetDesc(&desc);
 
-    uint32_t offset = 0;
-    uint32_t samplerOffset = 0;
     for (int i = 0; i < desc.BoundResources; i++) {
         D3D12_SHADER_INPUT_BIND_DESC shaderInputBindDesc = {};
         shaderReflection->GetResourceBindingDesc(i, &shaderInputBindDesc);
@@ -91,11 +89,13 @@ void DX12GraphicsPipelineState::ReflexShader(Shader shader, std::vector<D3D12_DE
 }
 
 void DX12GraphicsPipelineState::CreateRootSignature() {
+    uint32_t offset = 0;
+    uint32_t samplerOffset = 0;
     std::vector<D3D12_DESCRIPTOR_RANGE> descriptorRanges;
     std::vector<D3D12_DESCRIPTOR_RANGE> samplerDescriptorRanges;
 
-    if (m_Desc.VertexShader.Data) ReflexShader(m_Desc.VertexShader, descriptorRanges, samplerDescriptorRanges);
-    if (m_Desc.FragmentShader.Data) ReflexShader(m_Desc.FragmentShader, descriptorRanges, samplerDescriptorRanges);
+    if (m_Desc.VertexShader.Data) ReflexShader(m_Desc.VertexShader, descriptorRanges, samplerDescriptorRanges, offset, samplerOffset);
+    if (m_Desc.FragmentShader.Data) ReflexShader(m_Desc.FragmentShader, descriptorRanges, samplerDescriptorRanges, offset, samplerOffset);
 
     m_HaveResources = descriptorRanges.size();
     m_HaveSamplers = samplerDescriptorRanges.size();
@@ -141,6 +141,7 @@ void DX12GraphicsPipelineState::CreateRootSignature() {
     HRESULT hr = D3D12SerializeRootSignature(&rootSignatureDesc, D3D_ROOT_SIGNATURE_VERSION_1_0,
         &serializedSignature, &diagnosticBlob);
     if (diagnosticBlob) {
+        std::string sd = (const char*)diagnosticBlob->GetBufferPointer();
         printf("%s", (const char*)diagnosticBlob->GetBufferPointer());
     }
 
