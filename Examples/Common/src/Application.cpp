@@ -86,55 +86,81 @@ void Application::CreateGLFWWindow() {
 }
 
 void Application::CreateCubeMesh() {
-    float vertices[] = {
-        -0.5f, -0.5f, -0.5f,  0.0f, 0.0f,
-        0.5f, -0.5f, -0.5f,  1.0f, 0.0f,
-        0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
-        -0.5f,  0.5f, -0.5f,  0.0f, 1.0f,
-        -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
-        0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
-        0.5f,  0.5f,  0.5f,  1.0f, 1.0f,
-        -0.5f,  0.5f,  0.5f,  0.0f, 1.0f,
+    glm::f32 x = 1.0f / 2.0f;
+    glm::f32 y = 1.0f / 2.0f;
+    glm::f32 z = 1.0f / 2.0f;
 
-        -0.5f,  0.5f, -0.5f,  0.0f, 0.0f,
-        -0.5f, -0.5f, -0.5f,  1.0f, 0.0f,
-        -0.5f, -0.5f,  0.5f,  1.0f, 1.0f,
-        -0.5f,  0.5f,  0.5f,  0.0f, 1.0f,
-        0.5f, -0.5f, -0.5f,  0.0f, 0.0f,
-        0.5f,  0.5f, -0.5f,  1.0f, 0.0f,
-        0.5f,  0.5f,  0.5f,  1.0f, 1.0f,
-        0.5f, -0.5f,  0.5f,  0.0f, 1.0f,
+    glm::vec3 a0 = glm::vec3(+x, +y, +z);
+    glm::vec3 a1 = glm::vec3(-x, +y, +z);
+    glm::vec3 a2 = glm::vec3(-x, -y, +z);
+    glm::vec3 a3 = glm::vec3(+x, -y, +z);
+    glm::vec3 a4 = glm::vec3(+x, +y, -z);
+    glm::vec3 a5 = glm::vec3(-x, +y, -z);
+    glm::vec3 a6 = glm::vec3(-x, -y, -z);
+    glm::vec3 a7 = glm::vec3(+x, -y, -z);
 
-        -0.5f, -0.5f, -0.5f,  0.0f, 0.0f,
-        0.5f, -0.5f, -0.5f,  1.0f, 0.0f,
-        0.5f, -0.5f,  0.5f,  1.0f, 1.0f,
-        -0.5f, -0.5f,  0.5f,  0.0f, 1.0f,
-        0.5f,  0.5f, -0.5f,   0.0f, 0.0f,
-        -0.5f,  0.5f, -0.5f,  1.0f, 0.0f,
-        -0.5f,  0.5f,  0.5f,  1.0f, 1.0f,
-        0.5f,  0.5f,  0.5f,   0.0f, 1.0f,
+    glm::vec3 verts[] = {
+        a1, a2, a3, a3, a0, a1,
+        a2, a6, a7, a7, a3, a2,
+        a6, a5, a4, a4, a7, a6,
+        a5, a1, a0, a0, a4, a5,
+        a0, a3, a7, a7, a4, a0,
+        a5, a6, a2, a2, a1, a5
     };
+
+    glm::vec2 texc[] = {
+        glm::vec2(0,1), glm::vec2(0,0), glm::vec2(1,0), glm::vec2(1,0), glm::vec2(1,1), glm::vec2(0,1),
+        glm::vec2(0,1), glm::vec2(0,0), glm::vec2(1,0), glm::vec2(1,0), glm::vec2(1,1), glm::vec2(0,1),
+        glm::vec2(1,0), glm::vec2(1,1), glm::vec2(0,1), glm::vec2(0,1), glm::vec2(0,0), glm::vec2(1,0),
+        glm::vec2(0,1), glm::vec2(0,0), glm::vec2(1,0), glm::vec2(1,0), glm::vec2(1,1), glm::vec2(0,1),
+        glm::vec2(0,0), glm::vec2(1,0), glm::vec2(1,1), glm::vec2(1,1), glm::vec2(0,1), glm::vec2(0,0),
+        glm::vec2(1,1), glm::vec2(0,1), glm::vec2(0,0), glm::vec2(0,0), glm::vec2(1,0), glm::vec2(1,1),
+};
+
+    glm::vec3 norm[36];
+
+    for (int i = 0; i < 36; i += 3)
+    {
+        glm::vec3 normal = glm::normalize(
+            glm::cross(
+                glm::vec3(verts[i + 1]) - glm::vec3(verts[i]),
+                glm::vec3(verts[i + 2]) - glm::vec3(verts[i])));
+
+        norm[i] = normal;
+        norm[i + 1] = normal;
+        norm[i + 2] = normal;
+    }
+
+    float vertices[36 * 8];
+    for (int i = 0; i < 36; i++)
+    {
+        vertices[i * 8 + 0] = verts[i].x;
+        vertices[i * 8 + 1] = verts[i].y;
+        vertices[i * 8 + 2] = verts[i].z;
+
+        vertices[i * 8 + 3] = texc[i].x;
+        vertices[i * 8 + 4] = texc[i].y;
+
+        vertices[i * 8 + 5] = norm[i].x;
+        vertices[i * 8 + 6] = norm[i].y;
+        vertices[i * 8 + 7] = norm[i].z;
+    }
+
 
     BufferDesc vertexDesc = {
         .Size = sizeof(vertices),
         .BindFlags = BUFFER_BIND_VERTEX | BUFFER_BIND_TRANSFER_DST,
-        .Stride = 20,
+        .Stride = 32,
         .Usage = BufferUsage::Default
     };
 
     uint32_t indices[] = {
-        0, 3, 2,
-        2, 1, 0,
-        4, 5, 6,
-        6, 7 ,4,
-        11, 8, 9,
-        9, 10, 11,
-        12, 13, 14,
-        14, 15, 12,
-        16, 17, 18,
-        18, 19, 16,
-        20, 21, 22,
-        22, 23, 20
+        0, 1, 2, 3, 4, 5,
+        6, 7, 8, 9, 10, 11,
+        12, 13, 14, 15, 16, 17,
+        18, 19, 20, 21, 22, 23,
+        24, 25, 26, 27, 28, 29,
+        30, 31, 32, 33, 34, 35,
     };
 
     BufferDesc indexDesc = {

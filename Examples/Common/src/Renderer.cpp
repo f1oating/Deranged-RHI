@@ -104,7 +104,10 @@ void Renderer::CreatePipelineState() {
     };
 
     VertexInputDesc inputDesc = {
-        { { "POSITION", ValueType::Float3 }, { "TEXCOORD", ValueType::Float2 } }
+        {
+            { "POSITION", ValueType::Float3 },
+            { "TEXCOORD", ValueType::Float2 },
+            { "NORMAL", ValueType::Float3 } }
     };
 
     BlendDesc blendDesc = {

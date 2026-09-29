@@ -1,6 +1,7 @@
 struct Input {
     float4 Position : SV_Position;
     float2 UV : TEXCOORD;
+    float3 Normal : NORMAL;
 }
 
 [vk::binding(1, 0)]
