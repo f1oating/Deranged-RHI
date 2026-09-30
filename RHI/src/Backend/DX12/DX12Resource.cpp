@@ -17,7 +17,7 @@ DX12Texture::DX12Texture(TextureDesc desc, DX12Device* device) {
     };
 
     D3D12_RESOURCE_DESC1 resourceDesc = {
-        .Dimension = ToD3D12ResourceDimension(m_Desc.Type),
+        .Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D,
         .Width = m_Desc.Width,
         .Height = m_Desc.Height,
         .DepthOrArraySize = 1,

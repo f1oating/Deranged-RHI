@@ -268,19 +268,6 @@ inline D3D12_COMPARISON_FUNC ToD3D12ComparisonFunc(CompareOp op) {
     }
 }
 
-inline D3D12_RESOURCE_DIMENSION ToD3D12ResourceDimension(TextureType type) {
-    switch (type) {
-        case TextureType::Texture1D:
-            return D3D12_RESOURCE_DIMENSION_TEXTURE1D;
-        case TextureType::Texture2D:
-            return D3D12_RESOURCE_DIMENSION_TEXTURE2D;
-        case TextureType::Texture3D:
-            return D3D12_RESOURCE_DIMENSION_TEXTURE3D;
-        default:
-            return D3D12_RESOURCE_DIMENSION_TEXTURE2D;
-    }
-}
-
 inline D3D12_BARRIER_LAYOUT ToD3D12BarrierLayout(ImageLayout layout) {
     switch (layout) {
         case ImageLayout::Undefined:

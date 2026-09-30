@@ -55,7 +55,6 @@ DX12Swapchain::DX12Swapchain(WindowInfo window, DX12Device* device, DX12CommandQ
             .ArrayLayers = 1,
             .Samples = 1,
             .Format = TextureFormat::B8G8R8A8_UNORM,
-            .Type = TextureType::Texture2D,
             .BindFlags = TEXTURE_BIND_RENDER_TARGET
         };
         m_Textures[i] = new DX12Texture(desc, resource, m_Device);
@@ -114,7 +113,6 @@ void DX12Swapchain::Resize() {
             .ArrayLayers = 1,
             .Samples = 1,
             .Format = TextureFormat::B8G8R8A8_UNORM,
-            .Type = TextureType::Texture2D,
             .BindFlags = TEXTURE_BIND_RENDER_TARGET
         };
         m_Textures[i] = new DX12Texture(desc, resource, m_Device);

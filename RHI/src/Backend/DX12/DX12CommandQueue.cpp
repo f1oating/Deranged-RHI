@@ -265,7 +265,7 @@ void DX12CommandQueue::CopyToBuffer(Buffer* dst, uint64_t size, void* data) {
     ReleaseResource(new ReleaseResourceWrapper(new BufferReleaseResource(src)));
 }
 
-void DX12CommandQueue::CopyToTexture(Texture* dst, uint64_t size, void* data) {
+void DX12CommandQueue::CopyToTexture(Texture* dst, uint64_t size, void* data, TextureSubresourceLayers subresource) {
     DX12Texture* dxDst = static_cast<DX12Texture*>(dst);
 
     ID3D12Resource* src = nullptr;
@@ -287,12 +287,31 @@ void DX12CommandQueue::CopyToTexture(Texture* dst, uint64_t size, void* data) {
     m_Device->GetDX12Device()->CreateCommittedResource3(&heapProps, D3D12_HEAP_FLAG_NONE, &resourceDesc,
         D3D12_BARRIER_LAYOUT_UNDEFINED, nullptr, nullptr, 0, nullptr, IID_PPV_ARGS(&src));
 
-    D3D12_SUBRESOURCE_DATA textureData = {};
-    textureData.pData = data;
-    textureData.RowPitch = dxDst->GetDesc().Width * GetFormatSize(dxDst->GetDesc().Format);
-    textureData.SlicePitch = textureData.RowPitch * dxDst->GetDesc().Height;
+    void* mapped;
+    src->Map(0, nullptr, &mapped);
+    memcpy(mapped, data, size);
+    src->Unmap(0, nullptr);
 
-    UpdateSubresources(m_CommandList, dxDst->GetDX12Resource(), src, 0, 0, 1, &textureData);
+    D3D12_PLACED_SUBRESOURCE_FOOTPRINT footprint = {};
+    D3D12_RESOURCE_DESC dstDesc = dxDst->GetDX12Resource()->GetDesc();
+    m_Device->GetDX12Device()->GetCopyableFootprints(&dstDesc, 0, 1,
+        0, &footprint, nullptr, nullptr, nullptr);
+
+    D3D12_TEXTURE_COPY_LOCATION srcLocation = {
+        .pResource = src,
+        .Type = D3D12_TEXTURE_COPY_TYPE_PLACED_FOOTPRINT,
+        .PlacedFootprint = footprint
+    };
+
+    for (int i = 0; i < subresource.ArraysCount; i++) {
+        D3D12_TEXTURE_COPY_LOCATION dstLocation = {
+            .pResource = dxDst->GetDX12Resource(),
+            .Type = D3D12_TEXTURE_COPY_TYPE_SUBRESOURCE_INDEX,
+            .SubresourceIndex = subresource.ArrayLayer + i
+        };
+
+        m_CommandList->CopyTextureRegion(&dstLocation, 0, 0, 0, &srcLocation, nullptr);
+    }
 
     ReleaseResource(new ReleaseResourceWrapper(new BufferReleaseResource(src)));
 }

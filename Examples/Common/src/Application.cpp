@@ -232,7 +232,14 @@ void Application::ProceedCameraMovement() {
     double newPosY = 0.0f;
     glfwGetCursorPos(m_Window, &newPosX, &newPosY);
 
-    m_Camera.ProcessMouseMovement(newPosX - posX, newPosY - posY, true);
+    double xOffset = newPosX - posX;
+#ifdef WIN32
+    double yOffset = -(newPosY - posY);
+#else
+    double yOffset = newPosY - posY;
+#endif
+
+    m_Camera.ProcessMouseMovement(xOffset, yOffset, true);
     posX = newPosX;
     posY = newPosY;
 
