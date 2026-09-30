@@ -207,23 +207,16 @@ void Application::ProceedCameraMovement() {
     }
 
     if (glfwGetKey(m_Window, GLFW_KEY_W)) {
-        m_Camera.ProcessKeyboard(CameraMovement::Forward, m_DeltaTime);
+        m_Camera.ProcessMovement(Direction::Forward, m_DeltaTime);
     }
     if (glfwGetKey(m_Window, GLFW_KEY_S)) {
-        m_Camera.ProcessKeyboard(CameraMovement::Backward, m_DeltaTime);
+        m_Camera.ProcessMovement(Direction::Backward, m_DeltaTime);
     }
     if (glfwGetKey(m_Window, GLFW_KEY_A)) {
-        m_Camera.ProcessKeyboard(CameraMovement::Left, m_DeltaTime);
+        m_Camera.ProcessMovement(Direction::Left, m_DeltaTime);
     }
     if (glfwGetKey(m_Window, GLFW_KEY_D)) {
-        m_Camera.ProcessKeyboard(CameraMovement::Right, m_DeltaTime);
-    }
-
-    if (glfwGetMouseButton(m_Window, GLFW_MOUSE_BUTTON_LEFT)) {
-        m_Camera.ProcessMouseScroll(10.0f * m_DeltaTime);
-    }
-    if (glfwGetMouseButton(m_Window, GLFW_MOUSE_BUTTON_RIGHT)) {
-        m_Camera.ProcessMouseScroll(-10.0f * m_DeltaTime);
+        m_Camera.ProcessMovement(Direction::Right, m_DeltaTime);
     }
 
     static double posX = 0.0f;
@@ -232,21 +225,19 @@ void Application::ProceedCameraMovement() {
     double newPosY = 0.0f;
     glfwGetCursorPos(m_Window, &newPosX, &newPosY);
 
-    double xOffset = newPosX - posX;
+    if (posX != 0.0f && posY != 0.0f) {
+        double xOffset = newPosX - posX;
 #ifdef WIN32
-    double yOffset = -(newPosY - posY);
+        double yOffset = -(newPosY - posY);
 #else
-    double yOffset = newPosY - posY;
+        double yOffset = newPosY - posY;
 #endif
 
-    m_Camera.ProcessMouseMovement(xOffset, yOffset, true);
+        m_Camera.ProcessRotation(xOffset * m_DeltaTime, yOffset * m_DeltaTime);
+    }
+
     posX = newPosX;
     posY = newPosY;
-
-    int width = 1;
-    int height = 1;
-    glfwGetWindowSize(m_Window, &width, &height);
-    m_Camera.ProcessResize(width, height);
 }
 
 void Application::CheckWindowResized() {
@@ -256,6 +247,7 @@ void Application::CheckWindowResized() {
     if (m_WindowWidth != newWidth || m_WindowHeight != newHeight) {
         m_WindowWidth = newWidth;
         m_WindowHeight = newHeight;
+        m_Camera.ProcessResize(m_WindowWidth, m_WindowHeight);
         m_Renderer->ResizeAttachments();
     }
 }

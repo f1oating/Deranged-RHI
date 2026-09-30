@@ -8,42 +8,39 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
-enum class CameraMovement {
+enum class Direction {
     Forward,
     Backward,
     Left,
     Right
 };
 
+constexpr float CameraSpeed = 5.0f;
+
 class Camera {
 public:
-    Camera(glm::vec3 position = { 0.0f, 0.0f, 0.0f }, glm::vec3 up = { 0.0f, 1.0f, 0.0f },
-        float yaw = -90.0f, float pitch = 0.0f);
+    void ProcessMovement(Direction dir, double deltaTime);
+    void ProcessRotation(double xOffset, double yOffset);
 
-    void ProcessKeyboard(CameraMovement direction, float deltaTime);
-    void ProcessMouseMovement(float xoffset, float yoffset, bool constrainPitch = true);
-    void ProcessMouseScroll(float yoffset);
-    void ProcessResize(float width, float height);
+    void ProcessResize(int width, int height);
 
     glm::mat4 GetViewMatrix();
     glm::mat4 GetProjectionMatrix();
 
 private:
-    void UpdateCameraVectors();
+    void UpdateVectors();
 
 private:
-    glm::vec3 m_Position;
-    glm::vec3 m_Front;
-    glm::vec3 m_Up;
-    glm::vec3 m_Right;
-    glm::vec3 m_WorldUp;
-    float m_Yaw;
-    float m_Pitch;
-    float m_MovementSpeed;
-    float m_MouseSensitivity;
-    float m_Zoom;
-    float m_Width;
-    float m_Height;
+    glm::vec3 m_Position = { 0.0f, 0.0f, 0.0f };
+    glm::vec3 m_Front = { 0.0f, 0.0f, 1.0f };
+    glm::vec3 m_Up = { 0.0f, 1.0f, 0.0f };
+    glm::vec3 m_Right = { 1.0f, 0.0f, 0.0f };
+
+    float m_Yaw = 0.0f;
+    float m_Pitch = 0.0f;
+
+    int m_Width = 800;
+    int m_Height = 600;
 
 };
 
