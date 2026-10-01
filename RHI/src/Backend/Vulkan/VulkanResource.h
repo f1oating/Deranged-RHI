@@ -462,35 +462,35 @@ inline VkFilter ToVkFilter(Filter filter) {
     }
 }
 
-inline VkImageType ToVkImageType(TextureType type) {
-    switch (type) {
-        case TextureType::Texture1D:
+inline VkImageType ToVkImageType(TextureDimension dimension) {
+    switch (dimension) {
+        case TextureDimension::Texture1D:
             return VK_IMAGE_TYPE_1D;
-        case TextureType::Texture2D:
-        case TextureType::TextureCube:
+        case TextureDimension::Texture2D:
+        case TextureDimension::TextureCube:
             return VK_IMAGE_TYPE_2D;
-        case TextureType::Texture3D:
+        case TextureDimension::Texture3D:
             return VK_IMAGE_TYPE_3D;
         default:
             return VK_IMAGE_TYPE_2D;
     }
 }
 
-inline VkImageViewType ToVkImageViewType(TextureViewType type) {
-    switch (type) {
-        case TextureViewType::Texture1D:
+inline VkImageViewType ToVkImageViewType(TextureViewDimension dimension) {
+    switch (dimension) {
+        case TextureViewDimension::Texture1D:
             return VK_IMAGE_VIEW_TYPE_1D;
-        case TextureViewType::Texture1DArray:
+        case TextureViewDimension::Texture1DArray:
             return VK_IMAGE_VIEW_TYPE_1D_ARRAY;
-        case TextureViewType::Texture2D:
+        case TextureViewDimension::Texture2D:
             return VK_IMAGE_VIEW_TYPE_2D;
-        case TextureViewType::Texture2DArray:
+        case TextureViewDimension::Texture2DArray:
             return VK_IMAGE_VIEW_TYPE_2D_ARRAY;
-        case TextureViewType::TextureCube:
+        case TextureViewDimension::TextureCube:
             return VK_IMAGE_VIEW_TYPE_CUBE;
-        case TextureViewType::TextureCubeArray:
+        case TextureViewDimension::TextureCubeArray:
             return VK_IMAGE_VIEW_TYPE_CUBE_ARRAY;
-        case TextureViewType::Texture3D:
+        case TextureViewDimension::Texture3D:
             return VK_IMAGE_VIEW_TYPE_3D;
         default:
             return VK_IMAGE_VIEW_TYPE_2D;

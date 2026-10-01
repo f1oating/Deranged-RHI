@@ -39,7 +39,7 @@ enum TextureBind : uint8_t {
     TEXTURE_BIND_TRANSFER_DST = 1 << 4,
 };
 
-enum class TextureType {
+enum class TextureDimension {
     Texture1D,
     Texture2D,
     Texture3D,
@@ -66,12 +66,12 @@ struct TextureDesc {
     uint32_t MipLevels = 1;
     uint32_t ArrayLayers = 1;
     uint32_t Samples = 1;
-    TextureType Type = TextureType::Texture2D;
+    TextureDimension Dimension = TextureDimension::Texture2D;
     TextureFormat Format = TextureFormat::R8G8B8A8_UNORM;
     uint8_t BindFlags = TEXTURE_BIND_SHADER_RESOURCE || TEXTURE_BIND_TRANSFER_DST;
 };
 
-enum class TextureViewType {
+enum class TextureViewDimension {
     Texture1D,
     Texture1DArray,
     Texture2D,
@@ -95,9 +95,16 @@ public:
 
 };
 
+enum class TextureViewType {
+    RTV,
+    DSV,
+    SRV
+};
+
 struct TextureViewDesc {
     Texture* Tex;
-    TextureViewType Type = TextureViewType::Texture2D;
+    TextureViewType Type = TextureViewType::SRV;
+    TextureViewDimension Dimension = TextureViewDimension::Texture2D;
     uint32_t BaseMipLevel = 0;
     uint32_t MipLevels = 1;
     uint32_t BaseArrayLayer = 0;

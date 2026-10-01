@@ -73,8 +73,9 @@ DX12Device::DX12Device(DeviceDesc desc) {
     m_DebugQueue->PushStorageFilter(&filter);
 
     m_RingBuffer = std::make_unique<RingBuffer>(m_Device);
-    m_RTVAllocator = std::make_unique<DescriptorHeap>(m_Device, D3D12_DESCRIPTOR_HEAP_TYPE_RTV, 32);
-    m_DSVAllocator = std::make_unique<DescriptorHeap>(m_Device, D3D12_DESCRIPTOR_HEAP_TYPE_DSV, 32);
+    m_RTVAllocator = std::make_unique<DescriptorHeap>(m_Device, D3D12_DESCRIPTOR_HEAP_TYPE_RTV, 32, false);
+    m_DSVAllocator = std::make_unique<DescriptorHeap>(m_Device, D3D12_DESCRIPTOR_HEAP_TYPE_DSV, 32, false);
+    m_SRVAllocator = std::make_unique<DescriptorHeap>(m_Device, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 32, false);
 
     m_CommandQueue = new DX12CommandQueue(this);
 
@@ -85,6 +86,7 @@ DX12Device::~DX12Device() {
     if (m_CommandQueue) {
         delete m_CommandQueue;
     }
+    m_SRVAllocator.reset();
     m_DSVAllocator.reset();
     m_RTVAllocator.reset();
     m_RingBuffer.reset();
@@ -123,16 +125,8 @@ Texture* DX12Device::CreateTexture(TextureDesc desc) {
     return new DX12Texture(desc, this);
 }
 
-RenderTargetView* DX12Device::CreateRenderTargetView(Texture* texture) {
-    return new DX12RenderTargetView(static_cast<DX12Texture*>(texture), this);
-}
-
-DepthStencilView* DX12Device::CreateDepthStencilView(Texture* texture) {
-    return new DX12DepthStencilView(static_cast<DX12Texture*>(texture), this);
-}
-
-ShaderResourceView* DX12Device::CreateShaderResourceView(Texture* texture) {
-    return new DX12ShaderResourceView(static_cast<DX12Texture*>(texture), this);
+TextureView* DX12Device::CreateTextureView(TextureViewDesc desc) {
+    return new DX12TextureView(desc, this);
 }
 
 Buffer* DX12Device::CreateBuffer(BufferDesc desc) {

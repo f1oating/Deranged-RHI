@@ -68,13 +68,12 @@ D3D12_GPU_DESCRIPTOR_HANDLE DescriptorHeapAllocation::GetGPUHandle(uint32_t offs
     return gpuHandle;
 }
 
-DescriptorHeap::DescriptorHeap(ID3D12Device10* device, D3D12_DESCRIPTOR_HEAP_TYPE type, uint32_t numDescriptors){
+DescriptorHeap::DescriptorHeap(ID3D12Device10* device, D3D12_DESCRIPTOR_HEAP_TYPE type, uint32_t numDescriptors, bool shaderVisible){
     m_Device = device;
     m_NumDescriptors = numDescriptors;
+    m_ShaderVisible = shaderVisible;
 
     m_VariableSizeAllocationManager.Init(numDescriptors);
-
-    m_ShaderVisible = !(type == D3D12_DESCRIPTOR_HEAP_TYPE_DSV || type == D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
 
     D3D12_DESCRIPTOR_HEAP_FLAGS flags = m_ShaderVisible ?
         D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE : D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
@@ -123,8 +122,8 @@ void DescriptorHeap::Free(DescriptorHeapAllocation allocation) {
 
 DescriptorsStateManager::DescriptorsStateManager(ID3D12Device10* device) {
     m_Device = device;
-    m_Heap = std::make_unique<DescriptorHeap>(m_Device, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 128);
-    m_SamplerHeap = std::make_unique<DescriptorHeap>(m_Device, D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER, 32);
+    m_Heap = std::make_unique<DescriptorHeap>(m_Device, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 128, true);
+    m_SamplerHeap = std::make_unique<DescriptorHeap>(m_Device, D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER, 32, true);
 }
 
 DescriptorsStateManager::~DescriptorsStateManager() {
@@ -140,9 +139,8 @@ void DescriptorsStateManager::SetCBV(std::string name, D3D12_CONSTANT_BUFFER_VIE
     m_DescriptorsState.at(name).CBVDesc = cbvViewDesc;
 }
 
-void DescriptorsStateManager::SetSRV(std::string name, ID3D12Resource* resource, D3D12_SHADER_RESOURCE_VIEW_DESC srvViewDesc) {
-    m_DescriptorsState.at(name).SRVDesc = srvViewDesc;
-    m_DescriptorsState.at(name).Resource = resource;
+void DescriptorsStateManager::SetSRV(std::string name, DescriptorHeapAllocation allocation) {
+    m_DescriptorsState.at(name).Allocation = allocation;
 }
 
 void DescriptorsStateManager::SetSampler(std::string name, D3D12_SAMPLER_DESC desc) {
@@ -157,7 +155,8 @@ std::pair<DescriptorHeapAllocation, DescriptorHeapAllocation> DescriptorsStateMa
         if (descriptor.Type == DescriptorType::ConstantBuffer) {
             m_Device->CreateConstantBufferView(&descriptor.CBVDesc, allocation.GetCPUHandle(descriptor.Offset));
         } else if (descriptor.Type == DescriptorType::ShaderResource) {
-            m_Device->CreateShaderResourceView(descriptor.Resource, &descriptor.SRVDesc,allocation.GetCPUHandle(descriptor.Offset));
+            m_Device->CopyDescriptorsSimple(1, allocation.GetCPUHandle(descriptor.Offset),
+            descriptor.Allocation.GetCPUHandle(0), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
         } else if (descriptor.Type == DescriptorType::Sampler) {
             m_Device->CreateSampler(&descriptor.SamplerDesc,samplerAllocation.GetCPUHandle(descriptor.Offset));
         }

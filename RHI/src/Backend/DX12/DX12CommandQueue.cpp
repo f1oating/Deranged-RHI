@@ -74,16 +74,16 @@ void DX12CommandQueue::SetScissor(Scissor scissor) {
     m_ScissorBound = false;
 }
 
-void DX12CommandQueue::SetRenderTargets(std::vector<RenderTargetView*> rtvs) {
+void DX12CommandQueue::SetRenderTargets(std::vector<TextureView*> rtvs) {
     m_RTVs.resize(rtvs.size());
     for (int i = 0; i < rtvs.size(); i++) {
-        m_RTVs[i] = static_cast<DX12RenderTargetView*>(rtvs[i]);
+        m_RTVs[i] = static_cast<DX12TextureView*>(rtvs[i]);
     }
     m_RenderAttachmentsBound = false;
 }
 
-void DX12CommandQueue::SetDepthStencil(DepthStencilView *dsv) {
-    m_DSV = static_cast<DX12DepthStencilView*>(dsv);
+void DX12CommandQueue::SetDepthStencil(TextureView *dsv) {
+    m_DSV = static_cast<DX12TextureView*>(dsv);
     m_RenderAttachmentsBound = false;
 }
 
@@ -120,10 +120,10 @@ void DX12CommandQueue::SetConstantBuffer(std::string name, Buffer* buffer) {
     m_DescriptorsStateManager->SetCBV(name, desc);
 }
 
-void DX12CommandQueue::SetTexture(std::string name, ShaderResourceView* textureView) {
-    DX12ShaderResourceView* dxTextureView = static_cast<DX12ShaderResourceView*>(textureView);
+void DX12CommandQueue::SetTexture(std::string name, TextureView* textureView) {
+    DX12TextureView* dxTextureView = static_cast<DX12TextureView*>(textureView);
 
-    m_DescriptorsStateManager->SetSRV(name, dxTextureView->GetDXTexture()->GetDX12Resource(), dxTextureView->GetDXView());
+    m_DescriptorsStateManager->SetSRV(name, dxTextureView->GetAllocation());
 }
 
 void DX12CommandQueue::SetSampler(std::string name, Sampler* sampler) {

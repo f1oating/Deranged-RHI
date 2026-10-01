@@ -17,7 +17,7 @@ DX12Texture::DX12Texture(TextureDesc desc, DX12Device* device) {
     };
 
     D3D12_RESOURCE_DESC1 resourceDesc = {
-        .Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D,
+        .Dimension = ToD3D12ResourceDimension(m_Desc.Dimension),
         .Width = m_Desc.Width,
         .Height = m_Desc.Height,
         .DepthOrArraySize = (uint16_t)m_Desc.ArrayLayers,
@@ -39,7 +39,7 @@ DX12Texture::DX12Texture(TextureDesc desc, ID3D12Resource* res, DX12Device* devi
     m_Desc = desc;
     m_Resource = res;
     m_Device = device;
-    m_Layout = ImageLayout::Present;
+    m_Layout = TextureLayout::Present;
 
     spdlog::info("DX12Texture Created.");
 }
@@ -59,23 +59,35 @@ DX12Texture::~DX12Texture() {
     spdlog::info("DX12Texture Destroyed.");
 }
 
-RenderTargetView* DX12Texture::GetRTV() {
+TextureView* DX12Texture::GetRTV() {
     if (!m_RTV) {
-        m_RTV = new DX12RenderTargetView(this, m_Device);
+        TextureViewDesc rtvDesc = {
+            .Tex = this,
+            .Type = TextureViewType::RTV
+        };
+        m_RTV = new DX12TextureView(rtvDesc, m_Device);
     }
     return m_RTV;
 }
 
-DepthStencilView* DX12Texture::GetDSV() {
+TextureView* DX12Texture::GetDSV() {
     if (!m_DSV) {
-        m_DSV = new DX12DepthStencilView(this, m_Device);
+        TextureViewDesc dsvDesc = {
+            .Tex = this,
+            .Type = TextureViewType::DSV
+        };
+        m_DSV = new DX12TextureView(dsvDesc, m_Device);
     }
     return m_DSV;
 }
 
-ShaderResourceView* DX12Texture::GetSRV() {
-    if (!m_RTV) {
-        m_SRV = new DX12ShaderResourceView(this, m_Device);
+TextureView* DX12Texture::GetSRV() {
+    if (!m_SRV) {
+        TextureViewDesc srvDesc = {
+            .Tex = this,
+            .Type = TextureViewType::SRV
+        };
+        m_SRV = new DX12TextureView(srvDesc, m_Device);
     }
     return m_SRV;
 }
@@ -84,78 +96,190 @@ TextureDesc DX12Texture::GetDesc() {
     return m_Desc;
 }
 
-DX12RenderTargetView::DX12RenderTargetView(DX12Texture* texture, DX12Device* device) {
+DX12TextureView::DX12TextureView(TextureViewDesc desc, DX12Device* device) {
     m_Device = device;
-    m_Texture = texture;
+    m_Desc = desc;
+
+    switch (m_Desc.Type) {
+        case TextureViewType::RTV:
+            CreateRTV();
+            break;
+        case TextureViewType::DSV:
+            CreateDSV();
+            break;
+        case TextureViewType::SRV:
+            CreateSRV();
+            break;
+        default:
+            CreateSRV();
+    }
+
+    spdlog::info("DX12TextureView Created.");
+}
+
+DX12TextureView::~DX12TextureView() {
+    if (!m_Allocation.IsNull()) {
+        switch (m_Desc.Type) {
+            case TextureViewType::RTV:
+                m_Device->ReleaseResource(new DescriptorAllocationReleaseResource(m_Device->GetRTVAllocator(), m_Allocation));
+                break;
+            case TextureViewType::DSV:
+                m_Device->ReleaseResource(new DescriptorAllocationReleaseResource(m_Device->GetDSVAllocator(), m_Allocation));
+                break;
+            case TextureViewType::SRV:
+                m_Device->ReleaseResource(new DescriptorAllocationReleaseResource(m_Device->GetSRVAllocator(), m_Allocation));
+                break;
+            default:
+                m_Device->ReleaseResource(new DescriptorAllocationReleaseResource(m_Device->GetSRVAllocator(), m_Allocation));
+        }
+    }
+
+    spdlog::info("DX12TextureView Destroyed.");
+}
+
+void DX12TextureView::CreateRTV() {
     m_Allocation = m_Device->GetRTVAllocator()->Allocate(1);
 
+    DX12Texture* vkTex = static_cast<DX12Texture*>(m_Desc.Tex);
+
     D3D12_RENDER_TARGET_VIEW_DESC rtvDesc = {
-        .Format = ToDXGIFormat(m_Texture->GetDesc().Format),
-        .ViewDimension = D3D12_RTV_DIMENSION_TEXTURE2D
+        .Format = ToDXGIFormat(vkTex->GetDesc().Format),
+        .ViewDimension = ToD3D12RTVDimension(m_Desc.Dimension)
     };
 
-    m_Device->GetDX12Device()->CreateRenderTargetView(m_Texture->GetDX12Resource(), &rtvDesc, m_Allocation.GetCPUHandle(0));
-
-    spdlog::info("DX12RenderTargetView Created.");
-}
-
-DX12RenderTargetView::~DX12RenderTargetView() {
-    if (!m_Allocation.IsNull()) {
-        m_Device->ReleaseResource(new DescriptorAllocationReleaseResource(m_Device->GetRTVAllocator(), m_Allocation));
+    if (m_Desc.Dimension == TextureViewDimension::Texture1D) {
+        rtvDesc.Texture1D = {
+            .MipSlice = 0
+        };
+    } else if (m_Desc.Dimension == TextureViewDimension::Texture1DArray) {
+        rtvDesc.Texture1DArray = {
+            .MipSlice = 0,
+            .FirstArraySlice = m_Desc.BaseArrayLayer,
+            .ArraySize = m_Desc.ArrayLayers
+        };
+    } else if (m_Desc.Dimension == TextureViewDimension::Texture2D) {
+        rtvDesc.Texture2D = {
+            .MipSlice = 0,
+            .PlaneSlice = 0
+        };
+    } else if (m_Desc.Dimension == TextureViewDimension::Texture2DArray) {
+        rtvDesc.Texture2DArray = {
+            .MipSlice = 0,
+            .FirstArraySlice = m_Desc.BaseArrayLayer,
+            .ArraySize = m_Desc.ArrayLayers,
+            .PlaneSlice = 0
+        };
+    } else if (m_Desc.Dimension == TextureViewDimension::Texture3D) {
+        rtvDesc.Texture3D = {
+            .MipSlice = 0,
+            .FirstWSlice = 0,
+            .WSize = 1
+        };
     }
 
-    spdlog::info("DX12RenderTargetView Destroyed.");
+    m_Device->GetDX12Device()->CreateRenderTargetView(vkTex->GetDX12Resource(), &rtvDesc, m_Allocation.GetCPUHandle(0));
 }
 
-DX12DepthStencilView::DX12DepthStencilView(DX12Texture* texture, DX12Device* device) {
-    m_Device = device;
-    m_Texture = texture;
+void DX12TextureView::CreateDSV() {
     m_Allocation = m_Device->GetDSVAllocator()->Allocate(1);
-    m_ClearFlags = ToD3D12ClearFlags(m_Texture->GetDesc().Format);
+    m_ClearFlags = ToD3D12ClearFlags(m_Desc.Tex->GetDesc().Format);
+
+    DX12Texture* vkTex = static_cast<DX12Texture*>(m_Desc.Tex);
 
     D3D12_DEPTH_STENCIL_VIEW_DESC dsvDesc = {
-        .Format = ToDXGIFormat(m_Texture->GetDesc().Format),
-        .ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2D
+        .Format = ToDXGIFormat(vkTex->GetDesc().Format),
+        .ViewDimension = ToD3D12DSVDimension(m_Desc.Dimension)
     };
 
-    m_Device->GetDX12Device()->CreateDepthStencilView(m_Texture->GetDX12Resource(), &dsvDesc, m_Allocation.GetCPUHandle(0));
-
-    spdlog::info("DX12DepthStencilView Created.");
-}
-
-DX12DepthStencilView::~DX12DepthStencilView() {
-    if (!m_Allocation.IsNull()) {
-        m_Device->ReleaseResource(new DescriptorAllocationReleaseResource(m_Device->GetDSVAllocator(), m_Allocation));
+    if (m_Desc.Dimension == TextureViewDimension::Texture1D) {
+        dsvDesc.Texture1D = {
+            .MipSlice = 0
+        };
+    } else if (m_Desc.Dimension == TextureViewDimension::Texture1DArray) {
+        dsvDesc.Texture1DArray = {
+            .MipSlice = 0,
+            .FirstArraySlice = m_Desc.BaseArrayLayer,
+            .ArraySize = m_Desc.ArrayLayers
+        };
+    } else if (m_Desc.Dimension == TextureViewDimension::Texture2D) {
+        dsvDesc.Texture2D = {
+            .MipSlice = 0,
+        };
+    } else if (m_Desc.Dimension == TextureViewDimension::Texture2DArray) {
+        dsvDesc.Texture2DArray = {
+            .MipSlice = 0,
+            .FirstArraySlice = m_Desc.BaseArrayLayer,
+            .ArraySize = m_Desc.ArrayLayers,
+        };
     }
 
-    spdlog::info("DX12DepthStencilView Destroyed.");
+    m_Device->GetDX12Device()->CreateDepthStencilView(vkTex->GetDX12Resource(), &dsvDesc, m_Allocation.GetCPUHandle(0));
 }
 
-DX12ShaderResourceView::DX12ShaderResourceView(DX12Texture* texture, DX12Device* device) {
-    m_Device = device;
-    m_Texture = texture;
+void DX12TextureView::CreateSRV() {
+    m_Allocation = m_Device->GetSRVAllocator()->Allocate(1);
 
-    D3D12_TEX2D_SRV srv = {
-        .MostDetailedMip = 0,
-        .MipLevels = m_Texture->GetDesc().MipLevels,
-        .PlaneSlice = 0,
-        .ResourceMinLODClamp = 0.0f
+    DX12Texture* vkTex = static_cast<DX12Texture*>(m_Desc.Tex);
+
+    D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {
+        .Format = ToDXGIFormat(vkTex->GetDesc().Format),
+        .ViewDimension = ToD3D12SRVDimension(m_Desc.Dimension),
+        .Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING
     };
 
-    D3D12_SHADER_RESOURCE_VIEW_DESC view = {
-        .Format = ToDXGIFormat(m_Texture->GetDesc().Format),
-        .ViewDimension = m_Texture->GetDesc().ArrayLayers > 1 ? D3D12_SRV_DIMENSION_TEXTURECUBE : D3D12_SRV_DIMENSION_TEXTURE2D,
-        .Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING,
-        .Texture2D = srv
-    };
+    if (m_Desc.Dimension == TextureViewDimension::Texture1D) {
+        srvDesc.Texture1D = {
+            .MostDetailedMip = 0,
+            .MipLevels = 1,
+            .ResourceMinLODClamp = 0
+        };
+    } else if (m_Desc.Dimension == TextureViewDimension::Texture1DArray) {
+        srvDesc.Texture1DArray = {
+            .MostDetailedMip = 0,
+            .MipLevels = 1,
+            .FirstArraySlice = m_Desc.BaseArrayLayer,
+            .ArraySize = m_Desc.ArrayLayers,
+            .ResourceMinLODClamp = 0
+        };
+    } else if (m_Desc.Dimension == TextureViewDimension::Texture2D) {
+        srvDesc.Texture2D = {
+            .MostDetailedMip = 0,
+            .MipLevels = 1,
+            .PlaneSlice = 0,
+            .ResourceMinLODClamp = 0
+        };
+    } else if (m_Desc.Dimension == TextureViewDimension::Texture2DArray) {
+        srvDesc.Texture2DArray = {
+            .MostDetailedMip = 0,
+            .MipLevels = 1,
+            .FirstArraySlice = m_Desc.BaseArrayLayer,
+            .ArraySize = m_Desc.ArrayLayers,
+            .PlaneSlice = 1,
+            .ResourceMinLODClamp = 0
+        };
+    } else if (m_Desc.Dimension == TextureViewDimension::TextureCube) {
+        srvDesc.TextureCube = {
+            .MostDetailedMip = 0,
+            .MipLevels = 1,
+            .ResourceMinLODClamp = 0
+        };
+    } else if (m_Desc.Dimension == TextureViewDimension::TextureCubeArray) {
+        srvDesc.TextureCubeArray = {
+            .MostDetailedMip = 0,
+            .MipLevels = 1,
+            .First2DArrayFace = 0,
+            .NumCubes = 1,
+            .ResourceMinLODClamp = 0
+        };
+    } else if (m_Desc.Dimension == TextureViewDimension::Texture3D) {
+        srvDesc.Texture3D = {
+            .MostDetailedMip = 0,
+            .MipLevels = 1,
+            .ResourceMinLODClamp = 0
+        };
+    }
 
-    m_View = view;
-
-    spdlog::info("DX12ShaderResourceView Created.");
-}
-
-DX12ShaderResourceView::~DX12ShaderResourceView() {
-    spdlog::info("DX12ShaderResourceView Destroyed.");
+    m_Device->GetDX12Device()->CreateShaderResourceView(vkTex->GetDX12Resource(), &srvDesc, m_Allocation.GetCPUHandle(0));
 }
 
 DX12Buffer::DX12Buffer(BufferDesc desc, DX12Device* device) {

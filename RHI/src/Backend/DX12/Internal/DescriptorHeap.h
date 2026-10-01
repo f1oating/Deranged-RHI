@@ -48,7 +48,7 @@ private:
 class DescriptorHeap {
 public:
     DescriptorHeap(ID3D12Device10* device, D3D12_DESCRIPTOR_HEAP_TYPE type,
-        uint32_t numDescriptors);
+        uint32_t numDescriptors, bool shaderVisible);
     ~DescriptorHeap();
     DescriptorHeap(const DescriptorHeap& other) = delete;
     DescriptorHeap& operator=(const DescriptorHeap& other) = delete;
@@ -83,10 +83,9 @@ struct Descriptor {
     uint32_t Offset;
     union {
         D3D12_CONSTANT_BUFFER_VIEW_DESC CBVDesc;
-        D3D12_SHADER_RESOURCE_VIEW_DESC SRVDesc;
         D3D12_SAMPLER_DESC SamplerDesc;
     };
-    ID3D12Resource* Resource;
+    DescriptorHeapAllocation Allocation;
 };
 
 class DescriptorsStateManager {
@@ -101,7 +100,7 @@ public:
     void SetState(std::unordered_map<std::string, Descriptor> descriptorsState);
 
     void SetCBV(std::string name, D3D12_CONSTANT_BUFFER_VIEW_DESC cbvViewDesc);
-    void SetSRV(std::string name, ID3D12Resource* resource, D3D12_SHADER_RESOURCE_VIEW_DESC srvViewDesc);
+    void SetSRV(std::string name, DescriptorHeapAllocation allocation);
     void SetSampler(std::string name, D3D12_SAMPLER_DESC desc);
 
     std::pair<DescriptorHeapAllocation, DescriptorHeapAllocation> WriteAndAllocate(uint64_t frame);

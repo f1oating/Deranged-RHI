@@ -218,7 +218,7 @@ void Application::CreateSkybox() {
         .Width = 2048,
         .Height = 2048,
         .ArrayLayers = 6,
-        .Type = TextureType::TextureCube,
+        .Dimension = TextureDimension::TextureCube,
         .BindFlags = TEXTURE_BIND_TRANSFER_DST | TEXTURE_BIND_SHADER_RESOURCE
     };
     m_Skybox = m_Device->CreateTexture(textureDesc);
@@ -240,7 +240,7 @@ void Application::CreateSkybox() {
 
     TextureViewDesc textureViewDesc = {
         .Tex = m_Skybox,
-        .Type = TextureViewType::TextureCube,
+        .Dimension = TextureViewDimension::TextureCube,
         .BaseMipLevel = 0,
         .MipLevels = 1,
         .BaseArrayLayer = 0,

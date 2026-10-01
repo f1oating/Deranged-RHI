@@ -25,9 +25,7 @@ public:
     Swapchain* CreateSwapchain(WindowInfo window) override;
     GraphicsPipelineState* CreateGraphicsPipelineState(GraphicsPipelineDesc desc) override;
     Texture* CreateTexture(TextureDesc desc) override;
-    RenderTargetView* CreateRenderTargetView(Texture* texture) override;
-    DepthStencilView* CreateDepthStencilView(Texture* texture) override;
-    ShaderResourceView* CreateShaderResourceView(Texture* texture) override;
+    TextureView* CreateTextureView(TextureViewDesc desc) override;
     Buffer* CreateBuffer(BufferDesc desc) override;
     Sampler* CreateSampler(SamplerDesc desc) override;
 
@@ -39,6 +37,7 @@ public:
     ID3D12Device10* GetDX12Device() const { return m_Device; }
     DescriptorHeap* GetRTVAllocator() { return m_RTVAllocator.get(); }
     DescriptorHeap* GetDSVAllocator() { return m_DSVAllocator.get(); }
+    DescriptorHeap* GetSRVAllocator() { return m_SRVAllocator.get(); }
     RingBuffer* GetRingBuffer() { return m_RingBuffer.get(); }
 
 private:
@@ -55,6 +54,7 @@ private:
     std::unique_ptr<RingBuffer> m_RingBuffer = nullptr;
     std::unique_ptr<DescriptorHeap> m_RTVAllocator = nullptr;
     std::unique_ptr<DescriptorHeap> m_DSVAllocator = nullptr;
+    std::unique_ptr<DescriptorHeap> m_SRVAllocator = nullptr;
 
 };
 

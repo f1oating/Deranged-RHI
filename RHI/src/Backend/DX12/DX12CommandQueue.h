@@ -31,8 +31,8 @@ public:
     void SetViewport(Viewport viewport) override;
     void SetScissor(Scissor scissor) override;
 
-    void SetRenderTargets(std::vector<RenderTargetView*> rtvs) override;
-    void SetDepthStencil(DepthStencilView *dsv) override;
+    void SetRenderTargets(std::vector<TextureView*> rtvs) override;
+    void SetDepthStencil(TextureView *dsv) override;
 
     void ClearRenderTargets(float r, float g, float b, float a) override;
     void ClearDepthStencil(float depth, uint8_t stencil) override;
@@ -41,7 +41,7 @@ public:
     void SetIndexBuffer(Buffer* buffer) override;
 
     void SetConstantBuffer(std::string name, Buffer* buffer) override;
-    void SetTexture(std::string name, ShaderResourceView* textureView) override;
+    void SetTexture(std::string name, TextureView* textureView) override;
     void SetSampler(std::string name, Sampler* sampler) override;
 
     void DrawInstanced(uint32_t vertexCount, uint32_t instanceCount = 1,
@@ -99,10 +99,10 @@ private:
     DX12Buffer* m_IndexBuffer = nullptr;
     bool m_IndexBufferBound = false;
 
-    std::vector<DX12RenderTargetView*> m_RTVs;
+    std::vector<DX12TextureView*> m_RTVs;
     float m_RTVsClearValue[4];
     bool m_ShouldClearRTVs = false;
-    DX12DepthStencilView* m_DSV = nullptr;
+    DX12TextureView* m_DSV = nullptr;
     float m_DSVDepthClearValue;
     uint8_t m_DSVStencilClearValue;
     bool m_ShouldClearDSV = false;

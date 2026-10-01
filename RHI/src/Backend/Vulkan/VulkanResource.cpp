@@ -74,8 +74,8 @@ TextureDesc VulkanTexture::GetDesc() {
 void VulkanTexture::CreateTexture() {
     VkImageCreateInfo imageCreateInfo = {
         .sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO,
-        .flags = m_Desc.Type == TextureType::TextureCube ? VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT : 0U,
-        .imageType = ToVkImageType(m_Desc.Type),
+        .flags = m_Desc.Dimension == TextureDimension::TextureCube ? VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT : 0U,
+        .imageType = ToVkImageType(m_Desc.Dimension),
         .format = ToVkFormat(m_Desc.Format),
         .extent = { m_Desc.Width, m_Desc.Height, 1 },
         .mipLevels = m_Desc.MipLevels,
@@ -121,7 +121,7 @@ VulkanTextureView::VulkanTextureView(TextureViewDesc desc, VulkanDevice* device)
     VkImageViewCreateInfo imageViewCreateInfo = {
         .sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
         .image = vkTex->GetVkImage(),
-        .viewType = ToVkImageViewType(m_Desc.Type),
+        .viewType = ToVkImageViewType(m_Desc.Dimension),
         .format = ToVkFormat(vkTex->GetDesc().Format),
         .components = VK_COMPONENT_SWIZZLE_IDENTITY,
         .subresourceRange = imageSubresourceRange

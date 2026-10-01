@@ -13,9 +13,7 @@
 namespace dx {
 
 class DX12Device;
-class DX12RenderTargetView;
-class DX12DepthStencilView;
-class DX12ShaderResourceView;
+class DX12TextureView;
 
 class DX12Texture : public Texture {
 public:
@@ -23,16 +21,16 @@ public:
     DX12Texture(TextureDesc desc, ID3D12Resource* res, DX12Device* device);
     ~DX12Texture() override;
 
-    RenderTargetView* GetRTV() override;
-    DepthStencilView* GetDSV() override;
-    ShaderResourceView* GetSRV() override;
+    TextureView* GetRTV() override;
+    TextureView* GetDSV() override;
+    TextureView* GetSRV() override;
 
     TextureDesc GetDesc() override;
 
     ID3D12Resource* GetDX12Resource() const { return m_Resource; }
-    ImageLayout GetResourceLayout() const { return m_Layout; }
+    TextureLayout GetResourceLayout() const { return m_Layout; }
 
-    void SetResourceLayout(ImageLayout layout) { m_Layout = layout; }
+    void SetResourceLayout(TextureLayout layout) { m_Layout = layout; }
 
 private:
     DX12Device* m_Device = nullptr;
@@ -41,61 +39,33 @@ private:
 
     ID3D12Resource* m_Resource = nullptr;
 
-    ImageLayout m_Layout = ImageLayout::Undefined;
+    TextureLayout m_Layout = TextureLayout::Undefined;
 
-    DX12RenderTargetView* m_RTV = nullptr;
-    DX12DepthStencilView* m_DSV = nullptr;
-    DX12ShaderResourceView* m_SRV = nullptr;
-
-};
-
-class DX12RenderTargetView : public RenderTargetView {
-public:
-    DX12RenderTargetView(DX12Texture* texture, DX12Device* device);
-    ~DX12RenderTargetView();
-
-    DescriptorHeapAllocation GetAllocation() const { return m_Allocation; }
-
-private:
-    DX12Device* m_Device = nullptr;
-
-    DX12Texture* m_Texture = nullptr;
-
-    DescriptorHeapAllocation m_Allocation;
+    TextureView* m_RTV = nullptr;
+    TextureView* m_DSV = nullptr;
+    TextureView* m_SRV = nullptr;
 
 };
 
-class DX12DepthStencilView : public DepthStencilView {
+class DX12TextureView : public TextureView {
 public:
-    DX12DepthStencilView(DX12Texture* texture, DX12Device* device);
-    ~DX12DepthStencilView();
+    DX12TextureView(TextureViewDesc desc, DX12Device* device);
+    ~DX12TextureView();
 
     DescriptorHeapAllocation GetAllocation() const { return m_Allocation; }
     D3D12_CLEAR_FLAGS GetDX12ClearFlags() const { return m_ClearFlags; }
 
 private:
-    DX12Device* m_Device = nullptr;
-    DX12Texture* m_Texture = nullptr;
-
-    DescriptorHeapAllocation m_Allocation;
-
-    D3D12_CLEAR_FLAGS m_ClearFlags = D3D12_CLEAR_FLAG_DEPTH;
-
-};
-
-class DX12ShaderResourceView : public ShaderResourceView {
-public:
-    DX12ShaderResourceView(DX12Texture* texture, DX12Device* device);
-    ~DX12ShaderResourceView();
-
-    DX12Texture* GetDXTexture() const { return m_Texture; }
-    D3D12_SHADER_RESOURCE_VIEW_DESC GetDXView() const { return m_View; }
+    void CreateRTV();
+    void CreateDSV();
+    void CreateSRV();
 
 private:
     DX12Device* m_Device = nullptr;
-    DX12Texture* m_Texture = nullptr;
+    TextureViewDesc m_Desc;
 
-    D3D12_SHADER_RESOURCE_VIEW_DESC m_View;
+    DescriptorHeapAllocation m_Allocation;
+    D3D12_CLEAR_FLAGS m_ClearFlags = D3D12_CLEAR_FLAG_DEPTH;
 
 };
 
@@ -268,21 +238,21 @@ inline D3D12_COMPARISON_FUNC ToD3D12ComparisonFunc(CompareOp op) {
     }
 }
 
-inline D3D12_BARRIER_LAYOUT ToD3D12BarrierLayout(ImageLayout layout) {
+inline D3D12_BARRIER_LAYOUT ToD3D12BarrierLayout(TextureLayout layout) {
     switch (layout) {
-        case ImageLayout::Undefined:
+        case TextureLayout::Undefined:
             return  D3D12_BARRIER_LAYOUT_UNDEFINED;
-        case ImageLayout::TransferSRC:
+        case TextureLayout::TransferSRC:
             return  D3D12_BARRIER_LAYOUT_COPY_SOURCE;
-        case ImageLayout::TransferDST:
+        case TextureLayout::TransferDST:
             return  D3D12_BARRIER_LAYOUT_COPY_DEST;
-        case ImageLayout::ShaderResource:
+        case TextureLayout::ShaderResource:
             return  D3D12_BARRIER_LAYOUT_SHADER_RESOURCE;
-        case ImageLayout::DepthStencil:
+        case TextureLayout::DepthStencil:
             return D3D12_BARRIER_LAYOUT_DEPTH_STENCIL_WRITE;
-        case ImageLayout::RenderTarget:
+        case TextureLayout::RenderTarget:
             return D3D12_BARRIER_LAYOUT_RENDER_TARGET;
-        case ImageLayout::Present:
+        case TextureLayout::Present:
             return D3D12_BARRIER_LAYOUT_PRESENT;
         default:
             return D3D12_BARRIER_LAYOUT_UNDEFINED;
@@ -491,6 +461,73 @@ inline uint32_t GetFormatSize(TextureFormat format) {
         case TextureFormat::D32_FLOAT: return 4;
 
         default: return 0;
+    }
+}
+
+inline D3D12_RESOURCE_DIMENSION ToD3D12ResourceDimension(TextureDimension type) {
+    switch (type) {
+        case TextureDimension::Texture1D:
+            return D3D12_RESOURCE_DIMENSION_TEXTURE1D;
+        case TextureDimension::Texture2D:
+        case TextureDimension::TextureCube:
+            return D3D12_RESOURCE_DIMENSION_TEXTURE2D;
+        case TextureDimension::Texture3D:
+            return D3D12_RESOURCE_DIMENSION_TEXTURE3D;
+        default:
+            return D3D12_RESOURCE_DIMENSION_TEXTURE2D;
+    }
+}
+
+inline D3D12_RTV_DIMENSION ToD3D12RTVDimension(TextureViewDimension type) {
+    switch (type) {
+        case TextureViewDimension::Texture1D:
+            return D3D12_RTV_DIMENSION_TEXTURE1D;
+        case TextureViewDimension::Texture1DArray:
+            return D3D12_RTV_DIMENSION_TEXTURE1DARRAY;
+        case TextureViewDimension::Texture2D:
+            return D3D12_RTV_DIMENSION_TEXTURE2D;
+        case TextureViewDimension::Texture2DArray:
+            return D3D12_RTV_DIMENSION_TEXTURE2DARRAY;
+        case TextureViewDimension::Texture3D:
+            return D3D12_RTV_DIMENSION_TEXTURE3D;
+        default:
+            return D3D12_RTV_DIMENSION_TEXTURE2D;
+    }
+}
+
+inline D3D12_DSV_DIMENSION ToD3D12DSVDimension(TextureViewDimension type) {
+    switch (type) {
+        case TextureViewDimension::Texture1D:
+            return D3D12_DSV_DIMENSION_TEXTURE1D;
+        case TextureViewDimension::Texture1DArray:
+            return D3D12_DSV_DIMENSION_TEXTURE1DARRAY;
+        case TextureViewDimension::Texture2D:
+            return D3D12_DSV_DIMENSION_TEXTURE2D;
+        case TextureViewDimension::Texture2DArray:
+            return D3D12_DSV_DIMENSION_TEXTURE2DARRAY;
+        default:
+            return D3D12_DSV_DIMENSION_TEXTURE2D;
+    }
+}
+
+inline D3D12_SRV_DIMENSION ToD3D12SRVDimension(TextureViewDimension type) {
+    switch (type) {
+        case TextureViewDimension::Texture1D:
+            return D3D12_SRV_DIMENSION_TEXTURE1D;
+        case TextureViewDimension::Texture1DArray:
+            return D3D12_SRV_DIMENSION_TEXTURE1DARRAY;
+        case TextureViewDimension::Texture2D:
+            return D3D12_SRV_DIMENSION_TEXTURE2D;
+        case TextureViewDimension::Texture2DArray:
+            return D3D12_SRV_DIMENSION_TEXTURE2DARRAY;
+        case TextureViewDimension::TextureCube:
+            return D3D12_SRV_DIMENSION_TEXTURECUBE;
+        case TextureViewDimension::TextureCubeArray:
+            return D3D12_SRV_DIMENSION_TEXTURECUBEARRAY;
+        case TextureViewDimension::Texture3D:
+            return D3D12_SRV_DIMENSION_TEXTURE3D;
+        default:
+            return D3D12_SRV_DIMENSION_TEXTURE2D;
     }
 }
 
