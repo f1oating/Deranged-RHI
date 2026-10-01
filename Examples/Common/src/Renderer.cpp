@@ -37,7 +37,7 @@ void Renderer::Render() {
     TextureDesc backBufferDesc = backBuffer->GetDesc();
 
     m_Queue->Barrier(PIPELINE_STAGE_NONE, PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT, {},
-        { { backBuffer, ImageLayout::RenderTarget, ACCESS_NONE, ACCESS_COLOR_ATTACHMENT_WRITE } });
+        { { backBuffer, TextureLayout::RenderTarget, ACCESS_NONE, ACCESS_COLOR_ATTACHMENT_WRITE } });
 
     m_Queue->SetRenderTargets({ backBuffer->GetRTV() });
     m_Queue->SetDepthStencil(m_DepthStencil->GetDSV());
@@ -69,7 +69,7 @@ void Renderer::Render() {
         memcpy(transformCBufferPtr, &projView, sizeof(glm::mat4));
 
         m_Queue->SetConstantBuffer("Transform", m_TransformCBuffer);
-        m_Queue->SetTexture("Skybox", m_Skybox->GetSRV());
+        m_Queue->SetTexture("Skybox", m_Skybox);
         m_Queue->SetSampler("Sampler", m_Sampler);
 
         m_Queue->DrawIndexedInstanced(mesh.NumIndices);
@@ -77,7 +77,7 @@ void Renderer::Render() {
     m_Meshes.clear();
 
     m_Queue->Barrier(PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT, PIPELINE_STAGE_NONE, {},
-        { { backBuffer, ImageLayout::Present, ACCESS_COLOR_ATTACHMENT_WRITE, ACCESS_NONE } });
+        { { backBuffer, TextureLayout::Present, ACCESS_COLOR_ATTACHMENT_WRITE, ACCESS_NONE } });
 
     m_Swapchain->Present();
 }
@@ -102,7 +102,7 @@ void Renderer::CreateDepthStencil() {
     };
     m_DepthStencil = m_Device->CreateTexture(depthStencilDesc);
     m_Queue->Barrier(PIPELINE_STAGE_NONE, PIPELINE_STAGE_ALL_COMMANDS, {},
-    { { m_DepthStencil, ImageLayout::DepthStencil, ACCESS_NONE, ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE } });
+    { { m_DepthStencil, TextureLayout::DepthStencil, ACCESS_NONE, ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE } });
 }
 
 void Renderer::CreatePipelineState() {

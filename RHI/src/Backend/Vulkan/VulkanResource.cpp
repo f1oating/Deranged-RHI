@@ -46,23 +46,23 @@ VulkanTexture::~VulkanTexture() {
     spdlog::info("VulkanTexture Destroyed.");
 }
 
-RenderTargetView* VulkanTexture::GetRTV() {
+TextureView* VulkanTexture::GetRTV() {
     if (!m_RTV) {
-        m_RTV = new VulkanRenderTargetView(this, m_Device);
+        m_RTV = new VulkanTextureView({ this }, m_Device);
     }
     return m_RTV;
 }
 
-DepthStencilView* VulkanTexture::GetDSV() {
+TextureView* VulkanTexture::GetDSV() {
     if (!m_DSV) {
-        m_DSV = new VulkanDepthStencilView(this, m_Device);
+        m_DSV = new VulkanTextureView({ this }, m_Device);
     }
     return m_DSV;
 }
 
-ShaderResourceView* VulkanTexture::GetSRV() {
+TextureView* VulkanTexture::GetSRV() {
     if (!m_SRV) {
-        m_SRV = new VulkanShaderResourceView(this, m_Device);
+        m_SRV = new VulkanTextureView({ this }, m_Device);
     }
     return m_SRV;
 }
@@ -74,7 +74,8 @@ TextureDesc VulkanTexture::GetDesc() {
 void VulkanTexture::CreateTexture() {
     VkImageCreateInfo imageCreateInfo = {
         .sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO,
-        .imageType = VK_IMAGE_TYPE_2D,
+        .flags = m_Desc.Type == TextureType::TextureCube ? VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT : 0U,
+        .imageType = ToVkImageType(m_Desc.Type),
         .format = ToVkFormat(m_Desc.Format),
         .extent = { m_Desc.Width, m_Desc.Height, 1 },
         .mipLevels = m_Desc.MipLevels,
@@ -103,106 +104,40 @@ void VulkanTexture::CreateMemory() {
     vkAllocateMemory(m_Device->GetVkDevice(), &memoryAllocateInfo, nullptr, &m_Memory);
 }
 
-VulkanRenderTargetView::VulkanRenderTargetView(VulkanTexture* texture, VulkanDevice* device) {
+VulkanTextureView::VulkanTextureView(TextureViewDesc desc, VulkanDevice* device) {
     m_Device = device;
-    m_Texture = texture;
+    m_Desc = desc;
+
+    VulkanTexture* vkTex = static_cast<VulkanTexture*>(m_Desc.Tex);
 
     VkImageSubresourceRange imageSubresourceRange = {
-        .aspectMask = texture->GetVkAspectFlags(),
-        .baseMipLevel = 0,
-        .levelCount = 1,
-        .baseArrayLayer = 0,
-        .layerCount = 1
+        .aspectMask = vkTex->GetVkAspectFlags(),
+        .baseMipLevel = m_Desc.BaseMipLevel,
+        .levelCount = m_Desc.MipLevels,
+        .baseArrayLayer = m_Desc.BaseArrayLayer,
+        .layerCount = m_Desc.ArrayLayers
     };
 
     VkImageViewCreateInfo imageViewCreateInfo = {
         .sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
-        .image = m_Texture->GetVkImage(),
-        .viewType = VK_IMAGE_VIEW_TYPE_2D,
-        .format = ToVkFormat(m_Texture->GetDesc().Format),
+        .image = vkTex->GetVkImage(),
+        .viewType = ToVkImageViewType(m_Desc.Type),
+        .format = ToVkFormat(vkTex->GetDesc().Format),
         .components = VK_COMPONENT_SWIZZLE_IDENTITY,
         .subresourceRange = imageSubresourceRange
     };
 
     vkCreateImageView(m_Device->GetVkDevice(), &imageViewCreateInfo, nullptr, &m_View);
 
-    spdlog::info("VulkanRenderTargetView Created.");
+    spdlog::info("VulkanTextureView Created.");
 }
 
-VulkanRenderTargetView::~VulkanRenderTargetView() {
+VulkanTextureView::~VulkanTextureView() {
     if (m_View) {
         m_Device->ReleaseResource(new ImageViewReleaseResource(m_Device->GetVkDevice(), m_View));
     }
 
-    spdlog::info("VulkanRenderTargetView Destroyed.");
-}
-
-VulkanDepthStencilView::VulkanDepthStencilView(VulkanTexture* texture, VulkanDevice* device) {
-    m_Device = device;
-    m_Texture = texture;
-
-    VkImageSubresourceRange imageSubresourceRange = {
-        .aspectMask = texture->GetVkAspectFlags(),
-        .baseMipLevel = 0,
-        .levelCount = 1,
-        .baseArrayLayer = 0,
-        .layerCount = 1
-    };
-
-    VkImageViewCreateInfo imageViewCreateInfo = {
-        .sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
-        .image = m_Texture->GetVkImage(),
-        .viewType = VK_IMAGE_VIEW_TYPE_2D,
-        .format = ToVkFormat(m_Texture->GetDesc().Format),
-        .components = VK_COMPONENT_SWIZZLE_IDENTITY,
-        .subresourceRange = imageSubresourceRange
-    };
-
-    vkCreateImageView(m_Device->GetVkDevice(), &imageViewCreateInfo, nullptr, &m_View);
-
-    spdlog::info("VulkanDepthStencilView Created.");
-}
-
-VulkanDepthStencilView::~VulkanDepthStencilView() {
-    if (m_View) {
-        m_Device->ReleaseResource(new ImageViewReleaseResource(m_Device->GetVkDevice(), m_View));
-    }
-
-    spdlog::info("VulkanDepthStencilView Destroyed.");
-}
-
-VulkanShaderResourceView::VulkanShaderResourceView(VulkanTexture* texture, VulkanDevice* device) {
-    m_Device = device;
-    m_Texture = texture;
-
-    VkImageSubresourceRange imageSubresourceRange = {
-        .aspectMask = texture->GetVkAspectFlags(),
-        .baseMipLevel = 0,
-        .levelCount = m_Texture->GetDesc().MipLevels,
-        .baseArrayLayer = 0,
-        .layerCount = m_Texture->GetDesc().ArrayLayers
-    };
-
-    VkImageViewCreateInfo imageViewCreateInfo = {
-        .sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
-        .image = m_Texture->GetVkImage(),
-        .viewType = m_Texture->GetDesc().ArrayLayers > 1 ? VK_IMAGE_VIEW_TYPE_CUBE : VK_IMAGE_VIEW_TYPE_2D,
-        .format = ToVkFormat(m_Texture->GetDesc().Format),
-        .components = VK_COMPONENT_SWIZZLE_IDENTITY,
-        .subresourceRange = imageSubresourceRange
-    };
-
-    vkCreateImageView(m_Device->GetVkDevice(), &imageViewCreateInfo, nullptr, &m_View);
-
-    spdlog::info("VulkanShaderResourceView Created.");
-}
-
-VulkanShaderResourceView::~VulkanShaderResourceView() {
-    if (m_View) {
-        m_Device->ReleaseResource(new ImageViewReleaseResource(m_Device->GetVkDevice(), m_View));
-    }
-
-    spdlog::info("VulkanShaderResourceView Destroyed.");
+    spdlog::info("VulkanTextureView Destroyed.");
 }
 
 VulkanBuffer::VulkanBuffer(BufferDesc desc, VulkanDevice* device) {

@@ -12,9 +12,7 @@
 namespace vk {
 
 class VulkanDevice;
-class VulkanRenderTargetView;
-class VulkanDepthStencilView;
-class VulkanShaderResourceView;
+class VulkanTextureView;
 
 class VulkanTexture : public Texture {
 public:
@@ -22,17 +20,17 @@ public:
     VulkanTexture(TextureDesc desc, VulkanDevice* device, VkImage image);
     ~VulkanTexture() override;
 
-    RenderTargetView* GetRTV() override;
-    DepthStencilView* GetDSV() override;
-    ShaderResourceView* GetSRV() override;
+    TextureView* GetRTV() override;
+    TextureView* GetDSV() override;
+    TextureView* GetSRV() override;
 
     TextureDesc GetDesc() override;
 
     VkImage GetVkImage() const { return m_Image; }
-    ImageLayout GetLayout() const { return m_Layout; }
+    TextureLayout GetLayout() const { return m_Layout; }
     VkImageAspectFlags GetVkAspectFlags() const { return m_AspectFlags; }
 
-    void SetLayout(ImageLayout layout) { m_Layout = layout; }
+    void SetLayout(TextureLayout layout) { m_Layout = layout; }
 
 private:
     void CreateTexture();
@@ -45,58 +43,26 @@ private:
     VkImage m_Image = nullptr;
     VkDeviceMemory m_Memory = nullptr;
 
-    VulkanRenderTargetView* m_RTV = nullptr;
-    VulkanDepthStencilView* m_DSV = nullptr;
-    VulkanShaderResourceView* m_SRV = nullptr;
+    VulkanTextureView* m_RTV = nullptr;
+    VulkanTextureView* m_DSV = nullptr;
+    VulkanTextureView* m_SRV = nullptr;
 
-    ImageLayout m_Layout = ImageLayout::Undefined;
+    TextureLayout m_Layout = TextureLayout::Undefined;
     VkImageAspectFlags m_AspectFlags = VK_IMAGE_ASPECT_COLOR_BIT;
 
 };
 
-class VulkanRenderTargetView : public RenderTargetView {
+class VulkanTextureView : public TextureView {
 public:
-    VulkanRenderTargetView(VulkanTexture* texture, VulkanDevice* device);
-    ~VulkanRenderTargetView();
+    VulkanTextureView(TextureViewDesc desc, VulkanDevice* device);
+    ~VulkanTextureView();
 
     VkImageView GetVkImageView() const { return m_View; }
-    VulkanTexture* GetVkTexture() const { return m_Texture; }
+    VulkanTexture* GetVkTexture() const { return static_cast<VulkanTexture*>(m_Desc.Tex); }
 
 private:
     VulkanDevice* m_Device = nullptr;
-    VulkanTexture* m_Texture = nullptr;
-
-    VkImageView m_View = nullptr;
-
-};
-
-class VulkanDepthStencilView : public DepthStencilView {
-public:
-    VulkanDepthStencilView(VulkanTexture* texture, VulkanDevice* device);
-    ~VulkanDepthStencilView();
-
-    VkImageView GetVkImageView() const { return m_View; }
-    VulkanTexture* GetVkTexture() const { return m_Texture; }
-
-private:
-    VulkanDevice* m_Device = nullptr;
-    VulkanTexture* m_Texture = nullptr;
-
-    VkImageView m_View = nullptr;
-
-};
-
-class VulkanShaderResourceView : public ShaderResourceView {
-public:
-    VulkanShaderResourceView(VulkanTexture* texture, VulkanDevice* device);
-    ~VulkanShaderResourceView();
-
-    VkImageView GetVkImageView() const { return m_View; }
-    VulkanTexture* GetVkTexture() const { return m_Texture; }
-
-private:
-    VulkanDevice* m_Device = nullptr;
-    VulkanTexture* m_Texture = nullptr;
+    TextureViewDesc m_Desc;
 
     VkImageView m_View = nullptr;
 
@@ -305,21 +271,21 @@ inline VkSampleCountFlagBits ToVkSampleCountFlagBits(uint32_t sampleCount) {
     }
 }
 
-inline VkImageLayout ToVkImageLayout(ImageLayout layout) {
+inline VkImageLayout ToVkImageLayout(TextureLayout layout) {
     switch (layout) {
-        case ImageLayout::Undefined:
+        case TextureLayout::Undefined:
             return VK_IMAGE_LAYOUT_UNDEFINED;
-        case ImageLayout::TransferSRC:
+        case TextureLayout::TransferSRC:
             return VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
-        case ImageLayout::TransferDST:
+        case TextureLayout::TransferDST:
             return VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
-        case ImageLayout::ShaderResource:
+        case TextureLayout::ShaderResource:
             return VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-        case ImageLayout::DepthStencil:
+        case TextureLayout::DepthStencil:
             return VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL;
-        case ImageLayout::RenderTarget:
+        case TextureLayout::RenderTarget:
             return VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-        case ImageLayout::Present:
+        case TextureLayout::Present:
             return VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
         default:
             return VK_IMAGE_LAYOUT_UNDEFINED;
@@ -493,6 +459,41 @@ inline VkFilter ToVkFilter(Filter filter) {
             return VK_FILTER_NEAREST;
         default:
             return VK_FILTER_NEAREST;
+    }
+}
+
+inline VkImageType ToVkImageType(TextureType type) {
+    switch (type) {
+        case TextureType::Texture1D:
+            return VK_IMAGE_TYPE_1D;
+        case TextureType::Texture2D:
+        case TextureType::TextureCube:
+            return VK_IMAGE_TYPE_2D;
+        case TextureType::Texture3D:
+            return VK_IMAGE_TYPE_3D;
+        default:
+            return VK_IMAGE_TYPE_2D;
+    }
+}
+
+inline VkImageViewType ToVkImageViewType(TextureViewType type) {
+    switch (type) {
+        case TextureViewType::Texture1D:
+            return VK_IMAGE_VIEW_TYPE_1D;
+        case TextureViewType::Texture1DArray:
+            return VK_IMAGE_VIEW_TYPE_1D_ARRAY;
+        case TextureViewType::Texture2D:
+            return VK_IMAGE_VIEW_TYPE_2D;
+        case TextureViewType::Texture2DArray:
+            return VK_IMAGE_VIEW_TYPE_2D_ARRAY;
+        case TextureViewType::TextureCube:
+            return VK_IMAGE_VIEW_TYPE_CUBE;
+        case TextureViewType::TextureCubeArray:
+            return VK_IMAGE_VIEW_TYPE_CUBE_ARRAY;
+        case TextureViewType::Texture3D:
+            return VK_IMAGE_VIEW_TYPE_3D;
+        default:
+            return VK_IMAGE_VIEW_TYPE_2D;
     }
 }
 

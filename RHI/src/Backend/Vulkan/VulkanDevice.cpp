@@ -55,16 +55,8 @@ Texture* VulkanDevice::CreateTexture(TextureDesc desc) {
     return new VulkanTexture(desc, this);
 }
 
-RenderTargetView* VulkanDevice::CreateRenderTargetView(Texture* texture) {
-    return new VulkanRenderTargetView(static_cast<VulkanTexture*>(texture), this);
-}
-
-DepthStencilView* VulkanDevice::CreateDepthStencilView(Texture* texture) {
-    return new VulkanDepthStencilView(static_cast<VulkanTexture*>(texture), this);
-}
-
-ShaderResourceView* VulkanDevice::CreateShaderResourceView(Texture* texture) {
-    return new VulkanShaderResourceView(static_cast<VulkanTexture*>(texture), this);
+TextureView* VulkanDevice::CreateTextureView(TextureViewDesc desc) {
+    return new VulkanTextureView(desc, this);
 }
 
 Buffer* VulkanDevice::CreateBuffer(BufferDesc desc) {

@@ -28,7 +28,7 @@ public:
     void ResizeAttachments();
 
     void SetCamera(Camera* camera) { m_Camera = camera; }
-    void SetSkybox(Texture* skybox) { m_Skybox = skybox; }
+    void SetSkybox(TextureView* skybox) { m_Skybox = skybox; }
 
 private:
     void CreateDepthStencil();
@@ -43,7 +43,7 @@ private:
 
     Camera* m_Camera = nullptr;
     std::vector<Mesh> m_Meshes;
-    Texture* m_Skybox = nullptr;
+    TextureView* m_Skybox = nullptr;
 
     Texture* m_DepthStencil = nullptr;
     GraphicsPipelineState* m_PipelineState = nullptr;

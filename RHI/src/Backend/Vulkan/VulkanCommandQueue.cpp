@@ -63,23 +63,23 @@ void VulkanCommandQueue::SetScissor(Scissor scissor) {
     m_ScissorBound = false;
 }
 
-void VulkanCommandQueue::SetRenderTargets(std::vector<RenderTargetView*> rtvs) {
+void VulkanCommandQueue::SetRenderTargets(std::vector<TextureView*> rtvs) {
     if (m_InsideRendering) {
         EndRendering();
     }
 
     m_RTVs.resize(rtvs.size());
     for (int i = 0; i < m_RTVs.size(); i++) {
-        m_RTVs[i] = static_cast<VulkanRenderTargetView*>(rtvs[i]);
+        m_RTVs[i] = static_cast<VulkanTextureView*>(rtvs[i]);
     }
 }
 
-void VulkanCommandQueue::SetDepthStencil(DepthStencilView* dsv) {
+void VulkanCommandQueue::SetDepthStencil(TextureView* dsv) {
     if (m_InsideRendering) {
         EndRendering();
     }
 
-    m_DSV = static_cast<VulkanDepthStencilView*>(dsv);
+    m_DSV = static_cast<VulkanTextureView*>(dsv);
 }
 
 void VulkanCommandQueue::ClearRenderTargets(float r, float g, float b, float a) {
@@ -117,10 +117,10 @@ void VulkanCommandQueue::SetConstantBuffer(std::string name, Buffer* buffer) {
     m_DescriptorManager->WriteBufferInfo(set, binding, bufferInfo);
 }
 
-void VulkanCommandQueue::SetTexture(std::string name, ShaderResourceView* textureView) {
+void VulkanCommandQueue::SetTexture(std::string name, TextureView* textureView) {
     if (!m_GraphicsPipeline) return;
 
-    VulkanShaderResourceView* vkTextureView = static_cast<VulkanShaderResourceView*>(textureView);
+    VulkanTextureView* vkTextureView = static_cast<VulkanTextureView*>(textureView);
     const auto [set, binding] = m_GraphicsPipeline->GetBindingPlace(name);
 
     VkDescriptorImageInfo imageInfo = {

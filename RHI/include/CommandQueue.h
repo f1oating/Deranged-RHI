@@ -39,8 +39,8 @@ public:
     virtual void SetViewport(Viewport viewport) = 0;
     virtual void SetScissor(Scissor scissor) = 0;
 
-    virtual void SetRenderTargets(std::vector<RenderTargetView*> rtvs) = 0;
-    virtual void SetDepthStencil(DepthStencilView* dsv) = 0;
+    virtual void SetRenderTargets(std::vector<TextureView*> rtvs) = 0;
+    virtual void SetDepthStencil(TextureView* dsv) = 0;
 
     virtual void ClearRenderTargets(float r, float g, float b, float a) = 0;
     virtual void ClearDepthStencil(float depth, uint8_t stencil) = 0;
@@ -49,7 +49,7 @@ public:
     virtual void SetIndexBuffer(Buffer* buffer) = 0;
 
     virtual void SetConstantBuffer(std::string name, Buffer* buffer) = 0;
-    virtual void SetTexture(std::string name, ShaderResourceView* textureView) = 0;
+    virtual void SetTexture(std::string name, TextureView* textureView) = 0;
     virtual void SetSampler(std::string name, Sampler* sampler) = 0;
 
     virtual void DrawInstanced(uint32_t vertexCount, uint32_t instanceCount = 1,

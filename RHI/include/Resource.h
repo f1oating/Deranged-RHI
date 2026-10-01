@@ -39,6 +39,13 @@ enum TextureBind : uint8_t {
     TEXTURE_BIND_TRANSFER_DST = 1 << 4,
 };
 
+enum class TextureType {
+    Texture1D,
+    Texture2D,
+    Texture3D,
+    TextureCube
+};
+
 enum BufferBind : uint8_t {
     BUFFER_BIND_VERTEX = 1 << 0,
     BUFFER_BIND_INDEX = 1 << 1,
@@ -59,41 +66,47 @@ struct TextureDesc {
     uint32_t MipLevels = 1;
     uint32_t ArrayLayers = 1;
     uint32_t Samples = 1;
+    TextureType Type = TextureType::Texture2D;
     TextureFormat Format = TextureFormat::R8G8B8A8_UNORM;
     uint8_t BindFlags = TEXTURE_BIND_SHADER_RESOURCE || TEXTURE_BIND_TRANSFER_DST;
 };
 
-class RenderTargetView;
-class DepthStencilView;
-class ShaderResourceView;
+enum class TextureViewType {
+    Texture1D,
+    Texture1DArray,
+    Texture2D,
+    Texture2DArray,
+    TextureCube,
+    TextureCubeArray,
+    Texture3D
+};
+
+class TextureView;
 
 class Texture {
 public:
     virtual ~Texture() = default;
 
-    virtual RenderTargetView* GetRTV() = 0;
-    virtual DepthStencilView* GetDSV() = 0;
-    virtual ShaderResourceView* GetSRV() = 0;
+    virtual TextureView* GetRTV() = 0;
+    virtual TextureView* GetDSV() = 0;
+    virtual TextureView* GetSRV() = 0;
 
     virtual TextureDesc GetDesc() = 0;
 
 };
 
-class RenderTargetView {
-public:
-    virtual ~RenderTargetView() = default;
-
+struct TextureViewDesc {
+    Texture* Tex;
+    TextureViewType Type = TextureViewType::Texture2D;
+    uint32_t BaseMipLevel = 0;
+    uint32_t MipLevels = 1;
+    uint32_t BaseArrayLayer = 0;
+    uint32_t ArrayLayers = 1;
 };
 
-class DepthStencilView {
+class TextureView {
 public:
-    virtual ~DepthStencilView() = default;
-
-};
-
-class ShaderResourceView {
-public:
-    virtual ~ShaderResourceView() = default;
+    virtual ~TextureView() = default;
 
 };
 
@@ -114,7 +127,7 @@ public:
 
 };
 
-enum class ImageLayout {
+enum class TextureLayout {
     Undefined,
     TransferSRC,
     TransferDST,
@@ -161,7 +174,7 @@ struct TextureSubresourceLayers {
 
 struct TextureBarrier {
     Texture* Tex;
-    ImageLayout Layout;
+    TextureLayout Layout;
     uint32_t SrcAccessFlags;
     uint32_t DstAccessFlags;
 };

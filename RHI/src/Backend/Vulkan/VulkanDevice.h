@@ -24,9 +24,7 @@ public:
     Swapchain* CreateSwapchain(WindowInfo window) override;
     GraphicsPipelineState* CreateGraphicsPipelineState(GraphicsPipelineDesc desc) override;
     Texture* CreateTexture(TextureDesc desc) override;
-    RenderTargetView* CreateRenderTargetView(Texture* texture) override;
-    DepthStencilView* CreateDepthStencilView(Texture* texture) override;
-    ShaderResourceView* CreateShaderResourceView(Texture* texture) override;
+    TextureView* CreateTextureView(TextureViewDesc desc) override;
     Buffer* CreateBuffer(BufferDesc desc) override;
     Sampler* CreateSampler(SamplerDesc desc) override;
 

@@ -47,6 +47,7 @@ Application::Application() {
 }
 
 Application::~Application() {
+    delete m_SkyboxView;
     delete m_Skybox;
     delete m_Cube.Index;
     delete m_Cube.Vertex;
@@ -76,7 +77,7 @@ void Application::Run() {
         ProceedCameraMovement();
 
         m_Renderer->AddMesh(m_Cube);
-        m_Renderer->SetSkybox(m_Skybox);
+        m_Renderer->SetSkybox(m_SkyboxView);
         m_Renderer->Render();
 
         m_Device->EndFrame();
@@ -187,7 +188,7 @@ void Application::CreateCubeMesh() {
     m_Cube.NumIndices = sizeof(indices) / sizeof(uint32_t);
 
     m_Queue->Barrier(PIPELINE_STAGE_NONE, PIPELINE_STAGE_TRANSFER,
-    {}, { { m_Cube.Albedo, ImageLayout::TransferDST, ACCESS_NONE, ACCESS_TRANSFER_WRITE } });
+    {}, { { m_Cube.Albedo, TextureLayout::TransferDST, ACCESS_NONE, ACCESS_TRANSFER_WRITE } });
 
     m_Queue->CopyToBuffer(m_Cube.Vertex, sizeof(vertices), vertices);
     m_Queue->CopyToBuffer(m_Cube.Index, sizeof(indices), indices);
@@ -200,7 +201,7 @@ void Application::CreateCubeMesh() {
     m_Queue->Barrier(PIPELINE_STAGE_TRANSFER, PIPELINE_STAGE_INDEX_INPUT,
     { { m_Cube.Index, ACCESS_TRANSFER_WRITE, ACCESS_INDEX_READ } }, {});
     m_Queue->Barrier(PIPELINE_STAGE_TRANSFER, PIPELINE_STAGE_FRAGMENT_SHADER,
-    {}, { { m_Cube.Albedo, ImageLayout::ShaderResource, ACCESS_TRANSFER_WRITE, ACCESS_SHADER_READ } });
+    {}, { { m_Cube.Albedo, TextureLayout::ShaderResource, ACCESS_TRANSFER_WRITE, ACCESS_SHADER_READ } });
 }
 
 void Application::CreateSkybox() {
@@ -217,12 +218,13 @@ void Application::CreateSkybox() {
         .Width = 2048,
         .Height = 2048,
         .ArrayLayers = 6,
+        .Type = TextureType::TextureCube,
         .BindFlags = TEXTURE_BIND_TRANSFER_DST | TEXTURE_BIND_SHADER_RESOURCE
     };
     m_Skybox = m_Device->CreateTexture(textureDesc);
 
     m_Queue->Barrier(PIPELINE_STAGE_NONE, PIPELINE_STAGE_TRANSFER,
-    {}, { { m_Skybox, ImageLayout::TransferDST, ACCESS_NONE, ACCESS_TRANSFER_WRITE } });
+    {}, { { m_Skybox, TextureLayout::TransferDST, ACCESS_NONE, ACCESS_TRANSFER_WRITE } });
 
     for (int i = 0; i < 6; i++) {
         int width, height, channels;
@@ -234,7 +236,17 @@ void Application::CreateSkybox() {
     }
 
     m_Queue->Barrier(PIPELINE_STAGE_TRANSFER, PIPELINE_STAGE_FRAGMENT_SHADER,
-    {}, { { m_Skybox, ImageLayout::ShaderResource, ACCESS_TRANSFER_WRITE, ACCESS_SHADER_READ } });
+    {}, { { m_Skybox, TextureLayout::ShaderResource, ACCESS_TRANSFER_WRITE, ACCESS_SHADER_READ } });
+
+    TextureViewDesc textureViewDesc = {
+        .Tex = m_Skybox,
+        .Type = TextureViewType::TextureCube,
+        .BaseMipLevel = 0,
+        .MipLevels = 1,
+        .BaseArrayLayer = 0,
+        .ArrayLayers = 6
+    };
+    m_SkyboxView = m_Device->CreateTextureView(textureViewDesc);
 }
 
 void Application::ProceedCameraMovement() {

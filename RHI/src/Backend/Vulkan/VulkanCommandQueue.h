@@ -32,8 +32,8 @@ public:
     void SetViewport(Viewport viewport) override;
     void SetScissor(Scissor scissor) override;
 
-    void SetRenderTargets(std::vector<RenderTargetView*> rtvs) override;
-    void SetDepthStencil(DepthStencilView* dsv) override;
+    void SetRenderTargets(std::vector<TextureView*> rtvs) override;
+    void SetDepthStencil(TextureView* dsv) override;
 
     void ClearRenderTargets(float r, float g, float b, float a) override;
     void ClearDepthStencil(float depth, uint8_t stencil) override;
@@ -42,7 +42,7 @@ public:
     void SetIndexBuffer(Buffer* buffer) override;
 
     void SetConstantBuffer(std::string name, Buffer* buffer) override;
-    void SetTexture(std::string name, ShaderResourceView* textureView) override;
+    void SetTexture(std::string name, TextureView* textureView) override;
     void SetSampler(std::string name, Sampler* sampler) override;
 
     void DrawInstanced(uint32_t vertexCount, uint32_t instanceCount,
@@ -109,10 +109,10 @@ private:
     VulkanBuffer* m_IndexBuffer = nullptr;
     bool m_IndexBufferBound = false;
 
-    std::vector<VulkanRenderTargetView*> m_RTVs;
+    std::vector<VulkanTextureView*> m_RTVs;
     VkClearColorValue m_RTVsClearValue;
     bool m_ShouldClearRTVs = false;
-    VulkanDepthStencilView* m_DSV = nullptr;
+    VulkanTextureView* m_DSV = nullptr;
     VkClearDepthStencilValue m_DSVClearValue;
     bool m_ShouldClearDSV = false;
     bool m_InsideRendering = false;

@@ -53,6 +53,7 @@ private:
 
     Mesh m_Cube;
     Texture* m_Skybox = nullptr;
+    TextureView* m_SkyboxView = nullptr;
 
 };
 
