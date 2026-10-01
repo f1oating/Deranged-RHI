@@ -176,7 +176,7 @@ void DX12CommandQueue::Barrier(uint32_t srcStage, uint32_t dstStage,
             .IndexOrFirstMipLevel = 0,
             .NumMipLevels = 1,
             .FirstArraySlice = 0,
-            .NumArraySlices = 1,
+            .NumArraySlices = dxTexture->GetDesc().ArrayLayers,
             .FirstPlane = 0,
             .NumPlanes = 1
         };

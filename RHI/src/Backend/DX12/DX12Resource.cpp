@@ -20,7 +20,7 @@ DX12Texture::DX12Texture(TextureDesc desc, DX12Device* device) {
         .Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D,
         .Width = m_Desc.Width,
         .Height = m_Desc.Height,
-        .DepthOrArraySize = 1,
+        .DepthOrArraySize = (uint16_t)m_Desc.ArrayLayers,
         .MipLevels = (uint16_t)m_Desc.MipLevels,
         .Format = ToDXGIFormat(m_Desc.Format),
         .SampleDesc = { 1, 0 },
@@ -144,7 +144,7 @@ DX12ShaderResourceView::DX12ShaderResourceView(DX12Texture* texture, DX12Device*
 
     D3D12_SHADER_RESOURCE_VIEW_DESC view = {
         .Format = ToDXGIFormat(m_Texture->GetDesc().Format),
-        .ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D,
+        .ViewDimension = m_Texture->GetDesc().ArrayLayers > 1 ? D3D12_SRV_DIMENSION_TEXTURECUBE : D3D12_SRV_DIMENSION_TEXTURE2D,
         .Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING,
         .Texture2D = srv
     };

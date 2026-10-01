@@ -124,7 +124,7 @@ void DescriptorHeap::Free(DescriptorHeapAllocation allocation) {
 DescriptorsStateManager::DescriptorsStateManager(ID3D12Device10* device) {
     m_Device = device;
     m_Heap = std::make_unique<DescriptorHeap>(m_Device, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 128);
-    m_SamplerHeap = std::make_unique<DescriptorHeap>(m_Device, D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER, 12);
+    m_SamplerHeap = std::make_unique<DescriptorHeap>(m_Device, D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER, 32);
 }
 
 DescriptorsStateManager::~DescriptorsStateManager() {
