@@ -28,10 +28,12 @@ public:
     void ResizeAttachments();
 
     void SetCamera(Camera* camera) { m_Camera = camera; }
+    void SetSkybox(Texture* skybox) { m_Skybox = skybox; }
 
 private:
     void CreateDepthStencil();
     void CreatePipelineState();
+    void CreateSkyboxPipelineState();
     void CreateSampler();
 
 private:
@@ -41,9 +43,11 @@ private:
 
     Camera* m_Camera = nullptr;
     std::vector<Mesh> m_Meshes;
+    Texture* m_Skybox = nullptr;
 
     Texture* m_DepthStencil = nullptr;
     GraphicsPipelineState* m_PipelineState = nullptr;
+    GraphicsPipelineState* m_SkyboxPipelineState = nullptr;
     Buffer* m_TransformCBuffer = nullptr;
     Sampler* m_Sampler = nullptr;
 

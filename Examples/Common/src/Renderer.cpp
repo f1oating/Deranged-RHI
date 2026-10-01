@@ -13,6 +13,7 @@ Renderer::Renderer(Device* device, CommandQueue* queue, Swapchain* swapchain) {
 
     CreateDepthStencil();
     CreatePipelineState();
+    CreateSkyboxPipelineState();
 
     BufferDesc transformCBufferDesc = {
         .Size = 256,
@@ -26,6 +27,7 @@ Renderer::Renderer(Device* device, CommandQueue* queue, Swapchain* swapchain) {
 Renderer::~Renderer() {
     delete m_Sampler;
     delete m_TransformCBuffer;
+    delete m_SkyboxPipelineState;
     delete m_PipelineState;
     delete m_DepthStencil;
 }
@@ -56,6 +58,18 @@ void Renderer::Render() {
 
         m_Queue->SetConstantBuffer("Transform", m_TransformCBuffer);
         m_Queue->SetTexture("Albedo", mesh.Albedo->GetSRV());
+        m_Queue->SetSampler("Sampler", m_Sampler);
+
+        m_Queue->DrawIndexedInstanced(mesh.NumIndices);
+
+        m_Queue->SetGraphicsPipelineState(m_SkyboxPipelineState);
+
+        projView = m_Camera->GetProjectionMatrix() * glm::mat4(glm::mat3(m_Camera->GetViewMatrix()));
+        transformCBufferPtr = m_TransformCBuffer->Map();
+        memcpy(transformCBufferPtr, &projView, sizeof(glm::mat4));
+
+        m_Queue->SetConstantBuffer("Transform", m_TransformCBuffer);
+        m_Queue->SetTexture("Skybox", m_Skybox->GetSRV());
         m_Queue->SetSampler("Sampler", m_Sampler);
 
         m_Queue->DrawIndexedInstanced(mesh.NumIndices);
@@ -131,6 +145,48 @@ void Renderer::CreatePipelineState() {
         .PrimitiveTopology = Topology::TriangleList
     };
     m_PipelineState = m_Device->CreateGraphicsPipelineState(pipelineDesc);
+}
+
+void Renderer::CreateSkyboxPipelineState() {
+    auto vertexSource = ShaderCompiler::CompileShader("SkyboxV.slang");
+    Shader vertexShader{
+        .Data = vertexSource.data(),
+        .Size = vertexSource.size()
+    };
+    auto fragmentSource = ShaderCompiler::CompileShader("SkyboxF.slang");
+    Shader fragmentShader{
+        .Data = fragmentSource.data(),
+        .Size = fragmentSource.size()
+    };
+
+    VertexInputDesc inputDesc = {
+        {
+            { "POSITION", ValueType::Float3 },
+            { "TEXCOORD", ValueType::Float2 },
+            { "NORMAL", ValueType::Float3 } }
+    };
+
+    BlendDesc blendDesc = {
+        .ColorAttachments = { {} }
+    };
+
+    DepthStencilDesc depthStencilStateDesc = {
+        .DepthEnable = true,
+        .DepthWriteEnable = true,
+        .DepthCompare = CompareOp::LessOrEqual
+    };
+
+    GraphicsPipelineDesc pipelineDesc = {
+        .VertexShader = vertexShader,
+        .FragmentShader = fragmentShader,
+        .VertexInput = inputDesc,
+        .DepthStencil = depthStencilStateDesc,
+        .Blend = blendDesc,
+        .ColorFormats = { m_Swapchain->GetCurrentBackBuffer()->GetDesc().Format },
+        .DepthStencilFormat = m_DepthStencil->GetDesc().Format,
+        .PrimitiveTopology = Topology::TriangleList
+    };
+    m_SkyboxPipelineState = m_Device->CreateGraphicsPipelineState(pipelineDesc);
 }
 
 void Renderer::CreateSampler() {

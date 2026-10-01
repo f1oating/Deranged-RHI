@@ -97,7 +97,7 @@ void VulkanTexture::CreateMemory() {
         .sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO,
         .allocationSize = imageMemoryRequirements.size,
         .memoryTypeIndex = m_Device->FindMemoryTypeIndex(imageMemoryRequirements.memoryTypeBits,
-            VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT)
+            VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT)
     };
 
     vkAllocateMemory(m_Device->GetVkDevice(), &memoryAllocateInfo, nullptr, &m_Memory);
@@ -186,7 +186,7 @@ VulkanShaderResourceView::VulkanShaderResourceView(VulkanTexture* texture, Vulka
     VkImageViewCreateInfo imageViewCreateInfo = {
         .sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
         .image = m_Texture->GetVkImage(),
-        .viewType = m_Texture->GetDesc().ArrayLayers > 1 ? VK_IMAGE_VIEW_TYPE_2D_ARRAY : VK_IMAGE_VIEW_TYPE_2D,
+        .viewType = m_Texture->GetDesc().ArrayLayers > 1 ? VK_IMAGE_VIEW_TYPE_CUBE : VK_IMAGE_VIEW_TYPE_2D,
         .format = ToVkFormat(m_Texture->GetDesc().Format),
         .components = VK_COMPONENT_SWIZZLE_IDENTITY,
         .subresourceRange = imageSubresourceRange

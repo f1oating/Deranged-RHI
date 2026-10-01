@@ -59,7 +59,7 @@ struct TextureDesc {
     uint32_t MipLevels = 1;
     uint32_t ArrayLayers = 1;
     uint32_t Samples = 1;
-    TextureFormat Format = TextureFormat::R8G8B8A8_SNORM;
+    TextureFormat Format = TextureFormat::R8G8B8A8_UNORM;
     uint8_t BindFlags = TEXTURE_BIND_SHADER_RESOURCE || TEXTURE_BIND_TRANSFER_DST;
 };
 

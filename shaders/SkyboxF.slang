@@ -1,0 +1,15 @@
+struct Input {
+    float4 Position : SV_Position;
+    float3 UV : TEXCOORD;
+}
+
+[vk::binding(1, 0)]
+TextureCube Skybox : register(t0);
+
+[vk::binding(2, 0)]
+SamplerState Sampler : register(s0);
+
+[shader("fragment")]
+float4 main(Input input) : SV_Target {
+    return Skybox.Sample(Sampler, input.UV);
+}

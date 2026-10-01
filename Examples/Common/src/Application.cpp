@@ -43,9 +43,11 @@ Application::Application() {
     m_Renderer->SetCamera(&m_Camera);
 
     CreateCubeMesh();
+    CreateSkybox();
 }
 
 Application::~Application() {
+    delete m_Skybox;
     delete m_Cube.Index;
     delete m_Cube.Vertex;
     delete m_Cube.Albedo;
@@ -74,6 +76,7 @@ void Application::Run() {
         ProceedCameraMovement();
 
         m_Renderer->AddMesh(m_Cube);
+        m_Renderer->SetSkybox(m_Skybox);
         m_Renderer->Render();
 
         m_Device->EndFrame();
@@ -198,6 +201,40 @@ void Application::CreateCubeMesh() {
     { { m_Cube.Index, ACCESS_TRANSFER_WRITE, ACCESS_INDEX_READ } }, {});
     m_Queue->Barrier(PIPELINE_STAGE_TRANSFER, PIPELINE_STAGE_FRAGMENT_SHADER,
     {}, { { m_Cube.Albedo, ImageLayout::ShaderResource, ACCESS_TRANSFER_WRITE, ACCESS_SHADER_READ } });
+}
+
+void Application::CreateSkybox() {
+    const char* sides[] = {
+        "resources/polluted_earth/polluted_earth_ft.jpg",
+        "resources/polluted_earth/polluted_earth_bk.jpg",
+        "resources/polluted_earth/polluted_earth_up.jpg",
+        "resources/polluted_earth/polluted_earth_dn.jpg",
+        "resources/polluted_earth/polluted_earth_rt.jpg",
+        "resources/polluted_earth/polluted_earth_lf.jpg",
+    };
+
+    TextureDesc textureDesc = {
+        .Width = 2048,
+        .Height = 2048,
+        .ArrayLayers = 6,
+        .BindFlags = TEXTURE_BIND_TRANSFER_DST | TEXTURE_BIND_SHADER_RESOURCE
+    };
+    m_Skybox = m_Device->CreateTexture(textureDesc);
+
+    m_Queue->Barrier(PIPELINE_STAGE_NONE, PIPELINE_STAGE_TRANSFER,
+    {}, { { m_Skybox, ImageLayout::TransferDST, ACCESS_NONE, ACCESS_TRANSFER_WRITE } });
+
+    for (int i = 0; i < 6; i++) {
+        int width, height, channels;
+        unsigned char* loadedData = stbi_load(sides[i], &width, &height, &channels, STBI_rgb_alpha);
+
+        m_Queue->CopyToTexture(m_Skybox, width * height * 4, loadedData, { (uint32_t)i, 1 });
+
+        stbi_image_free(loadedData);
+    }
+
+    m_Queue->Barrier(PIPELINE_STAGE_TRANSFER, PIPELINE_STAGE_FRAGMENT_SHADER,
+    {}, { { m_Skybox, ImageLayout::ShaderResource, ACCESS_TRANSFER_WRITE, ACCESS_SHADER_READ } });
 }
 
 void Application::ProceedCameraMovement() {

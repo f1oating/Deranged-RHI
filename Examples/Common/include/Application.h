@@ -28,6 +28,7 @@ public:
 private:
     void CreateGLFWWindow();
     void CreateCubeMesh();
+    void CreateSkybox();
 
     void ProceedCameraMovement();
     void CheckWindowResized();
@@ -51,6 +52,7 @@ private:
     Camera m_Camera;
 
     Mesh m_Cube;
+    Texture* m_Skybox = nullptr;
 
 };
 
