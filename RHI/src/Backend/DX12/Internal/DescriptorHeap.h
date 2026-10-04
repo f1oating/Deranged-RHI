@@ -88,6 +88,12 @@ struct Descriptor {
     DescriptorHeapAllocation Allocation;
 };
 
+struct DescriptorState {
+    uint32_t NumRes = 0;
+    uint32_t NumSamplers = 0;
+    std::unordered_map<std::string, Descriptor> State;
+};
+
 class DescriptorsStateManager {
 public:
     DescriptorsStateManager(ID3D12Device10* device);
@@ -97,7 +103,7 @@ public:
     DescriptorsStateManager(DescriptorsStateManager&& other) = delete;
     DescriptorsStateManager& operator=(DescriptorsStateManager&& other) = delete;
 
-    void SetState(std::unordered_map<std::string, Descriptor> descriptorsState);
+    void SetState(DescriptorState descriptorState);
 
     void SetCBV(std::string name, D3D12_CONSTANT_BUFFER_VIEW_DESC cbvViewDesc);
     void SetSRV(std::string name, DescriptorHeapAllocation allocation);
@@ -114,11 +120,13 @@ public:
 
 private:
     ID3D12Device10* m_Device = nullptr;
+
     std::unique_ptr<DescriptorHeap> m_Heap = nullptr;
     std::unique_ptr<DescriptorHeap> m_SamplerHeap = nullptr;
     std::deque<std::pair<uint64_t, DescriptorHeapAllocation>> m_Allocations;
     std::deque<std::pair<uint64_t, DescriptorHeapAllocation>> m_SamplerAllocations;
-    std::unordered_map<std::string, Descriptor> m_DescriptorsState;
+
+    DescriptorState m_DescriptorsState;
 
 };
 

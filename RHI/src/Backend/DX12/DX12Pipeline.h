@@ -24,12 +24,12 @@ public:
 
     GraphicsPipelineDesc GetDesc() override;
 
-    bool HaveResources() const { return m_HaveResources; }
-    bool HaveSamplers() const { return m_HaveSamplers; }
+    bool HaveResources() const { return m_DescriptorsState.NumRes; }
+    bool HaveSamplers() const { return m_DescriptorsState.NumSamplers; }
 
     ID3D12RootSignature* GetRootSignature() { return m_RootSignature; }
     ID3D12PipelineState* GetPipelineState() { return m_PipelineState; };
-    std::unordered_map<std::string, Descriptor> GetDescriptorsState() { return m_DescriptorsState; }
+    DescriptorState GetDescriptorsState() { return m_DescriptorsState; }
 
 private:
     void ReflexShader(Shader shader, std::vector<D3D12_DESCRIPTOR_RANGE>& descriptorRanges,
@@ -45,9 +45,7 @@ private:
     ID3D12RootSignature* m_RootSignature = nullptr;
     ID3D12PipelineState* m_PipelineState = nullptr;
 
-    std::unordered_map<std::string, Descriptor> m_DescriptorsState;
-    bool m_HaveResources = false;
-    bool m_HaveSamplers = false;
+    DescriptorState m_DescriptorsState;
 
 };
 

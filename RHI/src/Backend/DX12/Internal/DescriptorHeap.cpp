@@ -131,27 +131,27 @@ DescriptorsStateManager::~DescriptorsStateManager() {
     m_Heap.reset();
 }
 
-void DescriptorsStateManager::SetState(std::unordered_map<std::string, Descriptor> descriptorsStruct) {
-    m_DescriptorsState = descriptorsStruct;
+void DescriptorsStateManager::SetState(DescriptorState descriptorState) {
+    m_DescriptorsState = descriptorState;
 }
 
 void DescriptorsStateManager::SetCBV(std::string name, D3D12_CONSTANT_BUFFER_VIEW_DESC cbvViewDesc) {
-    m_DescriptorsState.at(name).CBVDesc = cbvViewDesc;
+    m_DescriptorsState.State.at(name).CBVDesc = cbvViewDesc;
 }
 
 void DescriptorsStateManager::SetSRV(std::string name, DescriptorHeapAllocation allocation) {
-    m_DescriptorsState.at(name).Allocation = allocation;
+    m_DescriptorsState.State.at(name).Allocation = allocation;
 }
 
 void DescriptorsStateManager::SetSampler(std::string name, D3D12_SAMPLER_DESC desc) {
-    m_DescriptorsState.at(name).SamplerDesc = desc;
+    m_DescriptorsState.State.at(name).SamplerDesc = desc;
 }
 
 std::pair<DescriptorHeapAllocation, DescriptorHeapAllocation> DescriptorsStateManager::WriteAndAllocate(uint64_t frame) {
-    DescriptorHeapAllocation allocation = m_Heap->Allocate(m_DescriptorsState.size());
-    DescriptorHeapAllocation samplerAllocation = m_SamplerHeap->Allocate(m_DescriptorsState.size());
+    DescriptorHeapAllocation allocation = m_Heap->Allocate(m_DescriptorsState.NumRes);
+    DescriptorHeapAllocation samplerAllocation = m_SamplerHeap->Allocate(m_DescriptorsState.NumSamplers);
 
-    for (auto [key, descriptor] : m_DescriptorsState) {
+    for (auto [key, descriptor] : m_DescriptorsState.State) {
         if (descriptor.Type == DescriptorType::ConstantBuffer) {
             m_Device->CreateConstantBufferView(&descriptor.CBVDesc, allocation.GetCPUHandle(descriptor.Offset));
         } else if (descriptor.Type == DescriptorType::ShaderResource) {
@@ -168,7 +168,9 @@ std::pair<DescriptorHeapAllocation, DescriptorHeapAllocation> DescriptorsStateMa
 }
 
 void DescriptorsStateManager::Clear() {
-    m_DescriptorsState.clear();
+    m_DescriptorsState.State.clear();
+    m_DescriptorsState.NumRes = 0;
+    m_DescriptorsState.NumSamplers = 0;
 }
 
 void DescriptorsStateManager::FreeFrames(uint64_t frame) {

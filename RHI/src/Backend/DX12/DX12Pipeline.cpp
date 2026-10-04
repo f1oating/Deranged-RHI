@@ -70,17 +70,19 @@ void DX12GraphicsPipelineState::ReflexShader(Shader shader, std::vector<D3D12_DE
         };
 
         std::string name = shaderInputBindDesc.Name;
-        if (!m_DescriptorsState.contains(name)) {
+        if (!m_DescriptorsState.State.contains(name)) {
             if (descriptor.Type != DescriptorType::Sampler) {
                 descriptorRanges.push_back(descriptorRange);
                 descriptor.Offset = offset;
+                m_DescriptorsState.NumRes++;
                 offset++;
             } else {
                 samplerDescriptorRanges.push_back(descriptorRange);
                 descriptor.Offset = samplerOffset;
+                m_DescriptorsState.NumSamplers++;
                 samplerOffset++;
             }
-            m_DescriptorsState.emplace(name.substr(0, name.find('_')), descriptor);
+            m_DescriptorsState.State.emplace(name.substr(0, name.find('_')), descriptor);
         }
     }
 
@@ -97,12 +99,9 @@ void DX12GraphicsPipelineState::CreateRootSignature() {
     if (m_Desc.VertexShader.Data) ReflexShader(m_Desc.VertexShader, descriptorRanges, samplerDescriptorRanges, offset, samplerOffset);
     if (m_Desc.FragmentShader.Data) ReflexShader(m_Desc.FragmentShader, descriptorRanges, samplerDescriptorRanges, offset, samplerOffset);
 
-    m_HaveResources = descriptorRanges.size();
-    m_HaveSamplers = samplerDescriptorRanges.size();
-
     std::vector<D3D12_ROOT_PARAMETER> rootParameters;
 
-    if (m_HaveResources) {
+    if (HaveResources()) {
         D3D12_ROOT_DESCRIPTOR_TABLE descriptorTable = {
             .NumDescriptorRanges = (uint32_t)descriptorRanges.size(),
             .pDescriptorRanges = descriptorRanges.data()
@@ -115,7 +114,7 @@ void DX12GraphicsPipelineState::CreateRootSignature() {
         });
     }
 
-    if (m_HaveSamplers) {
+    if (HaveSamplers()) {
         D3D12_ROOT_DESCRIPTOR_TABLE descriptorTable = {
             .NumDescriptorRanges = (uint32_t)samplerDescriptorRanges.size(),
             .pDescriptorRanges = samplerDescriptorRanges.data()
