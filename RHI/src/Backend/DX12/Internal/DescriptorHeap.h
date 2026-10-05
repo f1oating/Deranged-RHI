@@ -81,10 +81,7 @@ struct Descriptor {
     uint32_t Space;
     uint32_t Binding;
     uint32_t Offset;
-    union {
-        D3D12_CONSTANT_BUFFER_VIEW_DESC CBVDesc;
-        D3D12_SAMPLER_DESC SamplerDesc;
-    };
+    D3D12_CONSTANT_BUFFER_VIEW_DESC CBVDesc;
     DescriptorHeapAllocation Allocation;
 };
 
@@ -107,7 +104,7 @@ public:
 
     void SetCBV(std::string name, D3D12_CONSTANT_BUFFER_VIEW_DESC cbvViewDesc);
     void SetSRV(std::string name, DescriptorHeapAllocation allocation);
-    void SetSampler(std::string name, D3D12_SAMPLER_DESC desc);
+    void SetSampler(std::string name, DescriptorHeapAllocation allocation);
 
     std::pair<DescriptorHeapAllocation, DescriptorHeapAllocation> WriteAndAllocate(uint64_t frame);
 

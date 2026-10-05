@@ -105,6 +105,7 @@ struct TextureViewDesc {
     Texture* Tex;
     TextureViewType Type = TextureViewType::SRV;
     TextureViewDimension Dimension = TextureViewDimension::Texture2D;
+    uint32_t Plane = 0;
     uint32_t BaseMipLevel = 0;
     uint32_t MipLevels = 1;
     uint32_t BaseArrayLayer = 0;

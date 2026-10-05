@@ -102,14 +102,13 @@ public:
 
     SamplerDesc GetDesc() override;
 
-    D3D12_SAMPLER_DESC GetDXSampler() const { return m_Sampler; }
+    DescriptorHeapAllocation GetAllocation() const { return m_Allocation; }
 
 private:
     DX12Device* m_Device = nullptr;
-
     SamplerDesc m_Desc;
 
-    D3D12_SAMPLER_DESC m_Sampler;
+    DescriptorHeapAllocation m_Allocation;
 
 };
 

@@ -149,29 +149,29 @@ void DX12TextureView::CreateRTV() {
 
     if (m_Desc.Dimension == TextureViewDimension::Texture1D) {
         rtvDesc.Texture1D = {
-            .MipSlice = 0
+            .MipSlice = m_Desc.BaseMipLevel
         };
     } else if (m_Desc.Dimension == TextureViewDimension::Texture1DArray) {
         rtvDesc.Texture1DArray = {
-            .MipSlice = 0,
+            .MipSlice = m_Desc.BaseMipLevel,
             .FirstArraySlice = m_Desc.BaseArrayLayer,
             .ArraySize = m_Desc.ArrayLayers
         };
     } else if (m_Desc.Dimension == TextureViewDimension::Texture2D) {
         rtvDesc.Texture2D = {
-            .MipSlice = 0,
-            .PlaneSlice = 0
+            .MipSlice = m_Desc.BaseMipLevel,
+            .PlaneSlice = m_Desc.Plane
         };
     } else if (m_Desc.Dimension == TextureViewDimension::Texture2DArray) {
         rtvDesc.Texture2DArray = {
-            .MipSlice = 0,
+            .MipSlice = m_Desc.BaseMipLevel,
             .FirstArraySlice = m_Desc.BaseArrayLayer,
             .ArraySize = m_Desc.ArrayLayers,
-            .PlaneSlice = 0
+            .PlaneSlice = m_Desc.Plane
         };
     } else if (m_Desc.Dimension == TextureViewDimension::Texture3D) {
         rtvDesc.Texture3D = {
-            .MipSlice = 0,
+            .MipSlice = m_Desc.BaseMipLevel,
             .FirstWSlice = 0,
             .WSize = 1
         };
@@ -193,21 +193,21 @@ void DX12TextureView::CreateDSV() {
 
     if (m_Desc.Dimension == TextureViewDimension::Texture1D) {
         dsvDesc.Texture1D = {
-            .MipSlice = 0
+            .MipSlice = m_Desc.BaseMipLevel
         };
     } else if (m_Desc.Dimension == TextureViewDimension::Texture1DArray) {
         dsvDesc.Texture1DArray = {
-            .MipSlice = 0,
+            .MipSlice = m_Desc.BaseMipLevel,
             .FirstArraySlice = m_Desc.BaseArrayLayer,
             .ArraySize = m_Desc.ArrayLayers
         };
     } else if (m_Desc.Dimension == TextureViewDimension::Texture2D) {
         dsvDesc.Texture2D = {
-            .MipSlice = 0,
+            .MipSlice = m_Desc.BaseMipLevel,
         };
     } else if (m_Desc.Dimension == TextureViewDimension::Texture2DArray) {
         dsvDesc.Texture2DArray = {
-            .MipSlice = 0,
+            .MipSlice = m_Desc.BaseMipLevel,
             .FirstArraySlice = m_Desc.BaseArrayLayer,
             .ArraySize = m_Desc.ArrayLayers,
         };
@@ -229,52 +229,52 @@ void DX12TextureView::CreateSRV() {
 
     if (m_Desc.Dimension == TextureViewDimension::Texture1D) {
         srvDesc.Texture1D = {
-            .MostDetailedMip = 0,
-            .MipLevels = 1,
+            .MostDetailedMip = m_Desc.BaseMipLevel,
+            .MipLevels = m_Desc.MipLevels,
             .ResourceMinLODClamp = 0
         };
     } else if (m_Desc.Dimension == TextureViewDimension::Texture1DArray) {
         srvDesc.Texture1DArray = {
-            .MostDetailedMip = 0,
-            .MipLevels = 1,
+            .MostDetailedMip = m_Desc.BaseMipLevel,
+            .MipLevels = m_Desc.MipLevels,
             .FirstArraySlice = m_Desc.BaseArrayLayer,
             .ArraySize = m_Desc.ArrayLayers,
             .ResourceMinLODClamp = 0
         };
     } else if (m_Desc.Dimension == TextureViewDimension::Texture2D) {
         srvDesc.Texture2D = {
-            .MostDetailedMip = 0,
-            .MipLevels = 1,
-            .PlaneSlice = 0,
+            .MostDetailedMip = m_Desc.BaseMipLevel,
+            .MipLevels = m_Desc.MipLevels,
+            .PlaneSlice = m_Desc.Plane,
             .ResourceMinLODClamp = 0
         };
     } else if (m_Desc.Dimension == TextureViewDimension::Texture2DArray) {
         srvDesc.Texture2DArray = {
-            .MostDetailedMip = 0,
-            .MipLevels = 1,
+            .MostDetailedMip = m_Desc.BaseMipLevel,
+            .MipLevels = m_Desc.MipLevels,
             .FirstArraySlice = m_Desc.BaseArrayLayer,
             .ArraySize = m_Desc.ArrayLayers,
-            .PlaneSlice = 1,
+            .PlaneSlice = m_Desc.Plane,
             .ResourceMinLODClamp = 0
         };
     } else if (m_Desc.Dimension == TextureViewDimension::TextureCube) {
         srvDesc.TextureCube = {
-            .MostDetailedMip = 0,
-            .MipLevels = 1,
+            .MostDetailedMip = m_Desc.BaseMipLevel,
+            .MipLevels = m_Desc.MipLevels,
             .ResourceMinLODClamp = 0
         };
     } else if (m_Desc.Dimension == TextureViewDimension::TextureCubeArray) {
         srvDesc.TextureCubeArray = {
-            .MostDetailedMip = 0,
-            .MipLevels = 1,
-            .First2DArrayFace = 0,
-            .NumCubes = 1,
+            .MostDetailedMip = m_Desc.BaseMipLevel,
+            .MipLevels = m_Desc.MipLevels,
+            .First2DArrayFace = m_Desc.BaseArrayLayer,
+            .NumCubes = m_Desc.ArrayLayers / 6,
             .ResourceMinLODClamp = 0
         };
     } else if (m_Desc.Dimension == TextureViewDimension::Texture3D) {
         srvDesc.Texture3D = {
-            .MostDetailedMip = 0,
-            .MipLevels = 1,
+            .MostDetailedMip = m_Desc.BaseMipLevel,
+            .MipLevels = m_Desc.MipLevels,
             .ResourceMinLODClamp = 0
         };
     }
@@ -342,6 +342,7 @@ void DX12Buffer::CreateResource() {
 DX12Sampler::DX12Sampler(SamplerDesc desc, DX12Device* device) {
     m_Device = device;
     m_Desc = desc;
+    m_Allocation = m_Device->GetSamplerAllocator()->Allocate(1);
 
     D3D12_SAMPLER_DESC samplerDesc = {
         .Filter = ToD3D12Filter(m_Desc.Filtering),
@@ -355,12 +356,17 @@ DX12Sampler::DX12Sampler(SamplerDesc desc, DX12Device* device) {
         .MinLOD = m_Desc.MinLod,
         .MaxLOD = m_Desc.MaxLod,
     };
-    m_Sampler = samplerDesc;
+
+    m_Device->GetDX12Device()->CreateSampler(&samplerDesc, m_Allocation.GetCPUHandle(0));
 
     spdlog::info("DX12Sampler Created.");
 }
 
 DX12Sampler::~DX12Sampler() {
+    if (!m_Allocation.IsNull()) {
+        m_Device->ReleaseResource(new DescriptorAllocationReleaseResource(m_Device->GetSamplerAllocator(), m_Allocation));
+    }
+
     spdlog::info("DX12Sampler Destroyed.");
 }
 

@@ -143,8 +143,8 @@ void DescriptorsStateManager::SetSRV(std::string name, DescriptorHeapAllocation 
     m_DescriptorsState.State.at(name).Allocation = allocation;
 }
 
-void DescriptorsStateManager::SetSampler(std::string name, D3D12_SAMPLER_DESC desc) {
-    m_DescriptorsState.State.at(name).SamplerDesc = desc;
+void DescriptorsStateManager::SetSampler(std::string name, DescriptorHeapAllocation allocation) {
+    m_DescriptorsState.State.at(name).Allocation = allocation;
 }
 
 std::pair<DescriptorHeapAllocation, DescriptorHeapAllocation> DescriptorsStateManager::WriteAndAllocate(uint64_t frame) {
@@ -158,7 +158,8 @@ std::pair<DescriptorHeapAllocation, DescriptorHeapAllocation> DescriptorsStateMa
             m_Device->CopyDescriptorsSimple(1, allocation.GetCPUHandle(descriptor.Offset),
             descriptor.Allocation.GetCPUHandle(0), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
         } else if (descriptor.Type == DescriptorType::Sampler) {
-            m_Device->CreateSampler(&descriptor.SamplerDesc,samplerAllocation.GetCPUHandle(descriptor.Offset));
+            m_Device->CopyDescriptorsSimple(1, samplerAllocation.GetCPUHandle(descriptor.Offset),
+            descriptor.Allocation.GetCPUHandle(0), D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER);
         }
     }
 

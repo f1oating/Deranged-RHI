@@ -129,7 +129,7 @@ void DX12CommandQueue::SetTexture(std::string name, TextureView* textureView) {
 void DX12CommandQueue::SetSampler(std::string name, Sampler* sampler) {
     DX12Sampler* dxSampler = static_cast<DX12Sampler*>(sampler);
 
-    m_DescriptorsStateManager->SetSampler(name, dxSampler->GetDXSampler());
+    m_DescriptorsStateManager->SetSampler(name, dxSampler->GetAllocation());
 }
 
 void DX12CommandQueue::DrawInstanced(uint32_t vertexCount, uint32_t instanceCount,

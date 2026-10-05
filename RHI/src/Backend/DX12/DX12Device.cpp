@@ -76,6 +76,7 @@ DX12Device::DX12Device(DeviceDesc desc) {
     m_RTVAllocator = std::make_unique<DescriptorHeap>(m_Device, D3D12_DESCRIPTOR_HEAP_TYPE_RTV, 32, false);
     m_DSVAllocator = std::make_unique<DescriptorHeap>(m_Device, D3D12_DESCRIPTOR_HEAP_TYPE_DSV, 32, false);
     m_SRVAllocator = std::make_unique<DescriptorHeap>(m_Device, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 32, false);
+    m_SamplerAllocator = std::make_unique<DescriptorHeap>(m_Device, D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER, 32, false);
 
     m_CommandQueue = new DX12CommandQueue(this);
 
@@ -86,6 +87,7 @@ DX12Device::~DX12Device() {
     if (m_CommandQueue) {
         delete m_CommandQueue;
     }
+    m_SamplerAllocator.reset();
     m_SRVAllocator.reset();
     m_DSVAllocator.reset();
     m_RTVAllocator.reset();
