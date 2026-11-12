@@ -4,6 +4,13 @@ file(GLOB_RECURSE SOURCES
 
 include(FetchContent)
 
+FetchContent_Declare(
+    assimp
+    GIT_REPOSITORY https://github.com/assimp/assimp.git
+    GIT_TAG a79ff6bbce54d3e01186a918dc6374ed55317426
+    SOURCE_DIR ${CMAKE_BINARY_DIR}/assimp
+)
+
 if(WIN32)
     set(SLANG_URL https://github.com/shader-slang/slang/releases/download/v2026.14.1/slang-2026.14.1-windows-x86_64.zip)
     set(SLANG_TARGET_PROPERTIES
@@ -34,13 +41,12 @@ FetchContent_Declare(
     SOURCE_DIR ${CMAKE_BINARY_DIR}/glfw
 )
 
-FetchContent_MakeAvailable(slang glm glfw)
+FetchContent_MakeAvailable(assimp slang glm glfw)
 
 add_library(slang SHARED IMPORTED)
 set_target_properties(slang PROPERTIES
     ${SLANG_TARGET_PROPERTIES}
 )
-
 target_include_directories(slang INTERFACE ${CMAKE_BINARY_DIR}/slang/include)
 
 if(WIN32)
@@ -62,6 +68,7 @@ target_include_directories(Common
 target_link_libraries(Common
     PUBLIC
         RHI
+        assimp
         slang
         glm
         glfw

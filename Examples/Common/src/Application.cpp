@@ -5,7 +5,6 @@
 #include "Application.h"
 #include "ShaderCompiler.h"
 #include "ThirdParty/stb_image.h"
-#include <memory>
 #ifdef WIN32
 #define GLFW_EXPOSE_NATIVE_WIN32
 #include <GLFW/glfw3native.h>
