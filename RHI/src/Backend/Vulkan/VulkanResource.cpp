@@ -48,21 +48,36 @@ VulkanTexture::~VulkanTexture() {
 
 TextureView* VulkanTexture::GetRTV() {
     if (!m_RTV) {
-        m_RTV = new VulkanTextureView({ this }, m_Device);
+        TextureViewDesc desc = {
+            .Tex = this,
+            .Type = TextureViewType::RTV,
+            .Plane = 0
+        };
+        m_RTV = new VulkanTextureView(desc, m_Device);
     }
     return m_RTV;
 }
 
 TextureView* VulkanTexture::GetDSV() {
     if (!m_DSV) {
-        m_DSV = new VulkanTextureView({ this }, m_Device);
+        TextureViewDesc desc = {
+            .Tex = this,
+            .Type = TextureViewType::DSV,
+            .Plane = 0
+        };
+        m_DSV = new VulkanTextureView(desc, m_Device);
     }
     return m_DSV;
 }
 
 TextureView* VulkanTexture::GetSRV() {
     if (!m_SRV) {
-        m_SRV = new VulkanTextureView({ this }, m_Device);
+        TextureViewDesc desc = {
+            .Tex = this,
+            .Type = TextureViewType::SRV,
+            .Plane = 0
+        };
+        m_SRV = new VulkanTextureView(desc, m_Device);
     }
     return m_SRV;
 }
@@ -111,7 +126,7 @@ VulkanTextureView::VulkanTextureView(TextureViewDesc desc, VulkanDevice* device)
     VulkanTexture* vkTex = static_cast<VulkanTexture*>(m_Desc.Tex);
 
     VkImageSubresourceRange imageSubresourceRange = {
-        .aspectMask = vkTex->GetVkAspectFlags(),
+        .aspectMask = ToVkImageAspectFlags(m_Desc.Tex->GetDesc().Format, m_Desc.Plane),
         .baseMipLevel = m_Desc.BaseMipLevel,
         .levelCount = m_Desc.MipLevels,
         .baseArrayLayer = m_Desc.BaseArrayLayer,

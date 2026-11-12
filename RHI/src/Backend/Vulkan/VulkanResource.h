@@ -8,6 +8,7 @@
 #include "Resource.h"
 #include <volk.h>
 #include "ReleaseManager.h"
+#include "../../../../cmake-build-debug/glm/glm/ext/scalar_uint_sized.hpp"
 
 namespace vk {
 
@@ -245,6 +246,19 @@ inline VkImageAspectFlags ToVkImageAspectFlags(TextureFormat format) {
         case TextureFormat::D24_UNORM_S8_UINT:
         case TextureFormat::D32_SFLOAT_S8_UINT:
             return VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT;
+        default:
+            return VK_IMAGE_ASPECT_COLOR_BIT;
+    }
+}
+
+inline VkImageAspectFlags ToVkImageAspectFlags(TextureFormat format, uint32_t plane) {
+    switch (format) {
+        case TextureFormat::D16_UNORM:
+        case TextureFormat::D32_FLOAT:
+            return VK_IMAGE_ASPECT_DEPTH_BIT;
+        case TextureFormat::D24_UNORM_S8_UINT:
+        case TextureFormat::D32_SFLOAT_S8_UINT:
+            return plane == 0 ? VK_IMAGE_ASPECT_DEPTH_BIT : VK_IMAGE_ASPECT_STENCIL_BIT;
         default:
             return VK_IMAGE_ASPECT_COLOR_BIT;
     }
