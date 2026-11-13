@@ -10,7 +10,7 @@ if(WIN32)
     )
 else()
     set(ASSIMP_TARGET_PROPERTIES
-        IMPORTED_LOCATION ${PROJECT_SOURCE_DIR}/ThirdParty/Assimp/linux/bin/libslang.so
+        IMPORTED_LOCATION ${PROJECT_SOURCE_DIR}/ThirdParty/Assimp/linux/bin/x64/libassimp.so.6
     )
 endif()
 
