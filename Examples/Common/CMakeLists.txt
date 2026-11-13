@@ -4,12 +4,15 @@ file(GLOB_RECURSE SOURCES
 
 include(FetchContent)
 
-FetchContent_Declare(
-    assimp
-    GIT_REPOSITORY https://github.com/assimp/assimp.git
-    GIT_TAG a79ff6bbce54d3e01186a918dc6374ed55317426
-    SOURCE_DIR ${CMAKE_BINARY_DIR}/assimp
-)
+if(WIN32)
+    set(ASSIMP_TARGET_PROPERTIES
+        IMPORTED_IMPLIB ${PROJECT_SOURCE_DIR}/ThirdParty/Assimp/win/lib/x64/assimp-vc145-mt.lib
+    )
+else()
+    set(ASSIMP_TARGET_PROPERTIES
+        IMPORTED_LOCATION ${PROJECT_SOURCE_DIR}/ThirdParty/Assimp/linux/bin/libslang.so
+    )
+endif()
 
 if(WIN32)
     set(SLANG_URL https://github.com/shader-slang/slang/releases/download/v2026.14.1/slang-2026.14.1-windows-x86_64.zip)
@@ -41,7 +44,7 @@ FetchContent_Declare(
     SOURCE_DIR ${CMAKE_BINARY_DIR}/glfw
 )
 
-FetchContent_MakeAvailable(assimp slang glm glfw)
+FetchContent_MakeAvailable(slang glm glfw)
 
 add_library(slang SHARED IMPORTED)
 set_target_properties(slang PROPERTIES
@@ -49,7 +52,16 @@ set_target_properties(slang PROPERTIES
 )
 target_include_directories(slang INTERFACE ${CMAKE_BINARY_DIR}/slang/include)
 
+add_library(assimp SHARED IMPORTED)
+set_target_properties(assimp PROPERTIES
+        ${ASSIMP_TARGET_PROPERTIES}
+)
+target_include_directories(assimp INTERFACE ${PROJECT_SOURCE_DIR}/ThirdParty/Assimp/include)
+
 if(WIN32)
+    execute_process(
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different ${PROJECT_SOURCE_DIR}/ThirdParty/Assimp/win/bin/x64/assimp-vc145-mt.dll ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}
+    )
     execute_process(
         COMMAND ${CMAKE_COMMAND} -E copy_if_different ${CMAKE_BINARY_DIR}/slang/bin/slang.dll ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}
         COMMAND ${CMAKE_COMMAND} -E copy_if_different ${CMAKE_BINARY_DIR}/slang/bin/slang-compiler.dll ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}
