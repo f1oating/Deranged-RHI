@@ -7,21 +7,15 @@
 
 #include "Device.h"
 #include <vector>
-#include "Camera.h"
-
-struct Mesh {
-    Buffer* Vertex;
-    Buffer* Index;
-    Texture* Albedo;
-    uint32_t NumIndices;
-};
+#include "Render/Camera.h"
+#include "Render/Model.h"
 
 class Renderer {
 public:
     Renderer(Device* device, CommandQueue* queue, Swapchain* swapchain);
     ~Renderer();
 
-    void AddMesh(Mesh mesh);
+    void AddModel(Model* model);
 
     void Render();
 
@@ -31,6 +25,9 @@ public:
     void SetSkybox(TextureView* skybox) { m_Skybox = skybox; }
 
 private:
+    void CreateFallbackTexture();
+    void CreateCubeMesh();
+
     void CreateDepthStencil();
     void CreatePipelineState();
     void CreateSkyboxPipelineState();
@@ -42,8 +39,13 @@ private:
     Swapchain* m_Swapchain = nullptr;
 
     Camera* m_Camera = nullptr;
-    std::vector<Mesh> m_Meshes;
+
+    std::vector<Model*> m_Models;
+
     TextureView* m_Skybox = nullptr;
+
+    Texture* m_FallbackTexture = nullptr;
+    Mesh m_Cube;
 
     Texture* m_DepthStencil = nullptr;
     GraphicsPipelineState* m_PipelineState = nullptr;

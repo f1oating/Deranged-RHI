@@ -5,6 +5,7 @@
 #include "Application.h"
 #include "ShaderCompiler.h"
 #include "ThirdParty/stb_image.h"
+
 #ifdef WIN32
 #define GLFW_EXPOSE_NATIVE_WIN32
 #include <GLFW/glfw3native.h>
@@ -41,16 +42,12 @@ Application::Application() {
     m_Renderer = new Renderer(m_Device, m_Queue, m_Swapchain);
     m_Renderer->SetCamera(&m_Camera);
 
-    CreateCubeMesh();
     CreateSkybox();
 }
 
 Application::~Application() {
     delete m_SkyboxView;
     delete m_Skybox;
-    delete m_Cube.Index;
-    delete m_Cube.Vertex;
-    delete m_Cube.Albedo;
 
     delete m_Renderer;
 
@@ -64,6 +61,9 @@ Application::~Application() {
 }
 
 void Application::Run() {
+    Model* model = new Model("resources/models/cat.obj", m_Device, m_Queue);
+    model->SetScale({0.05f, 0.05f, 0.05f});
+
     while (!glfwWindowShouldClose(m_Window)) {
         glfwPollEvents();
 
@@ -75,132 +75,19 @@ void Application::Run() {
 
         ProceedCameraMovement();
 
-        m_Renderer->AddMesh(m_Cube);
+        m_Renderer->AddModel(model);
         m_Renderer->SetSkybox(m_SkyboxView);
         m_Renderer->Render();
 
         m_Device->EndFrame();
     }
+
+    delete model;
 }
 
 void Application::CreateGLFWWindow() {
     glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
     m_Window = glfwCreateWindow(800, 600, "RHI", nullptr, nullptr);
-}
-
-void Application::CreateCubeMesh() {
-    glm::f32 x = 1.0f / 2.0f;
-    glm::f32 y = 1.0f / 2.0f;
-    glm::f32 z = 1.0f / 2.0f;
-
-    glm::vec3 a0 = glm::vec3(+x, +y, +z);
-    glm::vec3 a1 = glm::vec3(-x, +y, +z);
-    glm::vec3 a2 = glm::vec3(-x, -y, +z);
-    glm::vec3 a3 = glm::vec3(+x, -y, +z);
-    glm::vec3 a4 = glm::vec3(+x, +y, -z);
-    glm::vec3 a5 = glm::vec3(-x, +y, -z);
-    glm::vec3 a6 = glm::vec3(-x, -y, -z);
-    glm::vec3 a7 = glm::vec3(+x, -y, -z);
-
-    glm::vec3 verts[] = {
-        a1, a2, a3, a3, a0, a1,
-        a2, a6, a7, a7, a3, a2,
-        a6, a5, a4, a4, a7, a6,
-        a5, a1, a0, a0, a4, a5,
-        a0, a3, a7, a7, a4, a0,
-        a5, a6, a2, a2, a1, a5
-    };
-
-    glm::vec2 texc[] = {
-        glm::vec2(0,1), glm::vec2(0,0), glm::vec2(1,0), glm::vec2(1,0), glm::vec2(1,1), glm::vec2(0,1),
-        glm::vec2(0,1), glm::vec2(0,0), glm::vec2(1,0), glm::vec2(1,0), glm::vec2(1,1), glm::vec2(0,1),
-        glm::vec2(1,0), glm::vec2(1,1), glm::vec2(0,1), glm::vec2(0,1), glm::vec2(0,0), glm::vec2(1,0),
-        glm::vec2(0,1), glm::vec2(0,0), glm::vec2(1,0), glm::vec2(1,0), glm::vec2(1,1), glm::vec2(0,1),
-        glm::vec2(0,0), glm::vec2(1,0), glm::vec2(1,1), glm::vec2(1,1), glm::vec2(0,1), glm::vec2(0,0),
-        glm::vec2(1,1), glm::vec2(0,1), glm::vec2(0,0), glm::vec2(0,0), glm::vec2(1,0), glm::vec2(1,1),
-};
-
-    glm::vec3 norm[36];
-
-    for (int i = 0; i < 36; i += 3)
-    {
-        glm::vec3 normal = glm::normalize(
-            glm::cross(
-                glm::vec3(verts[i + 1]) - glm::vec3(verts[i]),
-                glm::vec3(verts[i + 2]) - glm::vec3(verts[i])));
-
-        norm[i] = normal;
-        norm[i + 1] = normal;
-        norm[i + 2] = normal;
-    }
-
-    float vertices[36 * 8];
-    for (int i = 0; i < 36; i++)
-    {
-        vertices[i * 8 + 0] = verts[i].x;
-        vertices[i * 8 + 1] = verts[i].y;
-        vertices[i * 8 + 2] = verts[i].z;
-
-        vertices[i * 8 + 3] = texc[i].x;
-        vertices[i * 8 + 4] = texc[i].y;
-
-        vertices[i * 8 + 5] = norm[i].x;
-        vertices[i * 8 + 6] = norm[i].y;
-        vertices[i * 8 + 7] = norm[i].z;
-    }
-
-
-    BufferDesc vertexDesc = {
-        .Size = sizeof(vertices),
-        .BindFlags = BUFFER_BIND_VERTEX | BUFFER_BIND_TRANSFER_DST,
-        .Stride = 32,
-        .Usage = BufferUsage::Default
-    };
-
-    uint32_t indices[] = {
-        0, 1, 2, 3, 4, 5,
-        6, 7, 8, 9, 10, 11,
-        12, 13, 14, 15, 16, 17,
-        18, 19, 20, 21, 22, 23,
-        24, 25, 26, 27, 28, 29,
-        30, 31, 32, 33, 34, 35,
-    };
-
-    BufferDesc indexDesc = {
-        .Size = sizeof(indices),
-        .BindFlags = BUFFER_BIND_INDEX | BUFFER_BIND_TRANSFER_DST,
-        .Usage = BufferUsage::Default
-    };
-
-    int width, height, channels;
-    unsigned char* loadedData = stbi_load("resources/metal.jpg", &width, &height, &channels, STBI_rgb_alpha);
-
-    TextureDesc textureDesc = {
-        .Width = (uint32_t)width,
-        .Height = (uint32_t)height,
-        .BindFlags = TEXTURE_BIND_TRANSFER_DST | TEXTURE_BIND_SHADER_RESOURCE
-    };
-
-    m_Cube.Vertex = m_Device->CreateBuffer(vertexDesc);
-    m_Cube.Index = m_Device->CreateBuffer(indexDesc);
-    m_Cube.Albedo = m_Device->CreateTexture(textureDesc);
-    m_Cube.NumIndices = sizeof(indices) / sizeof(uint32_t);
-
-    m_Queue->Barrier(PIPELINE_STAGE_NONE, PIPELINE_STAGE_TRANSFER,
-    {}, { { m_Cube.Albedo, TextureLayout::TransferDST, ACCESS_NONE, ACCESS_TRANSFER_WRITE } });
-
-    m_Queue->CopyToBuffer(m_Cube.Vertex, sizeof(vertices), vertices);
-    m_Queue->CopyToBuffer(m_Cube.Index, sizeof(indices), indices);
-    m_Queue->CopyToTexture(m_Cube.Albedo, width * height * 4, loadedData, {});
-
-    stbi_image_free(loadedData);
-
-    m_Queue->Barrier(PIPELINE_STAGE_TRANSFER, PIPELINE_STAGE_VERTEX_INPUT,
-    { { m_Cube.Vertex, ACCESS_TRANSFER_WRITE, ACCESS_VERTEX_READ } }, {});
-    m_Queue->Barrier(PIPELINE_STAGE_TRANSFER, PIPELINE_STAGE_INDEX_INPUT,
-    { { m_Cube.Index, ACCESS_TRANSFER_WRITE, ACCESS_INDEX_READ } }, {});
-    m_Queue->Barrier(PIPELINE_STAGE_TRANSFER, PIPELINE_STAGE_FRAGMENT_SHADER,
-    {}, { { m_Cube.Albedo, TextureLayout::ShaderResource, ACCESS_TRANSFER_WRITE, ACCESS_SHADER_READ } });
 }
 
 void Application::CreateSkybox() {

@@ -2,7 +2,7 @@
 // Created by alan on 15/09/2026.
 //
 
-#include "Camera.h"
+#include "Render/Camera.h"
 
 void Camera::ProcessMovement(Direction dir, double deltaTime) {
     float velocity = CameraSpeed * deltaTime;

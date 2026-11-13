@@ -6,9 +6,9 @@
 #define DERANGED_RHI_APPLICATION_H
 
 #include "Device.h"
-#include "Camera.h"
+#include "Render/Camera.h"
 #include <GLFW/glfw3.h>
-#include "Renderer.h"
+#include "Render/Renderer.h"
 
 class Application {
 public:
@@ -23,11 +23,8 @@ public:
 
     Camera* GetCamera() { return &m_Camera; }
 
-    Mesh GetCubeMesh() const { return m_Cube; }
-
 private:
     void CreateGLFWWindow();
-    void CreateCubeMesh();
     void CreateSkybox();
 
     void ProceedCameraMovement();
@@ -51,7 +48,6 @@ private:
 
     Camera m_Camera;
 
-    Mesh m_Cube;
     Texture* m_Skybox = nullptr;
     TextureView* m_SkyboxView = nullptr;
 
