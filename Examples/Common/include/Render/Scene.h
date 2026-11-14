@@ -2,11 +2,12 @@
 // Created by alan on 13/11/2026.
 //
 
-#ifndef DERANGED_RHI_MODEL_H
-#define DERANGED_RHI_MODEL_H
+#ifndef DERANGED_RHI_SCENE_H
+#define DERANGED_RHI_SCENE_H
 
 #include <glm/glm.hpp>
 #include <Device.h>
+#include <vector>
 
 struct Vertex {
     glm::vec3 Position;
@@ -29,7 +30,8 @@ public:
     void SetPosition(glm::vec3 pos) { m_Position = pos; }
     void SetScale(glm::vec3 scale) { m_Scale = scale; }
 
-    Mesh GetMesh() { return m_Mesh; }
+    uint32_t GetNumMeshes() { return m_Meshes.size(); }
+    Mesh GetMesh(uint32_t index) { return m_Meshes[index]; }
 
     glm::mat4 GetWorldMatrix();
 
@@ -40,11 +42,20 @@ private:
     Device* m_Device = nullptr;
     CommandQueue* m_Queue = nullptr;
 
-    Mesh m_Mesh{};
+    std::vector<Mesh> m_Meshes{};
 
     glm::vec3 m_Position = { 0.0f, 0.0f, 0.0f };
     glm::vec3 m_Scale = { 1.0f, 1.0f, 1.0f };
 
 };
 
-#endif //DERANGED_RHI_MODEL_H
+struct Transform {
+    glm::mat4 ModelViewProjection;
+    glm::mat4 ModelView;
+};
+
+struct Light {
+    glm::vec3 Directional;
+};
+
+#endif //DERANGED_RHI_SCENE_H

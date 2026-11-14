@@ -8,7 +8,7 @@
 #include "Device.h"
 #include <vector>
 #include "Render/Camera.h"
-#include "Render/Model.h"
+#include "Render/Scene.h"
 
 class Renderer {
 public:
@@ -27,6 +27,7 @@ public:
 private:
     void CreateFallbackTexture();
     void CreateCubeMesh();
+    void CreateConstantBuffers();
 
     void CreateDepthStencil();
     void CreatePipelineState();
@@ -50,7 +51,10 @@ private:
     Texture* m_DepthStencil = nullptr;
     GraphicsPipelineState* m_PipelineState = nullptr;
     GraphicsPipelineState* m_SkyboxPipelineState = nullptr;
+
     Buffer* m_TransformCBuffer = nullptr;
+    Buffer* m_LightCBuffer = nullptr;
+
     Sampler* m_Sampler = nullptr;
 
 };

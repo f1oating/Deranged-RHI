@@ -11,7 +11,8 @@ struct Output {
 
 [vk::binding(0, 0)]
 cbuffer Transform : register(b0) {
-    column_major float4x4 projView;
+    column_major float4x4 ModelViewProjection;
+    column_major float4x4 ModelView;
 };
 
 [shader("vertex")]
@@ -21,6 +22,6 @@ Output main(Input input) {
     #ifdef VULKAN
     input.Position.y = -input.Position.y;
     #endif
-    output.Position = mul(projView, float4(input.Position, 1.0)).xyww;
+    output.Position = mul(ModelViewProjection, float4(input.Position, 1.0)).xyww;
     return output;
 }

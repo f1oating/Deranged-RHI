@@ -13,17 +13,11 @@ Renderer::Renderer(Device* device, CommandQueue* queue, Swapchain* swapchain) {
 
     CreateFallbackTexture();
     CreateCubeMesh();
+    CreateConstantBuffers();
 
     CreateDepthStencil();
     CreatePipelineState();
     CreateSkyboxPipelineState();
-
-    BufferDesc transformCBufferDesc = {
-        .Size = 256,
-        .BindFlags = BUFFER_BIND_UNIFORM,
-        .Usage = BufferUsage::Dynamic
-    };
-    m_TransformCBuffer = device->CreateBuffer(transformCBufferDesc);
     CreateSampler();
 }
 
@@ -34,6 +28,7 @@ Renderer::~Renderer() {
 
     delete m_Sampler;
     delete m_TransformCBuffer;
+    delete m_LightCBuffer;
     delete m_SkyboxPipelineState;
     delete m_PipelineState;
     delete m_DepthStencil;
@@ -56,20 +51,31 @@ void Renderer::Render() {
     m_Queue->SetScissor({ 0, 0, (int)backBufferDesc.Width, (int)backBufferDesc.Height });
 
     for (auto* model : m_Models) {
-        Mesh mesh = model->GetMesh();
+        for (int i = 0; i < model->GetNumMeshes(); i++) {
+            Mesh mesh = model->GetMesh(i);
 
-        m_Queue->SetVertexBuffer(mesh.Vertex);
-        m_Queue->SetIndexBuffer(mesh.Index);
+            m_Queue->SetVertexBuffer(mesh.Vertex);
+            m_Queue->SetIndexBuffer(mesh.Index);
 
-        glm::mat4 projView = m_Camera->GetProjectionMatrix() * m_Camera->GetViewMatrix() * model->GetWorldMatrix();
-        void* transformCBufferPtr = m_TransformCBuffer->Map();
-        memcpy(transformCBufferPtr, &projView, sizeof(glm::mat4));
+            Transform transform{};
+            transform.ModelViewProjection = m_Camera->GetProjectionMatrix() * m_Camera->GetViewMatrix() * model->GetWorldMatrix();
+            transform.ModelView = m_Camera->GetViewMatrix() * model->GetWorldMatrix();
 
-        m_Queue->SetConstantBuffer("Transform", m_TransformCBuffer);
-        m_Queue->SetTexture("Albedo", mesh.Albedo ? mesh.Albedo->GetSRV() : m_FallbackTexture->GetSRV());
-        m_Queue->SetSampler("Sampler", m_Sampler);
+            void* transformCBufferPtr = m_TransformCBuffer->Map();
+            memcpy(transformCBufferPtr, &transform, sizeof(Transform));
 
-        m_Queue->DrawIndexedInstanced(mesh.NumIndices);
+            Light light{};
+            light.Directional = glm::vec3(0.0f, 1.0f, 0.0f);
+            void* lightCBufferPtr = m_LightCBuffer->Map();
+            memcpy(lightCBufferPtr, &light, sizeof(Light));
+
+            m_Queue->SetConstantBuffer("Transform", m_TransformCBuffer);
+            m_Queue->SetConstantBuffer("Light", m_LightCBuffer);
+            m_Queue->SetTexture("Albedo", mesh.Albedo ? mesh.Albedo->GetSRV() : m_FallbackTexture->GetSRV());
+            m_Queue->SetSampler("Sampler", m_Sampler);
+
+            m_Queue->DrawIndexedInstanced(mesh.NumIndices);
+        }
     }
     m_Models.clear();
 
@@ -78,9 +84,12 @@ void Renderer::Render() {
 
     m_Queue->SetGraphicsPipelineState(m_SkyboxPipelineState);
 
-    glm::mat4 projView = m_Camera->GetProjectionMatrix() * glm::mat4(glm::mat3(m_Camera->GetViewMatrix()));
+    Transform transform{};
+    transform.ModelViewProjection = m_Camera->GetProjectionMatrix() * glm::mat4(glm::mat3(m_Camera->GetViewMatrix()));
+    transform.ModelView = m_Camera->GetViewMatrix();
+
     void* transformCBufferPtr = m_TransformCBuffer->Map();
-    memcpy(transformCBufferPtr, &projView, sizeof(glm::mat4));
+    memcpy(transformCBufferPtr, &transform, sizeof(transform));
 
     m_Queue->SetConstantBuffer("Transform", m_TransformCBuffer);
     m_Queue->SetTexture("Skybox", m_Skybox);
@@ -232,6 +241,22 @@ void Renderer::CreateCubeMesh() {
     { { m_Cube.Vertex, ACCESS_TRANSFER_WRITE, ACCESS_VERTEX_READ } }, {});
     m_Queue->Barrier(PIPELINE_STAGE_TRANSFER, PIPELINE_STAGE_INDEX_INPUT,
     { { m_Cube.Index, ACCESS_TRANSFER_WRITE, ACCESS_INDEX_READ } }, {});
+}
+
+void Renderer::CreateConstantBuffers() {
+    BufferDesc transformCBufferDesc = {
+        .Size = sizeof(Transform),
+        .BindFlags = BUFFER_BIND_UNIFORM,
+        .Usage = BufferUsage::Dynamic
+    };
+    m_TransformCBuffer = m_Device->CreateBuffer(transformCBufferDesc);
+
+    BufferDesc lightCBufferDesc = {
+        .Size = sizeof(Light),
+        .BindFlags = BUFFER_BIND_UNIFORM,
+        .Usage = BufferUsage::Dynamic
+    };
+    m_LightCBuffer = m_Device->CreateBuffer(lightCBufferDesc);
 }
 
 void Renderer::CreateDepthStencil() {

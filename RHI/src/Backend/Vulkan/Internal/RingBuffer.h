@@ -9,8 +9,8 @@
 
 namespace vk {
 
-template<typename T> inline T AlignUp(T size, T alignment) {
-    return (size + alignment - (T)1) & ~(alignment - (T)1);
+inline uint64_t AlignUp(uint64_t size, uint64_t alignment) {
+    return (size + (alignment - 1)) / alignment * alignment;
 }
 
 class RingBuffer {

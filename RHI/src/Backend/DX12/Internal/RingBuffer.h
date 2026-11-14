@@ -10,9 +10,8 @@
 
 namespace dx {
 
-template<typename T> inline T AlignUp(T val, T alignment)
-{
-    return (val + alignment - (T)1) & ~(alignment - (T)1);
+inline uint64_t AlignUp(uint64_t size, uint64_t alignment) {
+    return (size + (alignment - 1)) / alignment * alignment;
 }
 
 class RingBuffer {

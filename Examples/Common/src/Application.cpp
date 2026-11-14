@@ -62,7 +62,7 @@ Application::~Application() {
 
 void Application::Run() {
     Model* model = new Model("resources/models/cat.obj", m_Device, m_Queue);
-    model->SetScale({0.05f, 0.05f, 0.05f});
+    model->SetScale({ 0.01f, 0.01f, 0.01f });
 
     while (!glfwWindowShouldClose(m_Window)) {
         glfwPollEvents();

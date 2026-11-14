@@ -12,7 +12,8 @@ struct Output {
 
 [vk::binding(0, 0)]
 cbuffer Transform : register(b0) {
-    column_major float4x4 projView;
+    column_major float4x4 ModelViewProjection;
+    column_major float4x4 ModelView;
 };
 
 [shader("vertex")]
@@ -21,8 +22,9 @@ Output main(Input input) {
     input.Position.y = -input.Position.y;
     #endif
     Output output;
-    output.Position = mul(projView, float4(input.Position, 1.0));
+    output.Position = mul(ModelViewProjection, float4(input.Position, 1.0));
     output.UV = input.UV;
-    output.Normal = input.Normal;
+    input.Normal.y = -input.Normal.y;
+    output.Normal = mul(float3x3(ModelView), input.Normal);
     return output;
 }
