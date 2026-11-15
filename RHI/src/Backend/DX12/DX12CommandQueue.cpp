@@ -115,7 +115,7 @@ void DX12CommandQueue::SetConstantBuffer(std::string name, Buffer* buffer) {
     DX12Buffer* dxBuffer = static_cast<DX12Buffer*>(buffer);
     D3D12_CONSTANT_BUFFER_VIEW_DESC desc = {
         .BufferLocation = dxBuffer->GetDX12Resource()->GetGPUVirtualAddress() + dxBuffer->GetOffset(),
-        .SizeInBytes = (uint32_t)dxBuffer->GetDesc().Size,
+        .SizeInBytes = (uint32_t)AlignUp((uint32_t)dxBuffer->GetDesc().Size, 256),
     };
     m_DescriptorsStateManager->SetCBV(name, desc);
 }

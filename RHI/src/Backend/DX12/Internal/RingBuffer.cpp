@@ -31,7 +31,7 @@ RingBuffer::~RingBuffer() {
 uint64_t RingBuffer::Allocate(uint64_t size) {
     uint64_t alignedSize = AlignUp(size, 256);
 
-    if (m_Head + alignedSize > 2560) {
+    if (m_Head + alignedSize > 512 * 512 * 4) {
         m_Head = 0;
     }
 
