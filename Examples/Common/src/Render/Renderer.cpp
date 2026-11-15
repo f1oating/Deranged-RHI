@@ -59,19 +59,21 @@ void Renderer::Render() {
 
             Transform transform{};
             transform.ModelViewProjection = m_Camera->GetProjectionMatrix() * m_Camera->GetViewMatrix() * model->GetWorldMatrix();
-            transform.ModelView = m_Camera->GetViewMatrix() * model->GetWorldMatrix();
+            transform.ModelView = glm::transpose(glm::inverse(m_Camera->GetViewMatrix() * model->GetWorldMatrix()));
 
             void* transformCBufferPtr = m_TransformCBuffer->Map();
             memcpy(transformCBufferPtr, &transform, sizeof(Transform));
 
             Light light{};
-            light.Directional = glm::vec3(0.0f, 1.0f, 0.0f);
+            light.Directional = glm::mat3(transform.ModelView) * glm::vec3(1.0f, 1.0f, -1.0f);
             void* lightCBufferPtr = m_LightCBuffer->Map();
             memcpy(lightCBufferPtr, &light, sizeof(Light));
 
-            m_Queue->SetConstantBuffer("Transform", m_TransformCBuffer);
-            m_Queue->SetConstantBuffer("Light", m_LightCBuffer);
-            m_Queue->SetTexture("Albedo", mesh.Albedo ? mesh.Albedo->GetSRV() : m_FallbackTexture->GetSRV());
+            m_Queue->SetConstantBuffer("TransformBuffer", m_TransformCBuffer);
+            m_Queue->SetConstantBuffer("LightBuffer", m_LightCBuffer);
+
+            Material material = model->GetMaterial(mesh.MaterialIndex);
+            m_Queue->SetTexture("Diffuse", material.Diffuse ? material.Diffuse->GetSRV() : m_FallbackTexture->GetSRV());
             m_Queue->SetSampler("Sampler", m_Sampler);
 
             m_Queue->DrawIndexedInstanced(mesh.NumIndices);
@@ -91,7 +93,7 @@ void Renderer::Render() {
     void* transformCBufferPtr = m_TransformCBuffer->Map();
     memcpy(transformCBufferPtr, &transform, sizeof(transform));
 
-    m_Queue->SetConstantBuffer("Transform", m_TransformCBuffer);
+    m_Queue->SetConstantBuffer("TransformBuffer", m_TransformCBuffer);
     m_Queue->SetTexture("Skybox", m_Skybox);
     m_Queue->SetSampler("Sampler", m_Sampler);
 
@@ -273,12 +275,12 @@ void Renderer::CreateDepthStencil() {
 }
 
 void Renderer::CreatePipelineState() {
-    auto vertexSource = ShaderCompiler::CompileShader("vertex.slang");
+    auto vertexSource = ShaderCompiler::CompileShader("MeshV.slang");
     Shader vertexShader{
         .Data = vertexSource.data(),
         .Size = vertexSource.size()
     };
-    auto fragmentSource = ShaderCompiler::CompileShader("fragment.slang");
+    auto fragmentSource = ShaderCompiler::CompileShader("MeshF.slang");
     Shader fragmentShader{
         .Data = fragmentSource.data(),
         .Size = fragmentSource.size()

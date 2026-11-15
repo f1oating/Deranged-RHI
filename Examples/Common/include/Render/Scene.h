@@ -15,10 +15,14 @@ struct Vertex {
     glm::vec3 Normal;
 };
 
+struct Material {
+    Texture* Diffuse;
+};
+
 struct Mesh {
     Buffer* Vertex;
     Buffer* Index;
-    Texture* Albedo;
+    uint32_t MaterialIndex;
     uint32_t NumIndices;
 };
 
@@ -29,6 +33,8 @@ public:
 
     void SetPosition(glm::vec3 pos) { m_Position = pos; }
     void SetScale(glm::vec3 scale) { m_Scale = scale; }
+
+    Material GetMaterial(uint32_t index) { return m_Materials[index]; }
 
     uint32_t GetNumMeshes() { return m_Meshes.size(); }
     Mesh GetMesh(uint32_t index) { return m_Meshes[index]; }
@@ -42,6 +48,7 @@ private:
     Device* m_Device = nullptr;
     CommandQueue* m_Queue = nullptr;
 
+    std::vector<Material> m_Materials{};
     std::vector<Mesh> m_Meshes{};
 
     glm::vec3 m_Position = { 0.0f, 0.0f, 0.0f };

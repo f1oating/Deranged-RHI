@@ -1,3 +1,5 @@
+import "Structures.slang";
+
 struct Input {
     float4 Position : SV_Position;
     float3 UV : TEXCOORD;
