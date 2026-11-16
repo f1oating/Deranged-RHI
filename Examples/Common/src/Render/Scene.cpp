@@ -101,14 +101,12 @@ void Model::LoadModel(const char* path) {
         BufferDesc vertexDesc = {
             .Size = vertices.size() * sizeof(Vertex),
             .BindFlags = BUFFER_BIND_VERTEX | BUFFER_BIND_TRANSFER_DST,
-            .Stride = 32,
-            .Usage = BufferUsage::Default
+            .Stride = sizeof(Vertex),
         };
 
         BufferDesc indexDesc = {
             .Size = indices.size() * sizeof(uint32_t),
             .BindFlags = BUFFER_BIND_INDEX | BUFFER_BIND_TRANSFER_DST,
-            .Usage = BufferUsage::Default
         };
 
         Mesh mesh{};

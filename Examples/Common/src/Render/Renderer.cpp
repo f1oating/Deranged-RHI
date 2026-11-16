@@ -5,6 +5,7 @@
 #include "Render/Renderer.h"
 #include <cstring>
 #include "ShaderCompiler.h"
+#include "ThirdParty/stb_image.h"
 
 Renderer::Renderer(Device* device, CommandQueue* queue, Swapchain* swapchain) {
     m_Device = device;
@@ -14,6 +15,7 @@ Renderer::Renderer(Device* device, CommandQueue* queue, Swapchain* swapchain) {
     CreateFallbackTexture();
     CreateCubeMesh();
     CreateConstantBuffers();
+    CreateTerrain();
 
     CreateDepthStencil();
     CreatePipelineState();
@@ -22,6 +24,9 @@ Renderer::Renderer(Device* device, CommandQueue* queue, Swapchain* swapchain) {
 }
 
 Renderer::~Renderer() {
+    delete m_Terrain.Vertex;
+    delete m_Terrain.Index;
+
     delete m_FallbackTexture;
     delete m_Cube.Vertex;
     delete m_Cube.Index;
@@ -80,6 +85,31 @@ void Renderer::Render() {
         }
     }
     m_Models.clear();
+
+    {
+        m_Queue->SetVertexBuffer(m_Terrain.Vertex);
+        m_Queue->SetIndexBuffer(m_Terrain.Index);
+
+        Transform transform{};
+        transform.ModelViewProjection = m_Camera->GetProjectionMatrix() * m_Camera->GetViewMatrix();
+        transform.ModelView = glm::transpose(glm::inverse(m_Camera->GetViewMatrix()));
+
+        void* transformCBufferPtr = m_TransformCBuffer->Map();
+        memcpy(transformCBufferPtr, &transform, sizeof(Transform));
+
+        Light light{};
+        light.Directional = glm::mat3(transform.ModelView) * glm::vec3(1.0f, 1.0f, -1.0f);
+        void* lightCBufferPtr = m_LightCBuffer->Map();
+        memcpy(lightCBufferPtr, &light, sizeof(Light));
+
+        m_Queue->SetConstantBuffer("TransformBuffer", m_TransformCBuffer);
+        m_Queue->SetConstantBuffer("LightBuffer", m_LightCBuffer);
+
+        m_Queue->SetTexture("Diffuse", m_FallbackTexture->GetSRV());
+        m_Queue->SetSampler("Sampler", m_Sampler);
+
+        m_Queue->DrawIndexedInstanced(m_Terrain.NumIndices);
+    }
 
     m_Queue->SetVertexBuffer(m_Cube.Vertex);
     m_Queue->SetIndexBuffer(m_Cube.Index);
@@ -213,7 +243,7 @@ void Renderer::CreateCubeMesh() {
     BufferDesc vertexDesc = {
         .Size = sizeof(vertices),
         .BindFlags = BUFFER_BIND_VERTEX | BUFFER_BIND_TRANSFER_DST,
-        .Stride = 32,
+        .Stride = sizeof(Vertex),
         .Usage = BufferUsage::Default
     };
 
@@ -259,6 +289,63 @@ void Renderer::CreateConstantBuffers() {
         .Usage = BufferUsage::Dynamic
     };
     m_LightCBuffer = m_Device->CreateBuffer(lightCBufferDesc);
+}
+
+void Renderer::CreateTerrain() {
+    int width, height, nChannels;
+    unsigned char* data = stbi_load("resources/terrain_heightmap.png", &width, &height, &nChannels, STBI_default);
+
+    std::vector<Vertex> vertices;
+    std::vector<uint32_t> indices;
+
+    for (int x = 0; x < width; x++) {
+        for (int y = 0; y < height; y++) {
+            uint32_t texelIndex = (x + y * width) * nChannels;
+            unsigned char texelData = data[texelIndex];
+
+            Vertex vert{};
+            vert.Position.x = -width / 2 + x;
+            vert.Position.y = texelData * (64.0f / 256.0f) - 16.0f;
+            vert.Position.z = -height / 2 + y;
+            vertices.push_back(vert);
+        }
+    }
+
+    for (int x = 0; x < width - 1; x++) {
+        for (int y = 0; y < height - 1; y++) {
+            indices.push_back(x + y * width);
+            indices.push_back(x + 1 + y * width);
+            indices.push_back(x + (y + 1) * width);
+            indices.push_back(x + 1 + y * width);
+            indices.push_back(x + 1 + (y + 1) * width);
+            indices.push_back(x + (y + 1) * width);
+        }
+    }
+
+    stbi_image_free(data);
+
+    BufferDesc vbDesc = {
+        .Size = vertices.size() * sizeof(Vertex),
+        .BindFlags = BUFFER_BIND_VERTEX | BUFFER_BIND_TRANSFER_DST,
+        .Stride = sizeof(Vertex)
+    };
+
+    BufferDesc ibDesc = {
+        .Size = indices.size() * sizeof(uint32_t),
+        .BindFlags = BUFFER_BIND_INDEX | BUFFER_BIND_TRANSFER_DST,
+    };
+
+    m_Terrain.Vertex = m_Device->CreateBuffer(vbDesc);
+    m_Terrain.Index = m_Device->CreateBuffer(ibDesc);
+    m_Terrain.NumIndices = indices.size();
+
+    m_Queue->CopyToBuffer(m_Terrain.Vertex, vertices.size() * sizeof(Vertex), vertices.data());
+    m_Queue->CopyToBuffer(m_Terrain.Index, indices.size() * sizeof(uint32_t), indices.data());
+
+    m_Queue->Barrier(PIPELINE_STAGE_TRANSFER, PIPELINE_STAGE_VERTEX_INPUT,
+    { { m_Terrain.Vertex, ACCESS_TRANSFER_WRITE, ACCESS_VERTEX_READ } }, {});
+    m_Queue->Barrier(PIPELINE_STAGE_TRANSFER, PIPELINE_STAGE_INDEX_INPUT,
+    { { m_Terrain.Index, ACCESS_TRANSFER_WRITE, ACCESS_INDEX_READ } }, {});
 }
 
 void Renderer::CreateDepthStencil() {

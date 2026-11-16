@@ -21,7 +21,7 @@ ConstantBuffer<Light> LightBuffer : register(b1);
 float4 main(Input input) : SV_Target {
     float3 diffuse = Diffuse.Sample(Sampler, input.UV).xyz;
 
-    float angle = max(0.0, dot(normalize(input.Normal), normalize(-LightBuffer.Directional)));
+    float angle = max(0.0, dot(normalize(input.Normal), normalize(LightBuffer.Directional)));
     float3 lightColor = float3(0.3, 0.3, 0.3) * angle;
 
     return float4(diffuse * AMBIENT + lightColor, 1.0);

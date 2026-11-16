@@ -28,6 +28,7 @@ private:
     void CreateFallbackTexture();
     void CreateCubeMesh();
     void CreateConstantBuffers();
+    void CreateTerrain();
 
     void CreateDepthStencil();
     void CreatePipelineState();
@@ -56,6 +57,8 @@ private:
     Buffer* m_LightCBuffer = nullptr;
 
     Sampler* m_Sampler = nullptr;
+
+    Mesh m_Terrain{};
 
 };
 
