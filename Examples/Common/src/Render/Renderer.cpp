@@ -26,6 +26,7 @@ Renderer::Renderer(Device* device, CommandQueue* queue, Swapchain* swapchain) {
 Renderer::~Renderer() {
     delete m_Terrain.Vertex;
     delete m_Terrain.Index;
+    delete m_TerrainTexture;
 
     delete m_FallbackTexture;
     delete m_Cube.Vertex;
@@ -105,7 +106,7 @@ void Renderer::Render() {
         m_Queue->SetConstantBuffer("TransformBuffer", m_TransformCBuffer);
         m_Queue->SetConstantBuffer("LightBuffer", m_LightCBuffer);
 
-        m_Queue->SetTexture("Diffuse", m_FallbackTexture->GetSRV());
+        m_Queue->SetTexture("Diffuse", m_TerrainTexture->GetSRV());
         m_Queue->SetSampler("Sampler", m_Sampler);
 
         m_Queue->DrawIndexedInstanced(m_Terrain.NumIndices);
@@ -307,6 +308,8 @@ void Renderer::CreateTerrain() {
             vert.Position.x = -width / 2 + x;
             vert.Position.y = texelData * (64.0f / 256.0f) - 16.0f;
             vert.Position.z = -height / 2 + y;
+            vert.UV.x = (float)x / (float)width;
+            vert.UV.y = (float)y / (float)height;
             vertices.push_back(vert);
         }
     }
@@ -335,13 +338,27 @@ void Renderer::CreateTerrain() {
         .BindFlags = BUFFER_BIND_INDEX | BUFFER_BIND_TRANSFER_DST,
     };
 
+    data = stbi_load("resources/metal.jpg", &width, &height, &nChannels, 4);
+
+    TextureDesc texDesc = {
+        .Width = (uint32_t)width,
+        .Height = (uint32_t)height
+    };
+
     m_Terrain.Vertex = m_Device->CreateBuffer(vbDesc);
     m_Terrain.Index = m_Device->CreateBuffer(ibDesc);
     m_Terrain.NumIndices = indices.size();
+    m_TerrainTexture = m_Device->CreateTexture(texDesc);
 
+    m_Queue->Barrier(PIPELINE_STAGE_NONE, PIPELINE_STAGE_TRANSFER,
+    {}, { { m_TerrainTexture, TextureLayout::TransferDST, ACCESS_NONE, ACCESS_TRANSFER_WRITE } });
+
+    m_Queue->CopyToTexture(m_TerrainTexture, width * height * 4, data, { 0, 1 });
     m_Queue->CopyToBuffer(m_Terrain.Vertex, vertices.size() * sizeof(Vertex), vertices.data());
     m_Queue->CopyToBuffer(m_Terrain.Index, indices.size() * sizeof(uint32_t), indices.data());
 
+    m_Queue->Barrier(PIPELINE_STAGE_TRANSFER, PIPELINE_STAGE_FRAGMENT_SHADER,
+    {}, { { m_TerrainTexture, TextureLayout::ShaderResource, ACCESS_TRANSFER_WRITE, ACCESS_SHADER_READ } });
     m_Queue->Barrier(PIPELINE_STAGE_TRANSFER, PIPELINE_STAGE_VERTEX_INPUT,
     { { m_Terrain.Vertex, ACCESS_TRANSFER_WRITE, ACCESS_VERTEX_READ } }, {});
     m_Queue->Barrier(PIPELINE_STAGE_TRANSFER, PIPELINE_STAGE_INDEX_INPUT,

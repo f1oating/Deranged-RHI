@@ -59,6 +59,7 @@ private:
     Sampler* m_Sampler = nullptr;
 
     Mesh m_Terrain{};
+    Texture* m_TerrainTexture = nullptr;
 
 };
 
