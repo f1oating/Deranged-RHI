@@ -71,7 +71,7 @@ void Renderer::Render() {
             memcpy(transformCBufferPtr, &transform, sizeof(Transform));
 
             Light light{};
-            light.Directional = glm::mat3(transform.ModelView) * glm::vec3(1.0f, 1.0f, -1.0f);
+            light.Directional = glm::mat3(transform.ModelView) * glm::vec3(1.0f, -1.0f, 0.0f);
             void* lightCBufferPtr = m_LightCBuffer->Map();
             memcpy(lightCBufferPtr, &light, sizeof(Light));
 
@@ -99,7 +99,7 @@ void Renderer::Render() {
         memcpy(transformCBufferPtr, &transform, sizeof(Transform));
 
         Light light{};
-        light.Directional = glm::mat3(transform.ModelView) * glm::vec3(1.0f, 1.0f, -1.0f);
+        light.Directional = glm::mat3(transform.ModelView) * glm::vec3(1.0f, -1.0f, 0.0f);
         void* lightCBufferPtr = m_LightCBuffer->Map();
         memcpy(lightCBufferPtr, &light, sizeof(Light));
 
@@ -310,6 +310,19 @@ void Renderer::CreateTerrain() {
             vert.Position.z = -height / 2 + y;
             vert.UV.x = (float)x / (float)width;
             vert.UV.y = (float)y / (float)height;
+
+            float hl = data[(std::max(-1, x - 1) + y * width) * nChannels];
+            float hr = data[(std::min(x + 1, width) + y * width) * nChannels];
+            float hd = data[(x + std::min(y + 1, height) * width) * nChannels];
+            float hu = data[(x + std::max(-1, y - 1) * width) * nChannels];
+
+            glm::vec3 normal{};
+            normal.x = hl - hr;
+            normal.y = 2.0f;
+            normal.z = hd - hu;
+            normal = glm::normalize(normal);
+            vert.Normal = normal;
+
             vertices.push_back(vert);
         }
     }
