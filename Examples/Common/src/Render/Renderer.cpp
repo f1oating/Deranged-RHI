@@ -6,6 +6,7 @@
 #include <cstring>
 #include "ShaderCompiler.h"
 #include "ThirdParty/stb_image.h"
+#include "Render/RenderGraph.h"
 
 Renderer::Renderer(Device* device, CommandQueue* queue, Swapchain* swapchain) {
     m_Device = device;
@@ -64,14 +65,14 @@ void Renderer::Render() {
             m_Queue->SetIndexBuffer(mesh.Index);
 
             Transform transform{};
-            transform.ModelViewProjection = m_Camera->GetProjectionMatrix() * m_Camera->GetViewMatrix() * model->GetWorldMatrix();
-            transform.ModelView = glm::transpose(glm::inverse(m_Camera->GetViewMatrix() * model->GetWorldMatrix()));
+            transform.ModelViewProjection = m_Camera->GetProjectionMatrix() * m_Camera->GetViewMatrix() * model->GetWorldMatrix() * Y_FIX_MATRIX;
+            transform.ModelView = glm::transpose(glm::inverse(m_Camera->GetViewMatrix() * model->GetWorldMatrix())) * Y_FIX_MATRIX;
 
             void* transformCBufferPtr = m_TransformCBuffer->Map();
             memcpy(transformCBufferPtr, &transform, sizeof(Transform));
 
             Light light{};
-            light.Directional = glm::mat3(transform.ModelView) * glm::vec3(1.0f, -1.0f, 0.0f);
+            light.Directional = glm::mat3(transform.ModelView) * glm::vec3(1.0f, 1.0f, 0.0f);
             void* lightCBufferPtr = m_LightCBuffer->Map();
             memcpy(lightCBufferPtr, &light, sizeof(Light));
 
@@ -92,14 +93,14 @@ void Renderer::Render() {
         m_Queue->SetIndexBuffer(m_Terrain.Index);
 
         Transform transform{};
-        transform.ModelViewProjection = m_Camera->GetProjectionMatrix() * m_Camera->GetViewMatrix();
-        transform.ModelView = glm::transpose(glm::inverse(m_Camera->GetViewMatrix()));
+        transform.ModelViewProjection = m_Camera->GetProjectionMatrix() * m_Camera->GetViewMatrix() * Y_FIX_MATRIX;
+        transform.ModelView = glm::transpose(glm::inverse(m_Camera->GetViewMatrix())) * Y_FIX_MATRIX;
 
         void* transformCBufferPtr = m_TransformCBuffer->Map();
         memcpy(transformCBufferPtr, &transform, sizeof(Transform));
 
         Light light{};
-        light.Directional = glm::mat3(transform.ModelView) * glm::vec3(1.0f, -1.0f, 0.0f);
+        light.Directional = glm::mat3(transform.ModelView) * glm::vec3(1.0f, 1.0f, 0.0f);
         void* lightCBufferPtr = m_LightCBuffer->Map();
         memcpy(lightCBufferPtr, &light, sizeof(Light));
 
@@ -118,8 +119,8 @@ void Renderer::Render() {
     m_Queue->SetGraphicsPipelineState(m_SkyboxPipelineState);
 
     Transform transform{};
-    transform.ModelViewProjection = m_Camera->GetProjectionMatrix() * glm::mat4(glm::mat3(m_Camera->GetViewMatrix()));
-    transform.ModelView = m_Camera->GetViewMatrix();
+    transform.ModelViewProjection = m_Camera->GetProjectionMatrix() * glm::mat4(glm::mat3(m_Camera->GetViewMatrix())) * Y_FIX_MATRIX;
+    transform.ModelView = m_Camera->GetViewMatrix() * Y_FIX_MATRIX;
 
     void* transformCBufferPtr = m_TransformCBuffer->Map();
     memcpy(transformCBufferPtr, &transform, sizeof(transform));
@@ -308,8 +309,8 @@ void Renderer::CreateTerrain() {
             vert.Position.x = -width / 2 + x;
             vert.Position.y = texelData * (64.0f / 256.0f) - 16.0f;
             vert.Position.z = -height / 2 + y;
-            vert.UV.x = (float)x / (float)width;
-            vert.UV.y = (float)y / (float)height;
+            vert.UV.x = (float)x / (float)(width % 32);
+            vert.UV.y = (float)y / (float)(height % 32);
 
             float hl = data[(std::max(-1, x - 1) + y * width) * nChannels];
             float hr = data[(std::min(x + 1, width) + y * width) * nChannels];
@@ -351,7 +352,7 @@ void Renderer::CreateTerrain() {
         .BindFlags = BUFFER_BIND_INDEX | BUFFER_BIND_TRANSFER_DST,
     };
 
-    data = stbi_load("resources/metal.jpg", &width, &height, &nChannels, 4);
+    data = stbi_load("resources/ground.jpg", &width, &height, &nChannels, 4);
 
     TextureDesc texDesc = {
         .Width = (uint32_t)width,

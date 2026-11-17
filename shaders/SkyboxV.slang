@@ -18,11 +18,6 @@ ConstantBuffer<Transform> TransformBuffer : register(b0);
 Output main(Input input) {
     Output output;
     output.UV = input.Position;
-
-    #ifdef VULKAN
-    input.Position.y = -input.Position.y;
-    #endif
-
     output.Position = mul(TransformBuffer.ModelViewProjection, float4(input.Position, 1.0)).xyww;
 
     return output;

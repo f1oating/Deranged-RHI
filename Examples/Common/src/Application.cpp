@@ -93,12 +93,12 @@ void Application::CreateGLFWWindow() {
 
 void Application::CreateSkybox() {
     const char* sides[] = {
-        "resources/polluted_earth/polluted_earth_ft.jpg",
-        "resources/polluted_earth/polluted_earth_bk.jpg",
-        "resources/polluted_earth/polluted_earth_up.jpg",
-        "resources/polluted_earth/polluted_earth_dn.jpg",
-        "resources/polluted_earth/polluted_earth_rt.jpg",
-        "resources/polluted_earth/polluted_earth_lf.jpg",
+        "resources/skyboxes/polluted_earth/polluted_earth_ft.jpg",
+        "resources/skyboxes/polluted_earth/polluted_earth_bk.jpg",
+        "resources/skyboxes/polluted_earth/polluted_earth_up.jpg",
+        "resources/skyboxes/polluted_earth/polluted_earth_dn.jpg",
+        "resources/skyboxes/polluted_earth/polluted_earth_rt.jpg",
+        "resources/skyboxes/polluted_earth/polluted_earth_lf.jpg",
     };
 
     TextureDesc textureDesc = {

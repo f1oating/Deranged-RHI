@@ -17,11 +17,6 @@ ConstantBuffer<Transform> TransformBuffer : register(b0);
 
 [shader("vertex")]
 Output main(Input input) {
-    #ifdef VULKAN
-    input.Position.y = -input.Position.y;
-    input.Normal.y = -input.Normal.y;
-    #endif
-
     Output output;
     output.Position = mul(TransformBuffer.ModelViewProjection, float4(input.Position, 1.0));
     output.UV = input.UV;
