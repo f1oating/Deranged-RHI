@@ -312,10 +312,10 @@ void Renderer::CreateTerrain() {
             vert.UV.x = (float)x / (float)(width % 32);
             vert.UV.y = (float)y / (float)(height % 32);
 
-            float hl = data[(std::max(-1, x - 1) + y * width) * nChannels];
+            float hl = data[(std::max(0, x - 1) + y * width) * nChannels];
             float hr = data[(std::min(x + 1, width) + y * width) * nChannels];
             float hd = data[(x + std::min(y + 1, height) * width) * nChannels];
-            float hu = data[(x + std::max(-1, y - 1) * width) * nChannels];
+            float hu = data[(x + std::max(0, y - 1) * width) * nChannels];
 
             glm::vec3 normal{};
             normal.x = hl - hr;
