@@ -3,7 +3,6 @@
 //
 
 #include "Render/RenderGraph.h"
-#include <functional>
 
 RenderGraph::RenderGraph(Device* device) {
     m_Device = device;
@@ -24,7 +23,7 @@ Texture* RenderGraph::GetTexture(RGHandle handle) {
     return m_Textures[handle];
 }
 
-void RenderGraph::AddPass(std::string name, void(*callback)(RenderGraph* renderGraph),
+void RenderGraph::AddPass(std::string name, std::function<void(RenderGraph* renderGraph)> callback,
     std::vector<RGHandle> input, std::vector<RGHandle> output) {
     m_Passes.push_back({ name, callback, input, output });
 }
@@ -37,12 +36,12 @@ void RenderGraph::Compile() {
     for (int i = 0; i < size; i++) {
         for (int j = 0; j < size; j++) {
             if (j == i) continue;
-            for (int k = 0; k < m_Passes[i].input.size(); k++) {
-                RGHandle handle = m_Passes[i].input[k];
+            for (int k = 0; k < m_Passes[i].Input.size(); k++) {
+                RGHandle handle = m_Passes[i].Input[k];
                 bool found = false;
 
-                for (int l = 0; l < m_Passes[j].output.size(); l++) {
-                    if (m_Passes[j].output[l] == handle) {
+                for (int l = 0; l < m_Passes[j].Output.size(); l++) {
+                    if (m_Passes[j].Output[l] == handle) {
                         adj[i].push_back(j);
                         found = true;
                     }
@@ -59,7 +58,10 @@ void RenderGraph::Compile() {
     std::vector onStack(size, false);
 
     for (int i = 0; i < adj.size(); i++) {
-        ProccessPass(i, adj, visited, onStack, m_SortedPassIndexes);
+        if (!ProccessPass(i, adj, visited, onStack, m_SortedPassIndexes)) {
+            m_SortedPassIndexes.clear();
+            break;
+        }
     }
 }
 
@@ -69,9 +71,10 @@ void RenderGraph::Execute() {
     }
 }
 
-void RenderGraph::ProccessPass(uint32_t index, std::vector<std::vector<uint32_t>>& adj, std::vector<bool>& visited,
+bool RenderGraph::ProccessPass(uint32_t index, std::vector<std::vector<uint32_t>>& adj, std::vector<bool>& visited,
         std::vector<bool>& onStack, std::vector<uint32_t>& sorted) {
-    if (visited[index]) return;
+    if (onStack[index]) return false;
+    if (visited[index]) return true;
 
     visited[index] = true;
     onStack[index] = true;
@@ -82,4 +85,6 @@ void RenderGraph::ProccessPass(uint32_t index, std::vector<std::vector<uint32_t>
 
     sorted.push_back(index);
     onStack[index] = false;
+
+    return true;
 }

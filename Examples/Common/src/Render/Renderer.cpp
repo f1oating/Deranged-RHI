@@ -53,20 +53,52 @@ void Renderer::Render() {
     m_Queue->ClearDepthStencil(1.0f, 0);
     m_Queue->ClearRenderTargets(0.0f, 0.0f, 0.0f, 1.0f);
 
-    m_Queue->SetGraphicsPipelineState(m_PipelineState);
     m_Queue->SetViewport({ 0, 0, (float)backBufferDesc.Width, (float)backBufferDesc.Height, 0.0f, 1.0f });
     m_Queue->SetScissor({ 0, 0, (int)backBufferDesc.Width, (int)backBufferDesc.Height });
 
-    for (auto* model : m_Models) {
-        for (int i = 0; i < model->GetNumMeshes(); i++) {
-            Mesh mesh = model->GetMesh(i);
+    RenderGraph rg(m_Device);
 
-            m_Queue->SetVertexBuffer(mesh.Vertex);
-            m_Queue->SetIndexBuffer(mesh.Index);
+    rg.AddPass("Mesh", [&](RenderGraph* rg) {
+        m_Queue->SetGraphicsPipelineState(m_PipelineState);
+
+        for (auto* model : m_Models) {
+            for (int i = 0; i < model->GetNumMeshes(); i++) {
+                Mesh mesh = model->GetMesh(i);
+
+                m_Queue->SetVertexBuffer(mesh.Vertex);
+                m_Queue->SetIndexBuffer(mesh.Index);
+
+                Transform transform{};
+                transform.ModelViewProjection = m_Camera->GetProjectionMatrix() * m_Camera->GetViewMatrix() * model->GetWorldMatrix() * Y_FIX_MATRIX;
+                transform.ModelView = glm::transpose(glm::inverse(m_Camera->GetViewMatrix() * model->GetWorldMatrix())) * Y_FIX_MATRIX;
+
+                void* transformCBufferPtr = m_TransformCBuffer->Map();
+                memcpy(transformCBufferPtr, &transform, sizeof(Transform));
+
+                Light light{};
+                light.Directional = glm::mat3(transform.ModelView) * glm::vec3(1.0f, 1.0f, 0.0f);
+                void* lightCBufferPtr = m_LightCBuffer->Map();
+                memcpy(lightCBufferPtr, &light, sizeof(Light));
+
+                m_Queue->SetConstantBuffer("TransformBuffer", m_TransformCBuffer);
+                m_Queue->SetConstantBuffer("LightBuffer", m_LightCBuffer);
+
+                Material material = model->GetMaterial(mesh.MaterialIndex);
+                m_Queue->SetTexture("Diffuse", material.Diffuse ? material.Diffuse->GetSRV() : m_FallbackTexture->GetSRV());
+                m_Queue->SetSampler("Sampler", m_Sampler);
+
+                m_Queue->DrawIndexedInstanced(mesh.NumIndices);
+            }
+        }
+        m_Models.clear();
+
+        {
+            m_Queue->SetVertexBuffer(m_Terrain.Vertex);
+            m_Queue->SetIndexBuffer(m_Terrain.Index);
 
             Transform transform{};
-            transform.ModelViewProjection = m_Camera->GetProjectionMatrix() * m_Camera->GetViewMatrix() * model->GetWorldMatrix() * Y_FIX_MATRIX;
-            transform.ModelView = glm::transpose(glm::inverse(m_Camera->GetViewMatrix() * model->GetWorldMatrix())) * Y_FIX_MATRIX;
+            transform.ModelViewProjection = m_Camera->GetProjectionMatrix() * m_Camera->GetViewMatrix() * Y_FIX_MATRIX;
+            transform.ModelView = glm::transpose(glm::inverse(m_Camera->GetViewMatrix())) * Y_FIX_MATRIX;
 
             void* transformCBufferPtr = m_TransformCBuffer->Map();
             memcpy(transformCBufferPtr, &transform, sizeof(Transform));
@@ -79,16 +111,16 @@ void Renderer::Render() {
             m_Queue->SetConstantBuffer("TransformBuffer", m_TransformCBuffer);
             m_Queue->SetConstantBuffer("LightBuffer", m_LightCBuffer);
 
-            Material material = model->GetMaterial(mesh.MaterialIndex);
-            m_Queue->SetTexture("Diffuse", material.Diffuse ? material.Diffuse->GetSRV() : m_FallbackTexture->GetSRV());
+            m_Queue->SetTexture("Diffuse", m_TerrainTexture->GetSRV());
             m_Queue->SetSampler("Sampler", m_Sampler);
 
-            m_Queue->DrawIndexedInstanced(mesh.NumIndices);
+            m_Queue->DrawIndexedInstanced(m_Terrain.NumIndices);
         }
-    }
-    m_Models.clear();
+    }, {}, {});
 
-    {
+    rg.AddPass("Terrain", [&](RenderGraph* rg) {
+        m_Queue->SetGraphicsPipelineState(m_PipelineState);
+
         m_Queue->SetVertexBuffer(m_Terrain.Vertex);
         m_Queue->SetIndexBuffer(m_Terrain.Index);
 
@@ -111,25 +143,30 @@ void Renderer::Render() {
         m_Queue->SetSampler("Sampler", m_Sampler);
 
         m_Queue->DrawIndexedInstanced(m_Terrain.NumIndices);
-    }
+    }, {}, {});
 
-    m_Queue->SetVertexBuffer(m_Cube.Vertex);
-    m_Queue->SetIndexBuffer(m_Cube.Index);
+    rg.AddPass("Skybox", [&](RenderGraph* rg) {
+        m_Queue->SetVertexBuffer(m_Cube.Vertex);
+        m_Queue->SetIndexBuffer(m_Cube.Index);
 
-    m_Queue->SetGraphicsPipelineState(m_SkyboxPipelineState);
+        m_Queue->SetGraphicsPipelineState(m_SkyboxPipelineState);
 
-    Transform transform{};
-    transform.ModelViewProjection = m_Camera->GetProjectionMatrix() * glm::mat4(glm::mat3(m_Camera->GetViewMatrix())) * Y_FIX_MATRIX;
-    transform.ModelView = m_Camera->GetViewMatrix() * Y_FIX_MATRIX;
+        Transform transform{};
+        transform.ModelViewProjection = m_Camera->GetProjectionMatrix() * glm::mat4(glm::mat3(m_Camera->GetViewMatrix())) * Y_FIX_MATRIX;
+        transform.ModelView = m_Camera->GetViewMatrix() * Y_FIX_MATRIX;
 
-    void* transformCBufferPtr = m_TransformCBuffer->Map();
-    memcpy(transformCBufferPtr, &transform, sizeof(transform));
+        void* transformCBufferPtr = m_TransformCBuffer->Map();
+        memcpy(transformCBufferPtr, &transform, sizeof(transform));
 
-    m_Queue->SetConstantBuffer("TransformBuffer", m_TransformCBuffer);
-    m_Queue->SetTexture("Skybox", m_Skybox);
-    m_Queue->SetSampler("Sampler", m_Sampler);
+        m_Queue->SetConstantBuffer("TransformBuffer", m_TransformCBuffer);
+        m_Queue->SetTexture("Skybox", m_Skybox);
+        m_Queue->SetSampler("Sampler", m_Sampler);
 
-    m_Queue->DrawIndexedInstanced(m_Cube.NumIndices);
+        m_Queue->DrawIndexedInstanced(m_Cube.NumIndices);
+    }, {}, {});
+
+    rg.Compile();
+    rg.Execute();
 
     m_Queue->Barrier(PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT, PIPELINE_STAGE_NONE, {},
         { { backBuffer, TextureLayout::Present, ACCESS_COLOR_ATTACHMENT_WRITE, ACCESS_NONE } });
