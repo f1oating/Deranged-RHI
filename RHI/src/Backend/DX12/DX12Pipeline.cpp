@@ -70,7 +70,7 @@ void DX12GraphicsPipelineState::ReflexShader(Shader shader, std::vector<D3D12_DE
         };
 
         std::string name = shaderInputBindDesc.Name;
-        if (!m_DescriptorsState.State.contains(name)) {
+        if (!m_DescriptorsState.State.contains(name.substr(0, name.find('_')))) {
             if (descriptor.Type != DescriptorType::Sampler) {
                 descriptorRanges.push_back(descriptorRange);
                 descriptor.Offset = offset;
