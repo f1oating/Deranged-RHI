@@ -15,30 +15,37 @@ Renderer::Renderer(Device* device, CommandQueue* queue, Swapchain* swapchain) {
 
     CreateFallbackTexture();
     CreateCubeMesh();
-    CreateConstantBuffers();
     CreateTerrain();
 
-    CreateDepthStencil();
-    CreatePipelineState();
-    CreateSkyboxPipelineState();
+    CreateConstantBuffers();
     CreateSampler();
+
+    CreateDepthStencil();
+
+    CreateMeshPipelineState();
+    CreateTerrainPipelineState();
+    CreateSkyboxPipelineState();
 }
 
 Renderer::~Renderer() {
+    delete m_FallbackTexture;
+
+    delete m_Cube.Vertex;
+    delete m_Cube.Index;
+
     delete m_Terrain.Vertex;
     delete m_Terrain.Index;
     delete m_TerrainTexture;
 
-    delete m_FallbackTexture;
-    delete m_Cube.Vertex;
-    delete m_Cube.Index;
-
-    delete m_Sampler;
     delete m_TransformCBuffer;
     delete m_LightCBuffer;
-    delete m_SkyboxPipelineState;
-    delete m_PipelineState;
+    delete m_Sampler;
+
     delete m_DepthStencil;
+
+    delete m_MeshPipelineState;
+    delete m_TerrainPipelineState;
+    delete m_SkyboxPipelineState;
 }
 
 void Renderer::Render() {
@@ -59,7 +66,7 @@ void Renderer::Render() {
     RenderGraph rg(m_Device);
 
     rg.AddPass("Mesh", [&](RenderGraph* rg) {
-        m_Queue->SetGraphicsPipelineState(m_PipelineState);
+        m_Queue->SetGraphicsPipelineState(m_MeshPipelineState);
 
         for (auto* model : m_Models) {
             for (int i = 0; i < model->GetNumMeshes(); i++) {
@@ -70,13 +77,14 @@ void Renderer::Render() {
 
                 Transform transform{};
                 transform.ModelViewProjection = m_Camera->GetProjectionMatrix() * m_Camera->GetViewMatrix() * model->GetWorldMatrix() * Y_FIX_MATRIX;
-                transform.ModelView = glm::transpose(glm::inverse(m_Camera->GetViewMatrix() * model->GetWorldMatrix())) * Y_FIX_MATRIX;
+                transform.TransInvModelView = glm::transpose(glm::inverse(m_Camera->GetViewMatrix() * model->GetWorldMatrix())) * Y_FIX_MATRIX;
+                transform.Model = model->GetWorldMatrix();
 
                 void* transformCBufferPtr = m_TransformCBuffer->Map();
                 memcpy(transformCBufferPtr, &transform, sizeof(Transform));
 
                 Light light{};
-                light.Directional = glm::mat3(transform.ModelView) * glm::vec3(1.0f, 1.0f, 0.0f);
+                light.Directional = glm::mat3(transform.TransInvModelView) * glm::vec3(1.0f, 1.0f, 1.0f);
                 void* lightCBufferPtr = m_LightCBuffer->Map();
                 memcpy(lightCBufferPtr, &light, sizeof(Light));
 
@@ -85,54 +93,31 @@ void Renderer::Render() {
 
                 Material material = model->GetMaterial(mesh.MaterialIndex);
                 m_Queue->SetTexture("Diffuse", material.Diffuse ? material.Diffuse->GetSRV() : m_FallbackTexture->GetSRV());
+                m_Queue->SetTexture("Normal", material.Normal ? material.Normal->GetSRV() : m_FallbackTexture->GetSRV());
                 m_Queue->SetSampler("Sampler", m_Sampler);
 
                 m_Queue->DrawIndexedInstanced(mesh.NumIndices);
             }
         }
         m_Models.clear();
-
-        {
-            m_Queue->SetVertexBuffer(m_Terrain.Vertex);
-            m_Queue->SetIndexBuffer(m_Terrain.Index);
-
-            Transform transform{};
-            transform.ModelViewProjection = m_Camera->GetProjectionMatrix() * m_Camera->GetViewMatrix() * Y_FIX_MATRIX;
-            transform.ModelView = glm::transpose(glm::inverse(m_Camera->GetViewMatrix())) * Y_FIX_MATRIX;
-
-            void* transformCBufferPtr = m_TransformCBuffer->Map();
-            memcpy(transformCBufferPtr, &transform, sizeof(Transform));
-
-            Light light{};
-            light.Directional = glm::mat3(transform.ModelView) * glm::vec3(1.0f, 1.0f, 0.0f);
-            void* lightCBufferPtr = m_LightCBuffer->Map();
-            memcpy(lightCBufferPtr, &light, sizeof(Light));
-
-            m_Queue->SetConstantBuffer("TransformBuffer", m_TransformCBuffer);
-            m_Queue->SetConstantBuffer("LightBuffer", m_LightCBuffer);
-
-            m_Queue->SetTexture("Diffuse", m_TerrainTexture->GetSRV());
-            m_Queue->SetSampler("Sampler", m_Sampler);
-
-            m_Queue->DrawIndexedInstanced(m_Terrain.NumIndices);
-        }
     }, {}, {});
 
     rg.AddPass("Terrain", [&](RenderGraph* rg) {
-        m_Queue->SetGraphicsPipelineState(m_PipelineState);
+        m_Queue->SetGraphicsPipelineState(m_TerrainPipelineState);
 
         m_Queue->SetVertexBuffer(m_Terrain.Vertex);
         m_Queue->SetIndexBuffer(m_Terrain.Index);
 
         Transform transform{};
         transform.ModelViewProjection = m_Camera->GetProjectionMatrix() * m_Camera->GetViewMatrix() * Y_FIX_MATRIX;
-        transform.ModelView = glm::transpose(glm::inverse(m_Camera->GetViewMatrix())) * Y_FIX_MATRIX;
+        transform.TransInvModelView = glm::transpose(glm::inverse(m_Camera->GetViewMatrix())) * Y_FIX_MATRIX;
+        transform.Model = glm::mat4(1);
 
         void* transformCBufferPtr = m_TransformCBuffer->Map();
         memcpy(transformCBufferPtr, &transform, sizeof(Transform));
 
         Light light{};
-        light.Directional = glm::mat3(transform.ModelView) * glm::vec3(1.0f, 1.0f, 0.0f);
+        light.Directional = glm::mat3(transform.TransInvModelView) * glm::vec3(1.0f, 1.0f, 1.0f);
         void* lightCBufferPtr = m_LightCBuffer->Map();
         memcpy(lightCBufferPtr, &light, sizeof(Light));
 
@@ -146,14 +131,15 @@ void Renderer::Render() {
     }, {}, {});
 
     rg.AddPass("Skybox", [&](RenderGraph* rg) {
+        m_Queue->SetGraphicsPipelineState(m_SkyboxPipelineState);
+
         m_Queue->SetVertexBuffer(m_Cube.Vertex);
         m_Queue->SetIndexBuffer(m_Cube.Index);
 
-        m_Queue->SetGraphicsPipelineState(m_SkyboxPipelineState);
-
         Transform transform{};
         transform.ModelViewProjection = m_Camera->GetProjectionMatrix() * glm::mat4(glm::mat3(m_Camera->GetViewMatrix())) * Y_FIX_MATRIX;
-        transform.ModelView = m_Camera->GetViewMatrix() * Y_FIX_MATRIX;
+        transform.TransInvModelView = m_Camera->GetViewMatrix() * Y_FIX_MATRIX;
+        transform.Model = glm::mat4(1);
 
         void* transformCBufferPtr = m_TransformCBuffer->Map();
         memcpy(transformCBufferPtr, &transform, sizeof(transform));
@@ -282,7 +268,7 @@ void Renderer::CreateCubeMesh() {
     BufferDesc vertexDesc = {
         .Size = sizeof(vertices),
         .BindFlags = BUFFER_BIND_VERTEX | BUFFER_BIND_TRANSFER_DST,
-        .Stride = sizeof(Vertex),
+        .Stride = sizeof(VertexPositionTextureNormal),
         .Usage = BufferUsage::Default
     };
 
@@ -314,27 +300,11 @@ void Renderer::CreateCubeMesh() {
     { { m_Cube.Index, ACCESS_TRANSFER_WRITE, ACCESS_INDEX_READ } }, {});
 }
 
-void Renderer::CreateConstantBuffers() {
-    BufferDesc transformCBufferDesc = {
-        .Size = sizeof(Transform),
-        .BindFlags = BUFFER_BIND_UNIFORM,
-        .Usage = BufferUsage::Dynamic
-    };
-    m_TransformCBuffer = m_Device->CreateBuffer(transformCBufferDesc);
-
-    BufferDesc lightCBufferDesc = {
-        .Size = sizeof(Light),
-        .BindFlags = BUFFER_BIND_UNIFORM,
-        .Usage = BufferUsage::Dynamic
-    };
-    m_LightCBuffer = m_Device->CreateBuffer(lightCBufferDesc);
-}
-
 void Renderer::CreateTerrain() {
     int width, height, nChannels;
     unsigned char* data = stbi_load("resources/terrain_heightmap.png", &width, &height, &nChannels, STBI_default);
 
-    std::vector<Vertex> vertices;
+    std::vector<VertexPositionTextureNormal> vertices;
     std::vector<uint32_t> indices;
 
     for (int x = 0; x < width; x++) {
@@ -342,7 +312,7 @@ void Renderer::CreateTerrain() {
             uint32_t texelIndex = (x + y * width) * nChannels;
             unsigned char texelData = data[texelIndex];
 
-            Vertex vert{};
+            VertexPositionTextureNormal vert{};
             vert.Position.x = -width / 2 + x;
             vert.Position.y = texelData * (64.0f / 256.0f) - 16.0f;
             vert.Position.z = -height / 2 + y;
@@ -379,9 +349,9 @@ void Renderer::CreateTerrain() {
     stbi_image_free(data);
 
     BufferDesc vbDesc = {
-        .Size = vertices.size() * sizeof(Vertex),
+        .Size = vertices.size() * sizeof(VertexPositionTextureNormal),
         .BindFlags = BUFFER_BIND_VERTEX | BUFFER_BIND_TRANSFER_DST,
-        .Stride = sizeof(Vertex)
+        .Stride = sizeof(VertexPositionTextureNormal)
     };
 
     BufferDesc ibDesc = {
@@ -405,7 +375,7 @@ void Renderer::CreateTerrain() {
     {}, { { m_TerrainTexture, TextureLayout::TransferDST, ACCESS_NONE, ACCESS_TRANSFER_WRITE } });
 
     m_Queue->CopyToTexture(m_TerrainTexture, width * height * 4, data, { 0, 1 });
-    m_Queue->CopyToBuffer(m_Terrain.Vertex, vertices.size() * sizeof(Vertex), vertices.data());
+    m_Queue->CopyToBuffer(m_Terrain.Vertex, vertices.size() * sizeof(VertexPositionTextureNormal), vertices.data());
     m_Queue->CopyToBuffer(m_Terrain.Index, indices.size() * sizeof(uint32_t), indices.data());
 
     m_Queue->Barrier(PIPELINE_STAGE_TRANSFER, PIPELINE_STAGE_FRAGMENT_SHADER,
@@ -414,6 +384,27 @@ void Renderer::CreateTerrain() {
     { { m_Terrain.Vertex, ACCESS_TRANSFER_WRITE, ACCESS_VERTEX_READ } }, {});
     m_Queue->Barrier(PIPELINE_STAGE_TRANSFER, PIPELINE_STAGE_INDEX_INPUT,
     { { m_Terrain.Index, ACCESS_TRANSFER_WRITE, ACCESS_INDEX_READ } }, {});
+}
+
+void Renderer::CreateConstantBuffers() {
+    BufferDesc transformCBufferDesc = {
+        .Size = sizeof(Transform),
+        .BindFlags = BUFFER_BIND_UNIFORM,
+        .Usage = BufferUsage::Dynamic
+    };
+    m_TransformCBuffer = m_Device->CreateBuffer(transformCBufferDesc);
+
+    BufferDesc lightCBufferDesc = {
+        .Size = sizeof(Light),
+        .BindFlags = BUFFER_BIND_UNIFORM,
+        .Usage = BufferUsage::Dynamic
+    };
+    m_LightCBuffer = m_Device->CreateBuffer(lightCBufferDesc);
+}
+
+void Renderer::CreateSampler() {
+    SamplerDesc samplerDesc = {};
+    m_Sampler = m_Device->CreateSampler(samplerDesc);
 }
 
 void Renderer::CreateDepthStencil() {
@@ -429,7 +420,7 @@ void Renderer::CreateDepthStencil() {
     { { m_DepthStencil, TextureLayout::DepthStencil, ACCESS_NONE, ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE } });
 }
 
-void Renderer::CreatePipelineState() {
+void Renderer::CreateMeshPipelineState() {
     auto vertexSource = ShaderCompiler::CompileShader("MeshV.slang");
     Shader vertexShader{
         .Data = vertexSource.data(),
@@ -445,7 +436,10 @@ void Renderer::CreatePipelineState() {
         {
             { "POSITION", ValueType::Float3 },
             { "TEXCOORD", ValueType::Float2 },
-            { "NORMAL", ValueType::Float3 } }
+            { "NORMAL", ValueType::Float3 },
+            { "TANGENT", ValueType::Float3 },
+            { "BITANGENT", ValueType::Float3 },
+        }
     };
 
     BlendDesc blendDesc = {
@@ -468,7 +462,50 @@ void Renderer::CreatePipelineState() {
         .DepthStencilFormat = m_DepthStencil->GetDesc().Format,
         .PrimitiveTopology = Topology::TriangleList
     };
-    m_PipelineState = m_Device->CreateGraphicsPipelineState(pipelineDesc);
+    m_MeshPipelineState = m_Device->CreateGraphicsPipelineState(pipelineDesc);
+}
+
+void Renderer::CreateTerrainPipelineState() {
+    auto vertexSource = ShaderCompiler::CompileShader("TerrainV.slang");
+    Shader vertexShader{
+        .Data = vertexSource.data(),
+        .Size = vertexSource.size()
+    };
+    auto fragmentSource = ShaderCompiler::CompileShader("TerrainF.slang");
+    Shader fragmentShader{
+        .Data = fragmentSource.data(),
+        .Size = fragmentSource.size()
+    };
+
+    VertexInputDesc inputDesc = {
+        {
+            { "POSITION", ValueType::Float3 },
+            { "TEXCOORD", ValueType::Float2 },
+            { "NORMAL", ValueType::Float3 }
+        }
+    };
+
+    BlendDesc blendDesc = {
+        .ColorAttachments = { {} }
+    };
+
+    DepthStencilDesc depthStencilStateDesc = {
+        .DepthEnable = true,
+        .DepthWriteEnable = true,
+        .DepthCompare = CompareOp::Less
+    };
+
+    GraphicsPipelineDesc pipelineDesc = {
+        .VertexShader = vertexShader,
+        .FragmentShader = fragmentShader,
+        .VertexInput = inputDesc,
+        .DepthStencil = depthStencilStateDesc,
+        .Blend = blendDesc,
+        .ColorFormats = { m_Swapchain->GetCurrentBackBuffer()->GetDesc().Format },
+        .DepthStencilFormat = m_DepthStencil->GetDesc().Format,
+        .PrimitiveTopology = Topology::TriangleList
+    };
+    m_TerrainPipelineState = m_Device->CreateGraphicsPipelineState(pipelineDesc);
 }
 
 void Renderer::CreateSkyboxPipelineState() {
@@ -511,9 +548,4 @@ void Renderer::CreateSkyboxPipelineState() {
         .PrimitiveTopology = Topology::TriangleList
     };
     m_SkyboxPipelineState = m_Device->CreateGraphicsPipelineState(pipelineDesc);
-}
-
-void Renderer::CreateSampler() {
-    SamplerDesc samplerDesc = {};
-    m_Sampler = m_Device->CreateSampler(samplerDesc);
 }

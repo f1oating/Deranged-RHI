@@ -9,7 +9,15 @@
 #include <Device.h>
 #include <vector>
 
-struct Vertex {
+struct VertexPositionTexture {
+    glm::vec3 Position;
+    glm::vec2 UV;
+    glm::vec3 Normal;
+    glm::vec3 Tangent;
+    glm::vec3 Bitangent;
+};
+
+struct VertexPositionTextureNormal {
     glm::vec3 Position;
     glm::vec2 UV;
     glm::vec3 Normal;
@@ -17,6 +25,7 @@ struct Vertex {
 
 struct Material {
     Texture* Diffuse;
+    Texture* Normal;
 };
 
 struct Mesh {
@@ -58,7 +67,8 @@ private:
 
 struct Transform {
     glm::mat4 ModelViewProjection;
-    glm::mat4 ModelView;
+    glm::mat4 TransInvModelView;
+    glm::mat4 Model;
 };
 
 struct Light {

@@ -33,13 +33,16 @@ public:
 private:
     void CreateFallbackTexture();
     void CreateCubeMesh();
-    void CreateConstantBuffers();
     void CreateTerrain();
 
-    void CreateDepthStencil();
-    void CreatePipelineState();
-    void CreateSkyboxPipelineState();
+    void CreateConstantBuffers();
     void CreateSampler();
+
+    void CreateDepthStencil();
+
+    void CreateMeshPipelineState();
+    void CreateTerrainPipelineState();
+    void CreateSkyboxPipelineState();
 
 private:
     Device* m_Device = nullptr;
@@ -49,23 +52,22 @@ private:
     Camera* m_Camera = nullptr;
 
     std::vector<Model*> m_Models;
-
     TextureView* m_Skybox = nullptr;
-
-    Texture* m_FallbackTexture = nullptr;
-    Mesh m_Cube;
-
-    Texture* m_DepthStencil = nullptr;
-    GraphicsPipelineState* m_PipelineState = nullptr;
-    GraphicsPipelineState* m_SkyboxPipelineState = nullptr;
 
     Buffer* m_TransformCBuffer = nullptr;
     Buffer* m_LightCBuffer = nullptr;
-
     Sampler* m_Sampler = nullptr;
 
-    Mesh m_Terrain{};
+    Texture* m_DepthStencil = nullptr;
+
+    GraphicsPipelineState* m_MeshPipelineState = nullptr;
+    GraphicsPipelineState* m_TerrainPipelineState = nullptr;
+    GraphicsPipelineState* m_SkyboxPipelineState = nullptr;
+
+    Texture* m_FallbackTexture = nullptr;
+    Mesh m_Cube;
     Texture* m_TerrainTexture = nullptr;
+    Mesh m_Terrain{};
 
 };
 

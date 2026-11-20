@@ -62,8 +62,8 @@ Application::~Application() {
 
 void Application::Run() {
     Model* model = new Model("resources/models/axe.fbx", m_Device, m_Queue);
-    model->SetPosition({ 1.0, 0.0f, 0.0f });
-    model->SetScale({ 1.0f, 0.5f, 1.0f });
+    model->SetPosition({ 0.0, 0.0f, 0.0f });
+    model->SetScale({ 1.0f, 1.0f, 1.0f });
 
     while (!glfwWindowShouldClose(m_Window)) {
         glfwPollEvents();

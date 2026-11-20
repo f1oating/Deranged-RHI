@@ -44,6 +44,14 @@ std::vector<uint8_t> ShaderCompiler::CompileShader(const char* path) {
         "shaders"
     };
 
+    slang::CompilerOptionEntry optimizationOption{};
+    optimizationOption.name = slang::CompilerOptionName::MatrixLayoutColumn;
+    optimizationOption.value = { .intValue0 = SLANG_MATRIX_LAYOUT_COLUMN_MAJOR };
+
+    slang::CompilerOptionEntry compilerOptions[] = {
+        optimizationOption
+    };
+
     slang::SessionDesc sessionDesc = {
         .targets = &targetDesc,
         .targetCount = 1,
@@ -51,6 +59,8 @@ std::vector<uint8_t> ShaderCompiler::CompileShader(const char* path) {
         .searchPathCount = sizeof(paths) / sizeof(char*),
         .preprocessorMacros = macros,
         .preprocessorMacroCount = sizeof(macros) / sizeof(slang::PreprocessorMacroDesc),
+        .compilerOptionEntries = compilerOptions,
+        .compilerOptionEntryCount = sizeof(compilerOptions) / sizeof(slang::CompilerOptionEntry)
     };
 
     slang::ISession* session = nullptr;

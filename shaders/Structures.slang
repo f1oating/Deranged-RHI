@@ -1,6 +1,7 @@
 struct Transform {
-    column_major float4x4 ModelViewProjection;
-    column_major float4x4 ModelView;
+    float4x4 ModelViewProjection;
+    float4x4 TransInvModelView;
+    float4x4 Model;
 }
 
 struct Light {

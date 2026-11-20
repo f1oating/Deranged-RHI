@@ -20,6 +20,7 @@ Model::Model(const char* path, Device* device, CommandQueue* queue) {
 Model::~Model() {
     for (auto material : m_Materials) {
         if (material.Diffuse) delete material.Diffuse;
+        if (material.Diffuse) delete material.Normal;
     }
     m_Materials.clear();
     for (auto mesh : m_Meshes) {
@@ -39,7 +40,8 @@ glm::mat4 Model::GetWorldMatrix() {
 void Model::LoadModel(const char* path) {
     Assimp::Importer importer;
 
-    const aiScene* aiScene = importer.ReadFile(path, aiProcess_GenSmoothNormals | aiProcess_FlipUVs);
+    const aiScene* aiScene = importer.ReadFile(path, aiProcess_FlipUVs | aiProcess_CalcTangentSpace |
+        aiProcess_Triangulate | aiProcess_GenSmoothNormals | aiProcess_JoinIdenticalVertices);
 
     for (int materialIndex = 0; materialIndex < aiScene->mNumMaterials; ++materialIndex) {
         aiMaterial* aiMaterial = aiScene->mMaterials[materialIndex];
@@ -73,20 +75,50 @@ void Model::LoadModel(const char* path) {
             {}, { { material.Diffuse, TextureLayout::ShaderResource, ACCESS_TRANSFER_WRITE, ACCESS_SHADER_READ } });
         }
 
+        aiMaterial->Get(AI_MATKEY_TEXTURE_NORMALS(0), path);
+
+        if (!path.Empty()) {
+            int width, height, channels;
+            std::string fullPath = std::string("resources/models/") + std::string(path.C_Str());
+            std::replace(fullPath.begin(), fullPath.end(), '\\', '/');
+            unsigned char* loadedData = stbi_load(fullPath.c_str(), &width, &height, &channels, STBI_rgb_alpha);
+
+            TextureDesc textureDesc = {
+                .Width = (uint32_t)width,
+                .Height = (uint32_t)height,
+                .ArrayLayers = 1,
+                .BindFlags = TEXTURE_BIND_TRANSFER_DST | TEXTURE_BIND_SHADER_RESOURCE
+            };
+            material.Normal = m_Device->CreateTexture(textureDesc);
+
+            m_Queue->Barrier(PIPELINE_STAGE_NONE, PIPELINE_STAGE_TRANSFER,
+            {}, { { material.Normal, TextureLayout::TransferDST, ACCESS_NONE, ACCESS_TRANSFER_WRITE } });
+
+            m_Queue->CopyToTexture(material.Normal, width * height * 4, loadedData, { 0, 1 });
+
+            stbi_image_free(loadedData);
+
+            m_Queue->Barrier(PIPELINE_STAGE_TRANSFER, PIPELINE_STAGE_FRAGMENT_SHADER,
+            {}, { { material.Normal, TextureLayout::ShaderResource, ACCESS_TRANSFER_WRITE, ACCESS_SHADER_READ } });
+        }
+
         m_Materials.push_back(material);
     }
 
     for (int meshIndex = 0; meshIndex < aiScene->mNumMeshes; meshIndex++) {
         aiMesh* aiMesh = aiScene->mMeshes[meshIndex];
 
-        std::vector<Vertex> vertices;
+        std::vector<VertexPositionTexture> vertices;
         std::vector<uint32_t> indices;
 
         for (uint32_t i = 0; i < aiMesh->mNumVertices; ++i) {
-            Vertex vertex;
+            VertexPositionTexture vertex{};
+
             vertex.Position = { aiMesh->mVertices[i].x, aiMesh->mVertices[i].y, aiMesh->mVertices[i].z };
-            vertex.Normal = { aiMesh->mNormals[i].x, aiMesh->mNormals[i].y, aiMesh->mNormals[i].z };
             vertex.UV = { aiMesh->mTextureCoords[0][i].x, aiMesh->mTextureCoords[0][i].y };
+            vertex.Normal = { aiMesh->mNormals[i].x, aiMesh->mNormals[i].y, aiMesh->mNormals[i].z };
+            vertex.Tangent = { aiMesh->mTangents[i].x, aiMesh->mTangents[i].y, aiMesh->mTangents[i].z };
+            vertex.Bitangent = { aiMesh->mBitangents[i].x, aiMesh->mBitangents[i].y, aiMesh->mBitangents[i].z };
 
             vertices.push_back(vertex);
         }
@@ -99,9 +131,9 @@ void Model::LoadModel(const char* path) {
         }
 
         BufferDesc vertexDesc = {
-            .Size = vertices.size() * sizeof(Vertex),
+            .Size = vertices.size() * sizeof(VertexPositionTexture),
             .BindFlags = BUFFER_BIND_VERTEX | BUFFER_BIND_TRANSFER_DST,
-            .Stride = sizeof(Vertex),
+            .Stride = sizeof(VertexPositionTexture),
         };
 
         BufferDesc indexDesc = {
@@ -115,7 +147,7 @@ void Model::LoadModel(const char* path) {
         mesh.MaterialIndex = aiMesh->mMaterialIndex;
         mesh.NumIndices = indices.size();
 
-        m_Queue->CopyToBuffer(mesh.Vertex, vertices.size() * sizeof(Vertex), vertices.data());
+        m_Queue->CopyToBuffer(mesh.Vertex, vertices.size() * sizeof(VertexPositionTexture), vertices.data());
         m_Queue->CopyToBuffer(mesh.Index, indices.size() * sizeof(uint32_t), indices.data());
 
         m_Queue->Barrier(PIPELINE_STAGE_TRANSFER, PIPELINE_STAGE_VERTEX_INPUT,
