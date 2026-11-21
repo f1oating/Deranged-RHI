@@ -4,7 +4,6 @@
 
 #include "Backend/Vulkan/VulkanCommandQueue.h"
 
-#include <cstring>
 #include "VulkanResource.h"
 #include "Backend/Vulkan/VulkanDevice.h"
 

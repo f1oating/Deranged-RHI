@@ -4,6 +4,6 @@ struct Input {
 };
 
 [shader("fragment")]
-float4 main(Input input) {
+float4 main(Input input) : SV_Target {
     return float4(input.Color, 1.0);
 }

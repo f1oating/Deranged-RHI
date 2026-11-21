@@ -7,7 +7,7 @@
 #include <iostream>
 #include "Backend/DX12/DX12Resource.h"
 #include "Backend/DX12/DX12Pipeline.h"
-#include <spdlog/spdlog.h>
+#include "Debug.h"
 
 namespace dx {
 
@@ -20,18 +20,18 @@ void DebugCallback(
     switch (Severity) {
         case D3D12_MESSAGE_SEVERITY_INFO:
         case D3D12_MESSAGE_SEVERITY_MESSAGE:
-            spdlog::info(pDescription);
+            Debug::LogInfo(pDescription);
         case D3D12_MESSAGE_SEVERITY_WARNING:
-            spdlog::warn(pDescription);
+            Debug::LogWarning(pDescription);
             return;
         case D3D12_MESSAGE_SEVERITY_ERROR:
-            spdlog::error(pDescription);
+            Debug::LogError(pDescription);
             return;
         case D3D12_MESSAGE_SEVERITY_CORRUPTION:
-            spdlog::critical(pDescription);
+            Debug::LogCritical(pDescription);
             return;
         default:
-            spdlog::info(pDescription);
+            Debug::LogInfo(pDescription);
     }
 }
 
@@ -79,8 +79,6 @@ DX12Device::DX12Device(DeviceDesc desc) {
     m_SamplerAllocator = std::make_unique<DescriptorHeap>(m_Device, D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER, 32, false);
 
     m_CommandQueue = new DX12CommandQueue(this);
-
-    spdlog::info("DX12Device Created.");
 }
 
 DX12Device::~DX12Device() {
@@ -102,8 +100,6 @@ DX12Device::~DX12Device() {
     if (m_Debug) {
         m_Debug->Release();
     }
-
-    spdlog::info("DX12Device Destroyed.");
 }
 
 void DX12Device::EndFrame() {

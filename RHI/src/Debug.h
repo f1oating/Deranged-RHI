@@ -11,12 +11,10 @@
 
 class Debug {
 public:
-    static void Init();
-    static void Shutdown();
-
     static void LogInfo(std::string message);
     static void LogWarning(std::string message);
-    static void LogError(std::string message, std::source_location location = std::source_location::current());
+    static void LogError(std::string message);
+    static void LogCritical(std::string message);
 
     static void Assert(bool condition, std::string message, std::source_location location = std::source_location::current());
 

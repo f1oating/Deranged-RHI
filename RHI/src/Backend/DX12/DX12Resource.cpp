@@ -3,7 +3,6 @@
 //
 
 #include "Backend/DX12/DX12Resource.h"
-#include <spdlog/spdlog.h>
 #include "Backend/DX12/DX12Device.h"
 
 namespace dx {
@@ -31,8 +30,6 @@ DX12Texture::DX12Texture(TextureDesc desc, DX12Device* device) {
     HRESULT hr = m_Device->GetDX12Device()->CreateCommittedResource3(&heapProps, D3D12_HEAP_FLAG_NONE,
         &resourceDesc, D3D12_BARRIER_LAYOUT_UNDEFINED, nullptr, nullptr, 0,
         nullptr, IID_PPV_ARGS(&m_Resource));
-
-    spdlog::info("DX12Texture Created.");
 }
 
 DX12Texture::DX12Texture(TextureDesc desc, ID3D12Resource* res, DX12Device* device) {
@@ -40,8 +37,6 @@ DX12Texture::DX12Texture(TextureDesc desc, ID3D12Resource* res, DX12Device* devi
     m_Resource = res;
     m_Device = device;
     m_Layout = TextureLayout::Present;
-
-    spdlog::info("DX12Texture Created.");
 }
 
 DX12Texture::~DX12Texture() {
@@ -55,8 +50,6 @@ DX12Texture::~DX12Texture() {
         delete m_SRV;
     }
     m_Device->ReleaseResource(new TextureReleaseResource(m_Resource));
-
-    spdlog::info("DX12Texture Destroyed.");
 }
 
 TextureView* DX12Texture::GetRTV() {
@@ -113,8 +106,6 @@ DX12TextureView::DX12TextureView(TextureViewDesc desc, DX12Device* device) {
         default:
             CreateSRV();
     }
-
-    spdlog::info("DX12TextureView Created.");
 }
 
 DX12TextureView::~DX12TextureView() {
@@ -133,8 +124,6 @@ DX12TextureView::~DX12TextureView() {
                 m_Device->ReleaseResource(new DescriptorAllocationReleaseResource(m_Device->GetSRVAllocator(), m_Allocation));
         }
     }
-
-    spdlog::info("DX12TextureView Destroyed.");
 }
 
 void DX12TextureView::CreateRTV() {
@@ -287,8 +276,6 @@ DX12Buffer::DX12Buffer(BufferDesc desc, DX12Device* device) {
     m_Device = device;
 
     CreateResource();
-
-    spdlog::info("DX12Buffer Created.");
 }
 
 DX12Buffer::~DX12Buffer() {
@@ -296,8 +283,6 @@ DX12Buffer::~DX12Buffer() {
         m_Resource->Unmap(0, nullptr);
     }
     m_Device->ReleaseResource(new BufferReleaseResource(m_Resource));
-
-    spdlog::info("DX12Buffer Destroyed.");
 }
 
 void* DX12Buffer::Map() {
@@ -358,16 +343,12 @@ DX12Sampler::DX12Sampler(SamplerDesc desc, DX12Device* device) {
     };
 
     m_Device->GetDX12Device()->CreateSampler(&samplerDesc, m_Allocation.GetCPUHandle(0));
-
-    spdlog::info("DX12Sampler Created.");
 }
 
 DX12Sampler::~DX12Sampler() {
     if (!m_Allocation.IsNull()) {
         m_Device->ReleaseResource(new DescriptorAllocationReleaseResource(m_Device->GetSamplerAllocator(), m_Allocation));
     }
-
-    spdlog::info("DX12Sampler Destroyed.");
 }
 
 SamplerDesc DX12Sampler::GetDesc() {

@@ -3,6 +3,7 @@
 //
 
 #include "Backend/DX12/Internal/RingBuffer.h"
+#include "Debug.h"
 
 namespace dx {
     RingBuffer::RingBuffer(ID3D12Device10* device, uint64_t size) {
@@ -33,6 +34,12 @@ uint64_t RingBuffer::Allocate(uint64_t size) {
 
     if (m_Head + alignedSize > 512 * 512 * 4) {
         m_Head = 0;
+    }
+
+    if (m_Head < m_Tail && m_Head + alignedSize > m_Tail) {
+        Debug::Assert(false, std::format(
+            "RingBuffer Overflow: Head:{0} Tail:{1} AllocationSize:{2}", m_Head, m_Tail, alignedSize
+        ));
     }
 
     uint64_t offset = m_Head;

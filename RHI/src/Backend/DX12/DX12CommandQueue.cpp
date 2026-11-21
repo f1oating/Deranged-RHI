@@ -5,7 +5,6 @@
 #include "Backend/DX12/DX12CommandQueue.h"
 #include "Backend/DX12/DX12Device.h"
 #include "Backend/DX12/DX12Resource.h"
-#include <spdlog/spdlog.h>
 #include <d3dx12/d3dx12.h>
 
 namespace dx {
@@ -23,8 +22,6 @@ DX12CommandQueue::DX12CommandQueue(DX12Device* device) {
         D3D12_COMMAND_LIST_FLAG_NONE, IID_PPV_ARGS(&m_CommandList));
 
     AcquireCommandAllocator();
-
-    spdlog::info("DX12CommandQueue Created.");
 }
 
 DX12CommandQueue::~DX12CommandQueue() {
@@ -42,8 +39,6 @@ DX12CommandQueue::~DX12CommandQueue() {
     if (m_Queue) {
         m_Queue->Release();
     }
-
-    spdlog::info("DX12CommandQueue Destroyed.");
 }
 
 void DX12CommandQueue::Wait(Fence* fence, uint64_t value) {

@@ -8,7 +8,6 @@
 #include <d3d12shader.h>
 #include <dxcapi.h>
 #include <set>
-#include <spdlog/spdlog.h>
 
 namespace dx {
 
@@ -18,16 +17,12 @@ DX12GraphicsPipelineState::DX12GraphicsPipelineState(GraphicsPipelineDesc desc, 
 
     CreateRootSignature();
     CreatePipeline();
-
-    spdlog::info("DX12GraphicsPipelineState Created.");
 }
 
 DX12GraphicsPipelineState::~DX12GraphicsPipelineState() {
     if (m_RootSignature && m_PipelineState) {
         m_Device->ReleaseResource(new PipelineStateReleaseResource(m_RootSignature, m_PipelineState));
     }
-
-    spdlog::info("DX12GraphicsPipelineState Destroyed.");
 }
 
 GraphicsPipelineDesc DX12GraphicsPipelineState::GetDesc() {
@@ -140,8 +135,8 @@ void DX12GraphicsPipelineState::CreateRootSignature() {
     HRESULT hr = D3D12SerializeRootSignature(&rootSignatureDesc, D3D_ROOT_SIGNATURE_VERSION_1_0,
         &serializedSignature, &diagnosticBlob);
     if (diagnosticBlob) {
-        std::string sd = (const char*)diagnosticBlob->GetBufferPointer();
         printf("%s", (const char*)diagnosticBlob->GetBufferPointer());
+        diagnosticBlob->Release();
     }
 
     hr = m_Device->GetDX12Device()->CreateRootSignature(0, serializedSignature->GetBufferPointer(),

@@ -4,7 +4,6 @@
 
 #include "Backend/DX12/DX12Swapchain.h"
 #include "Backend/DX12/DX12Device.h"
-#include <spdlog/spdlog.h>
 
 namespace dx {
 
@@ -65,8 +64,6 @@ DX12Swapchain::DX12Swapchain(WindowInfo window, DX12Device* device, DX12CommandQ
     for (int i = 0; i < 3; i++) {
         m_FrameFenceValues[i] = 0;
     }
-
-    spdlog::info("DX12Swapchain Created.");
 }
 
 DX12Swapchain::~DX12Swapchain() {
@@ -82,8 +79,6 @@ DX12Swapchain::~DX12Swapchain() {
         }
         m_SwapChain->Release();
     }
-
-    spdlog::info("DX12Swapchain Destroyed.");
 }
 
 void DX12Swapchain::Resize() {
