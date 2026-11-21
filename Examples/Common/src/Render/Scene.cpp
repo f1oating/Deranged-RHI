@@ -41,18 +41,18 @@ void Model::LoadModel(const char* path) {
     Assimp::Importer importer;
 
     const aiScene* aiScene = importer.ReadFile(path, aiProcess_FlipUVs | aiProcess_CalcTangentSpace |
-        aiProcess_Triangulate | aiProcess_GenSmoothNormals | aiProcess_JoinIdenticalVertices);
+        aiProcess_Triangulate | aiProcess_GenSmoothNormals | aiProcess_MakeLeftHanded);
 
-    for (int materialIndex = 0; materialIndex < aiScene->mNumMaterials; ++materialIndex) {
+    for (int materialIndex = 0; materialIndex < 1; ++materialIndex) {
         aiMaterial* aiMaterial = aiScene->mMaterials[materialIndex];
         Material material{};
 
         aiString path;
         aiMaterial->Get(AI_MATKEY_TEXTURE_DIFFUSE(0), path);
 
-        if (!path.Empty()) {
+        if (true) {
             int width, height, channels;
-            std::string fullPath = std::string("resources/models/") + std::string(path.C_Str());
+            std::string fullPath = std::string("resources/models/sharp-boulder2-albedo.png");
             std::replace(fullPath.begin(), fullPath.end(), '\\', '/');
             unsigned char* loadedData = stbi_load(fullPath.c_str(), &width, &height, &channels, STBI_rgb_alpha);
 
@@ -77,9 +77,9 @@ void Model::LoadModel(const char* path) {
 
         aiMaterial->Get(AI_MATKEY_TEXTURE_NORMALS(0), path);
 
-        if (!path.Empty()) {
+        if (true) {
             int width, height, channels;
-            std::string fullPath = std::string("resources/models/") + std::string(path.C_Str());
+            std::string fullPath = std::string("resources/models/sharp-boulder2-normal_ogl.png");
             std::replace(fullPath.begin(), fullPath.end(), '\\', '/');
             unsigned char* loadedData = stbi_load(fullPath.c_str(), &width, &height, &channels, STBI_rgb_alpha);
 
@@ -144,7 +144,7 @@ void Model::LoadModel(const char* path) {
         Mesh mesh{};
         mesh.Vertex = m_Device->CreateBuffer(vertexDesc);
         mesh.Index = m_Device->CreateBuffer(indexDesc);
-        mesh.MaterialIndex = aiMesh->mMaterialIndex;
+        mesh.MaterialIndex = 0;
         mesh.NumIndices = indices.size();
 
         m_Queue->CopyToBuffer(mesh.Vertex, vertices.size() * sizeof(VertexPositionTexture), vertices.data());

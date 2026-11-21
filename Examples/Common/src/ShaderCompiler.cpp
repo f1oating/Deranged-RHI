@@ -45,11 +45,16 @@ std::vector<uint8_t> ShaderCompiler::CompileShader(const char* path) {
     };
 
     slang::CompilerOptionEntry optimizationOption{};
-    optimizationOption.name = slang::CompilerOptionName::MatrixLayoutColumn;
-    optimizationOption.value = { .intValue0 = SLANG_MATRIX_LAYOUT_COLUMN_MAJOR };
+    optimizationOption.name = slang::CompilerOptionName::Optimization;
+    optimizationOption.value = { .intValue0 = SLANG_OPTIMIZATION_LEVEL_NONE };
+
+    slang::CompilerOptionEntry matrixLayoutColumnOption{};
+    matrixLayoutColumnOption.name = slang::CompilerOptionName::MatrixLayoutColumn;
+    matrixLayoutColumnOption.value = { .intValue0 = SLANG_MATRIX_LAYOUT_COLUMN_MAJOR };
 
     slang::CompilerOptionEntry compilerOptions[] = {
-        optimizationOption
+        optimizationOption,
+        matrixLayoutColumnOption
     };
 
     slang::SessionDesc sessionDesc = {

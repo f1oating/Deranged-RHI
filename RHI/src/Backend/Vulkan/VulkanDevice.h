@@ -48,6 +48,9 @@ private:
     void DestroyInstance();
     void DestroyLogicalDevice();
 
+    void LogInstanceInfo(const VkInstanceCreateInfo& instance);
+    void LogPhysDeviceInfo(const VkPhysicalDeviceProperties& props);
+
 private:
     DeviceDesc m_Desc;
 

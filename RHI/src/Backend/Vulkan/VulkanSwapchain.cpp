@@ -5,7 +5,6 @@
 #include "Backend/Vulkan/VulkanSwapchain.h"
 #include "Backend/Vulkan/VulkanDevice.h"
 #include <vector>
-#include <spdlog/spdlog.h>
 
 namespace vk {
 
@@ -27,8 +26,6 @@ VulkanSwapchain::VulkanSwapchain(WindowInfo window, VulkanCommandQueue* queue, V
 
     m_Fence->Wait(m_FrameFenceValues[m_CurrentFrame]);
     AcquireImage();
-
-    spdlog::info("VulkanSwapchain Created.");
 }
 
 VulkanSwapchain::~VulkanSwapchain() {
@@ -39,8 +36,6 @@ VulkanSwapchain::~VulkanSwapchain() {
     DestroySync();
     DestroySwapchain();
     DestroySurface();
-
-    spdlog::info("VulkanSwapchain Destroyed.");
 }
 
 void VulkanSwapchain::Resize() {

@@ -34,8 +34,7 @@ float4 main(Input input) : SV_Target {
     float3 tan = normalize(input.Tangent);
     float3 bit = normalize(input.Bitangent);
 
-    normal = normalize(mul(float3x3(nor, tan, bit), normal));
-    normal = mul(TransformBuffer.TransInvModelView, float4(normal, 1.0)).xyz;
+    normal = normalize(mul(float3x3(tan, bit, nor), normal));
 
     float3 diffuse = Diffuse.Sample(Sampler, input.UV).xyz;
 

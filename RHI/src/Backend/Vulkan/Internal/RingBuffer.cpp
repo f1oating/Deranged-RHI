@@ -3,6 +3,8 @@
 //
 
 #include "Backend/Vulkan/Internal/RingBuffer.h"
+#include "Debug.h"
+#include <format>
 
 namespace vk {
 
@@ -45,6 +47,12 @@ uint64_t RingBuffer::Allocate(uint64_t size) {
 
     if (m_Head + alignedSize > m_Size) {
         m_Head = 0;
+    }
+
+    if (m_Head < m_Tail && m_Head + alignedSize > m_Tail) {
+        Debug::Assert(false, std::format(
+            "RingBuffer Overflow: Head:{0} Tail:{1} AllocationSize:{2}", m_Head, m_Tail, alignedSize
+        ));
     }
 
     uint64_t offset = m_Head;

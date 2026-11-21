@@ -4,7 +4,6 @@
 
 #include "Backend/Vulkan/VulkanFence.h"
 #include "VulkanDevice.h"
-#include "spdlog/spdlog.h"
 
 namespace vk {
 
@@ -22,15 +21,12 @@ VulkanFence::VulkanFence(VulkanDevice* device) {
     };
 
     VkResult res = vkCreateSemaphore(m_Device->GetVkDevice(), &semaphoreCreateInfo, nullptr, &m_TimelineSemaphore);
-    spdlog::info("VulkanFence Created.");
 }
 
 VulkanFence::~VulkanFence() {
     if (m_TimelineSemaphore) {
         m_Device->ReleaseResource(new FenceReleaseResource(m_Device->GetVkDevice(), m_TimelineSemaphore));
     }
-
-    spdlog::info("VulkanFence Destroyed.");
 }
 
 uint64_t VulkanFence::GetCompletedValue() {

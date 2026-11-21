@@ -48,7 +48,7 @@ Renderer::~Renderer() {
     delete m_SkyboxPipelineState;
 }
 
-void Renderer::Render() {
+void Renderer::Render(double time) {
     Texture* backBuffer = m_Swapchain->GetCurrentBackBuffer();
     TextureDesc backBufferDesc = backBuffer->GetDesc();
 
@@ -76,15 +76,15 @@ void Renderer::Render() {
                 m_Queue->SetIndexBuffer(mesh.Index);
 
                 Transform transform{};
-                transform.ModelViewProjection = m_Camera->GetProjectionMatrix() * m_Camera->GetViewMatrix() * model->GetWorldMatrix() * Y_FIX_MATRIX;
-                transform.TransInvModelView = glm::transpose(glm::inverse(m_Camera->GetViewMatrix() * model->GetWorldMatrix())) * Y_FIX_MATRIX;
-                transform.Model = model->GetWorldMatrix();
+                transform.ModelViewProjection = m_Camera->GetProjectionMatrix() * m_Camera->GetViewMatrix() * model->GetWorldMatrix() * SYSTEM_FIX_MATRIX;
+                transform.TransInvModelView = glm::transpose(glm::inverse(m_Camera->GetViewMatrix() * model->GetWorldMatrix() * SYSTEM_FIX_MATRIX));
+                transform.Model = model->GetWorldMatrix() * SYSTEM_FIX_MATRIX;
 
                 void* transformCBufferPtr = m_TransformCBuffer->Map();
                 memcpy(transformCBufferPtr, &transform, sizeof(Transform));
 
                 Light light{};
-                light.Directional = glm::mat3(transform.TransInvModelView) * glm::vec3(1.0f, 1.0f, 1.0f);
+                light.Directional = glm::mat3(transform.TransInvModelView) * glm::vec3(cos(time), 0.0f, sin(time));
                 void* lightCBufferPtr = m_LightCBuffer->Map();
                 memcpy(lightCBufferPtr, &light, sizeof(Light));
 
@@ -109,15 +109,15 @@ void Renderer::Render() {
         m_Queue->SetIndexBuffer(m_Terrain.Index);
 
         Transform transform{};
-        transform.ModelViewProjection = m_Camera->GetProjectionMatrix() * m_Camera->GetViewMatrix() * Y_FIX_MATRIX;
-        transform.TransInvModelView = glm::transpose(glm::inverse(m_Camera->GetViewMatrix())) * Y_FIX_MATRIX;
+        transform.ModelViewProjection = m_Camera->GetProjectionMatrix() * m_Camera->GetViewMatrix() * SYSTEM_FIX_MATRIX;
+        transform.TransInvModelView = glm::transpose(glm::inverse(m_Camera->GetViewMatrix() * SYSTEM_FIX_MATRIX));
         transform.Model = glm::mat4(1);
 
         void* transformCBufferPtr = m_TransformCBuffer->Map();
         memcpy(transformCBufferPtr, &transform, sizeof(Transform));
 
         Light light{};
-        light.Directional = glm::mat3(transform.TransInvModelView) * glm::vec3(1.0f, 1.0f, 1.0f);
+        light.Directional = glm::mat3(transform.TransInvModelView) * glm::vec3(cos(time), 1.0f, sin(time));
         void* lightCBufferPtr = m_LightCBuffer->Map();
         memcpy(lightCBufferPtr, &light, sizeof(Light));
 
@@ -137,9 +137,9 @@ void Renderer::Render() {
         m_Queue->SetIndexBuffer(m_Cube.Index);
 
         Transform transform{};
-        transform.ModelViewProjection = m_Camera->GetProjectionMatrix() * glm::mat4(glm::mat3(m_Camera->GetViewMatrix())) * Y_FIX_MATRIX;
-        transform.TransInvModelView = m_Camera->GetViewMatrix() * Y_FIX_MATRIX;
-        transform.Model = glm::mat4(1);
+        transform.ModelViewProjection = m_Camera->GetProjectionMatrix() * glm::mat4(glm::mat3(m_Camera->GetViewMatrix())) * SYSTEM_FIX_MATRIX;
+        transform.TransInvModelView = m_Camera->GetViewMatrix() * SYSTEM_FIX_MATRIX;
+        transform.Model = glm::mat4(1) * SYSTEM_FIX_MATRIX;
 
         void* transformCBufferPtr = m_TransformCBuffer->Map();
         memcpy(transformCBufferPtr, &transform, sizeof(transform));

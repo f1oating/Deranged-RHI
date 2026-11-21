@@ -11,9 +11,9 @@
 #include "Render/Scene.h"
 
 #ifdef WIN32
-#define Y_FIX_MATRIX glm::scale(glm::mat4(1.0f), { 1.0f, 1.0f, 1.0f });
+#define SYSTEM_FIX_MATRIX glm::scale(glm::mat4(1.0f), { 1.0f, 1.0f, 1.0f })
 #else
-#define Y_FIX_MATRIX glm::scale(glm::mat4(1.0f), { 1.0f, -1.0f, 1.0f });
+#define SYSTEM_FIX_MATRIX glm::scale(glm::mat4(1.0f), { 1.0f, -1.0f, 1.0f })
 #endif
 
 class Renderer {
@@ -23,7 +23,7 @@ public:
 
     void AddModel(Model* model);
 
-    void Render();
+    void Render(double time);
 
     void ResizeAttachments();
 

@@ -7,7 +7,9 @@
 #include "Backend/Vulkan/VulkanSwapchain.h"
 #include "Backend/Vulkan/VulkanResource.h"
 #include "Backend/Vulkan/VulkanPipeline.h"
-#include <spdlog/spdlog.h>
+#include "Debug.h"
+#include <algorithm>
+#include <sstream>
 
 namespace vk {
 
@@ -20,8 +22,6 @@ VulkanDevice::VulkanDevice(DeviceDesc desc) {
     CreateLogicalDevice();
     m_RingBuffer = std::make_unique<RingBuffer>(m_Device, m_PhysicalDevice);
     m_Queue = new VulkanCommandQueue(m_QueueFamily.value(), this);
-
-    spdlog::info("VulkanDevice Created.");
 }
 
 VulkanDevice::~VulkanDevice() {
@@ -30,8 +30,6 @@ VulkanDevice::~VulkanDevice() {
     m_RingBuffer.reset();
     DestroyLogicalDevice();
     DestroyInstance();
-
-    spdlog::info("VulkanDevice Destroyed.");
 }
 
 void VulkanDevice::EndFrame() {
@@ -136,6 +134,8 @@ void VulkanDevice::CreateInstance() {
 
     VkResult res = vkCreateInstance(&createInfo, nullptr, &m_Instance);
     volkLoadInstance(m_Instance);
+
+    LogInstanceInfo(createInfo);
 }
 
 void VulkanDevice::PickPhysicalDevice() {
@@ -151,6 +151,7 @@ void VulkanDevice::PickPhysicalDevice() {
 
         if (props.deviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU) {
             m_PhysicalDevice = physicalDevices[i];
+            LogPhysDeviceInfo(props);
             break;
         }
     }
@@ -220,5 +221,35 @@ void VulkanDevice::DestroyLogicalDevice() {
         vkDestroyDevice(m_Device, nullptr);
     }
 }
+
+void VulkanDevice::LogInstanceInfo(const VkInstanceCreateInfo& instance) {
+    Debug::LogInfo("Instance Info:");
+    std::stringstream layers{};
+    std::ranges::for_each(instance.ppEnabledLayerNames,
+        instance.ppEnabledLayerNames + instance.enabledLayerCount, [&layers](const char* layer) {
+        layers << std::string(layer);
+        layers << ",";
+    });
+    Debug::LogInfo(std::format(
+        "\tLayers: [{0}]", layers.str()
+    ));
+    std::stringstream extensions{};
+    std::ranges::for_each(instance.ppEnabledExtensionNames,
+        instance.ppEnabledExtensionNames + instance.enabledExtensionCount, [&extensions](const char* extension) {
+        extensions << std::string(extension);
+        extensions << ",";
+    });
+    Debug::LogInfo(std::format(
+        "\tExtensions: [{0}]", extensions.str()
+    ));
+}
+
+void VulkanDevice::LogPhysDeviceInfo(const VkPhysicalDeviceProperties& props) {
+    Debug::LogInfo("Physical Device Info:");
+    Debug::LogInfo(std::format(
+        "\tName: {0}", props.deviceName
+    ));
+}
+
 
 } // vk

@@ -25,9 +25,9 @@ Output main(Input input) {
 
     output.Position = mul(TransformBuffer.ModelViewProjection, float4(input.Position, 1.0));
     output.UV = input.UV;
-    output.Normal = input.Normal;
-    output.Tangent = input.Tangent;
-    output.Bitangent = input.Bitangent;
+    output.Normal = mul(float3x3(TransformBuffer.TransInvModelView), input.Normal);
+    output.Tangent = mul(float3x3(TransformBuffer.TransInvModelView), input.Tangent);
+    output.Bitangent = mul(float3x3(TransformBuffer.TransInvModelView), input.Bitangent);
 
     return output;
 }

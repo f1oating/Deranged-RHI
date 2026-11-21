@@ -4,7 +4,6 @@
 
 #include "Backend/Vulkan/VulkanResource.h"
 #include "Backend/Vulkan/VulkanDevice.h"
-#include <spdlog/spdlog.h>
 
 namespace vk {
 
@@ -17,16 +16,12 @@ VulkanTexture::VulkanTexture(TextureDesc desc, VulkanDevice* device) {
     CreateMemory();
 
     vkBindImageMemory(m_Device->GetVkDevice(), m_Image, m_Memory, 0);
-
-    spdlog::info("VulkanTexture Created.");
 }
 
 VulkanTexture::VulkanTexture(TextureDesc desc, VulkanDevice* device, VkImage image) {
     m_Desc = desc;
     m_Device = device;
     m_Image = image;
-
-    spdlog::info("VulkanTexture Created.");
 }
 
 VulkanTexture::~VulkanTexture() {
@@ -42,8 +37,6 @@ VulkanTexture::~VulkanTexture() {
     if (m_Memory) {
         m_Device->ReleaseResource(new ImageReleaseResource(m_Device->GetVkDevice(), m_Image, m_Memory));
     }
-
-    spdlog::info("VulkanTexture Destroyed.");
 }
 
 TextureView* VulkanTexture::GetRTV() {
@@ -143,16 +136,12 @@ VulkanTextureView::VulkanTextureView(TextureViewDesc desc, VulkanDevice* device)
     };
 
     vkCreateImageView(m_Device->GetVkDevice(), &imageViewCreateInfo, nullptr, &m_View);
-
-    spdlog::info("VulkanTextureView Created.");
 }
 
 VulkanTextureView::~VulkanTextureView() {
     if (m_View) {
         m_Device->ReleaseResource(new ImageViewReleaseResource(m_Device->GetVkDevice(), m_View));
     }
-
-    spdlog::info("VulkanTextureView Destroyed.");
 }
 
 VulkanBuffer::VulkanBuffer(BufferDesc desc, VulkanDevice* device) {
@@ -163,8 +152,6 @@ VulkanBuffer::VulkanBuffer(BufferDesc desc, VulkanDevice* device) {
     CreateMemory();
 
     vkBindBufferMemory(m_Device->GetVkDevice(), m_Buffer, m_Memory, 0);
-
-    spdlog::info("VulkanBuffer Created.");
 }
 
 VulkanBuffer::~VulkanBuffer() {
@@ -173,8 +160,6 @@ VulkanBuffer::~VulkanBuffer() {
     } else {
         m_Device->ReleaseResource(new BufferReleaseResource(m_Device->GetVkDevice(), m_Buffer, m_Memory));
     }
-
-    spdlog::info("VulkanBuffer Destroyed.");
 }
 
 void* VulkanBuffer::Map() {
@@ -245,16 +230,12 @@ VulkanSampler::VulkanSampler(SamplerDesc desc, VulkanDevice* device) {
     };
 
     vkCreateSampler(m_Device->GetVkDevice(), &createInfo, nullptr, &m_Sampler);
-
-    spdlog::info("VulkanSampler Created.");
 }
 
 VulkanSampler::~VulkanSampler() {
     if (m_Sampler) {
         m_Device->ReleaseResource(new SamplerReleaseResource(m_Device->GetVkDevice(), m_Sampler));
     }
-
-    spdlog::info("VulkanSampler Destroyed.");
 }
 
 SamplerDesc VulkanSampler::GetDesc() {

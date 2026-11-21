@@ -5,7 +5,6 @@
 #include "Backend/Vulkan/VulkanCommandQueue.h"
 
 #include <cstring>
-#include <spdlog/spdlog.h>
 #include "VulkanResource.h"
 #include "Backend/Vulkan/VulkanDevice.h"
 
@@ -20,8 +19,6 @@ VulkanCommandQueue::VulkanCommandQueue(uint32_t queueIndex, VulkanDevice* device
     m_Fence = new VulkanFence(m_Device);
 
     AcquireCommandBuffer();
-
-    spdlog::info("VulkanQueue Created.");
 }
 
 VulkanCommandQueue::~VulkanCommandQueue() {
@@ -31,8 +28,6 @@ VulkanCommandQueue::~VulkanCommandQueue() {
     m_DescriptorManager.reset();
     m_CommandBufferPool.reset();
     m_ReleaseManager.Clear();
-
-    spdlog::info("VulkanQueue Destroyed.");
 }
 
 void VulkanCommandQueue::Wait(Fence* fence, uint64_t value) {

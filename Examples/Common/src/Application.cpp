@@ -61,7 +61,7 @@ Application::~Application() {
 }
 
 void Application::Run() {
-    Model* model = new Model("resources/models/axe.fbx", m_Device, m_Queue);
+    Model* model = new Model("resources/models/sharp-boulder2.obj", m_Device, m_Queue);
     model->SetPosition({ 0.0, 0.0f, 0.0f });
     model->SetScale({ 1.0f, 1.0f, 1.0f });
 
@@ -78,7 +78,7 @@ void Application::Run() {
 
         m_Renderer->AddModel(model);
         m_Renderer->SetSkybox(m_SkyboxView);
-        m_Renderer->Render();
+        m_Renderer->Render(m_Time);
 
         m_Device->EndFrame();
     }
