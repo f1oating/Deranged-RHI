@@ -23,6 +23,11 @@ struct VertexPositionTextureNormal {
     glm::vec3 Normal;
 };
 
+struct VertexPositionColor {
+    glm::vec3 Position;
+    glm::vec3 Color;
+};
+
 struct Material {
     Texture* Diffuse;
     Texture* Normal;
@@ -47,6 +52,7 @@ public:
 
     uint32_t GetNumMeshes() { return m_Meshes.size(); }
     Mesh GetMesh(uint32_t index) { return m_Meshes[index]; }
+    Mesh GetDebugMesh() { return m_DebugMesh; }
 
     glm::mat4 GetWorldMatrix();
 
@@ -59,6 +65,8 @@ private:
 
     std::vector<Material> m_Materials{};
     std::vector<Mesh> m_Meshes{};
+
+    Mesh m_DebugMesh{};
 
     glm::vec3 m_Position = { 0.0f, 0.0f, 0.0f };
     glm::vec3 m_Scale = { 1.0f, 1.0f, 1.0f };

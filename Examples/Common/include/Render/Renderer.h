@@ -43,6 +43,7 @@ private:
     void CreateMeshPipelineState();
     void CreateTerrainPipelineState();
     void CreateSkyboxPipelineState();
+    void CreateDebugLinesPipelineState();
 
 private:
     Device* m_Device = nullptr;
@@ -63,6 +64,8 @@ private:
     GraphicsPipelineState* m_MeshPipelineState = nullptr;
     GraphicsPipelineState* m_TerrainPipelineState = nullptr;
     GraphicsPipelineState* m_SkyboxPipelineState = nullptr;
+
+    GraphicsPipelineState* m_DebugLinesPipelineState = nullptr;
 
     Texture* m_FallbackTexture = nullptr;
     Mesh m_Cube;

@@ -25,6 +25,7 @@ Renderer::Renderer(Device* device, CommandQueue* queue, Swapchain* swapchain) {
     CreateMeshPipelineState();
     CreateTerrainPipelineState();
     CreateSkyboxPipelineState();
+    CreateDebugLinesPipelineState();
 }
 
 Renderer::~Renderer() {
@@ -46,6 +47,7 @@ Renderer::~Renderer() {
     delete m_MeshPipelineState;
     delete m_TerrainPipelineState;
     delete m_SkyboxPipelineState;
+    delete m_DebugLinesPipelineState;
 }
 
 void Renderer::Render(double time) {
@@ -99,7 +101,31 @@ void Renderer::Render(double time) {
                 m_Queue->DrawIndexedInstanced(mesh.NumIndices);
             }
         }
-        m_Models.clear();
+    }, {}, {});
+
+    rg.AddPass("Debug", [&](RenderGraph* rg) {
+        m_Queue->SetGraphicsPipelineState(m_DebugLinesPipelineState);
+
+        for (auto* model : m_Models) {
+            for (int i = 0; i < model->GetNumMeshes(); i++) {
+                Mesh mesh = model->GetDebugMesh();
+
+                m_Queue->SetVertexBuffer(mesh.Vertex);
+                m_Queue->SetIndexBuffer(mesh.Index);
+
+                Transform transform{};
+                transform.ModelViewProjection = m_Camera->GetProjectionMatrix() * m_Camera->GetViewMatrix() * model->GetWorldMatrix() * SYSTEM_FIX_MATRIX;
+                transform.TransInvModelView = glm::transpose(glm::inverse(m_Camera->GetViewMatrix() * model->GetWorldMatrix() * SYSTEM_FIX_MATRIX));
+                transform.Model = model->GetWorldMatrix() * SYSTEM_FIX_MATRIX;
+
+                void* transformCBufferPtr = m_TransformCBuffer->Map();
+                memcpy(transformCBufferPtr, &transform, sizeof(Transform));
+
+                m_Queue->SetConstantBuffer("TransformBuffer", m_TransformCBuffer);
+
+                m_Queue->DrawIndexedInstanced(mesh.NumIndices);
+            }
+        }
     }, {}, {});
 
     rg.AddPass("Terrain", [&](RenderGraph* rg) {
@@ -158,6 +184,8 @@ void Renderer::Render(double time) {
         { { backBuffer, TextureLayout::Present, ACCESS_COLOR_ATTACHMENT_WRITE, ACCESS_NONE } });
 
     m_Swapchain->Present();
+
+    m_Models.clear();
 }
 
 void Renderer::AddModel(Model* model) {
@@ -548,4 +576,46 @@ void Renderer::CreateSkyboxPipelineState() {
         .PrimitiveTopology = Topology::TriangleList
     };
     m_SkyboxPipelineState = m_Device->CreateGraphicsPipelineState(pipelineDesc);
+}
+
+void Renderer::CreateDebugLinesPipelineState() {
+    auto vertexSource = ShaderCompiler::CompileShader("Debug/LineV.slang");
+    Shader vertexShader{
+        .Data = vertexSource.data(),
+        .Size = vertexSource.size()
+    };
+    auto fragmentSource = ShaderCompiler::CompileShader("Debug/LineF.slang");
+    Shader fragmentShader{
+        .Data = fragmentSource.data(),
+        .Size = fragmentSource.size()
+    };
+
+    VertexInputDesc inputDesc = {
+        {
+            { "POSITION", ValueType::Float3 },
+            { "COLOR", ValueType::Float3 },
+        }
+    };
+
+    BlendDesc blendDesc = {
+        .ColorAttachments = { {} }
+    };
+
+    DepthStencilDesc depthStencilStateDesc = {
+        .DepthEnable = true,
+        .DepthWriteEnable = true,
+        .DepthCompare = CompareOp::LessOrEqual
+    };
+
+    GraphicsPipelineDesc pipelineDesc = {
+        .VertexShader = vertexShader,
+        .FragmentShader = fragmentShader,
+        .VertexInput = inputDesc,
+        .DepthStencil = depthStencilStateDesc,
+        .Blend = blendDesc,
+        .ColorFormats = { m_Swapchain->GetCurrentBackBuffer()->GetDesc().Format },
+        .DepthStencilFormat = m_DepthStencil->GetDesc().Format,
+        .PrimitiveTopology = Topology::LineList
+    };
+    m_DebugLinesPipelineState = m_Device->CreateGraphicsPipelineState(pipelineDesc);
 }
