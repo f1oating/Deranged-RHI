@@ -196,6 +196,10 @@ void VulkanDevice::CreateLogicalDevice() {
         .timelineSemaphore = true
     };
 
+    VkPhysicalDeviceFeatures deviceFeatures = {
+        .geometryShader = true
+    };
+
     VkDeviceCreateInfo deviceInfo = {
         .sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO,
         .pNext = &timelineSemaphoreFeatures,
@@ -204,7 +208,8 @@ void VulkanDevice::CreateLogicalDevice() {
         .enabledLayerCount = 0,
         .ppEnabledLayerNames = nullptr,
         .enabledExtensionCount = (uint32_t)extensions.size(),
-        .ppEnabledExtensionNames = extensions.data()
+        .ppEnabledExtensionNames = extensions.data(),
+        .pEnabledFeatures = &deviceFeatures
     };
 
     VkResult res = vkCreateDevice(m_PhysicalDevice, &deviceInfo, nullptr, &m_Device);

@@ -21,13 +21,17 @@ ConstantBuffer<Transform> TransformBuffer : register(b0);
 
 [shader("vertex")]
 Output main(Input input) {
+    float4x4 worldView = mul(TransformBuffer.View, TransformBuffer.World);
+    float4x4 worldViewProjection = mul(TransformBuffer.Projection, worldView);
+
     Output output;
 
-    output.Position = mul(TransformBuffer.ModelViewProjection, float4(input.Position, 1.0));
+    output.Position = mul(worldViewProjection, float4(input.Position, 1.0));
     output.UV = input.UV;
-    output.Normal = mul(float3x3(TransformBuffer.TransInvModelView), input.Normal);
-    output.Tangent = mul(float3x3(TransformBuffer.TransInvModelView), input.Tangent);
-    output.Bitangent = mul(float3x3(TransformBuffer.TransInvModelView), input.Bitangent);
+
+    output.Normal = mul(float3x3(TransformBuffer.TransInvWorldView), input.Normal);
+    output.Tangent = mul(float3x3(TransformBuffer.TransInvWorldView), input.Tangent);
+    output.Bitangent = mul(float3x3(TransformBuffer.TransInvWorldView), input.Bitangent);
 
     return output;
 }

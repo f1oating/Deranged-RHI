@@ -41,9 +41,12 @@ private:
     void CreateDepthStencil();
 
     void CreateMeshPipelineState();
+    void CreateMeshDebugNormalMapPipelineState();
+
     void CreateTerrainPipelineState();
+    void CreateTerrainDebugNormalPipelineState();
+
     void CreateSkyboxPipelineState();
-    void CreateDebugLinesPipelineState();
 
 private:
     Device* m_Device = nullptr;
@@ -62,10 +65,12 @@ private:
     Texture* m_DepthStencil = nullptr;
 
     GraphicsPipelineState* m_MeshPipelineState = nullptr;
-    GraphicsPipelineState* m_TerrainPipelineState = nullptr;
-    GraphicsPipelineState* m_SkyboxPipelineState = nullptr;
+    GraphicsPipelineState* m_MeshDebugNormalMapPipelineState = nullptr;
 
-    GraphicsPipelineState* m_DebugLinesPipelineState = nullptr;
+    GraphicsPipelineState* m_TerrainPipelineState = nullptr;
+    GraphicsPipelineState* m_TerrainDebugNormalPipelineState = nullptr;
+
+    GraphicsPipelineState* m_SkyboxPipelineState = nullptr;
 
     Texture* m_FallbackTexture = nullptr;
     Mesh m_Cube;

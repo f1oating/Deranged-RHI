@@ -60,6 +60,9 @@ void VulkanGraphicsPipelineState::CreatePipelineLayout() {
     if (m_Desc.VertexShader.Data) {
         ReflectShader(m_Desc.VertexShader);
     }
+    if (m_Desc.GeometryShader.Data) {
+        ReflectShader(m_Desc.GeometryShader);
+    }
     if (m_Desc.FragmentShader.Data) {
         ReflectShader(m_Desc.FragmentShader);
     }
@@ -104,6 +107,7 @@ void VulkanGraphicsPipelineState::CreatePipelineLayout() {
 
 void VulkanGraphicsPipelineState::CreatePipeline() {
     VkShaderModule vertexShader = nullptr;
+    VkShaderModule geometryShader = nullptr;
     VkShaderModule fragmentShader = nullptr;
 
     std::vector<VkPipelineShaderStageCreateInfo> shaderStages;
@@ -120,6 +124,23 @@ void VulkanGraphicsPipelineState::CreatePipeline() {
             .sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
             .stage = VK_SHADER_STAGE_VERTEX_BIT,
             .module = vertexShader,
+            .pName = "main"
+        };
+        shaderStages.push_back(shaderStageCreateInfo);
+    }
+
+    if (m_Desc.GeometryShader.Data) {
+        VkShaderModuleCreateInfo shaderModuleCreateInfo = {
+            .sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO,
+            .codeSize = m_Desc.GeometryShader.Size,
+            .pCode = (uint32_t*)m_Desc.GeometryShader.Data,
+        };
+        vkCreateShaderModule(m_Device->GetVkDevice(), &shaderModuleCreateInfo, nullptr, &geometryShader);
+
+        VkPipelineShaderStageCreateInfo shaderStageCreateInfo = {
+            .sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
+            .stage = VK_SHADER_STAGE_GEOMETRY_BIT,
+            .module = geometryShader,
             .pName = "main"
         };
         shaderStages.push_back(shaderStageCreateInfo);
@@ -310,6 +331,9 @@ void VulkanGraphicsPipelineState::CreatePipeline() {
 
     if (vertexShader) {
         vkDestroyShaderModule(m_Device->GetVkDevice(), vertexShader, nullptr);
+    }
+    if (geometryShader) {
+        vkDestroyShaderModule(m_Device->GetVkDevice(), geometryShader, nullptr);
     }
     if (fragmentShader) {
         vkDestroyShaderModule(m_Device->GetVkDevice(), fragmentShader, nullptr);

@@ -23,9 +23,12 @@ Renderer::Renderer(Device* device, CommandQueue* queue, Swapchain* swapchain) {
     CreateDepthStencil();
 
     CreateMeshPipelineState();
+    CreateMeshDebugNormalMapPipelineState();
+
     CreateTerrainPipelineState();
+    CreateTerrainDebugNormalPipelineState();
+
     CreateSkyboxPipelineState();
-    CreateDebugLinesPipelineState();
 }
 
 Renderer::~Renderer() {
@@ -45,9 +48,12 @@ Renderer::~Renderer() {
     delete m_DepthStencil;
 
     delete m_MeshPipelineState;
+    delete m_MeshDebugNormalMapPipelineState;
+
     delete m_TerrainPipelineState;
+    delete m_TerrainDebugNormalPipelineState;
+
     delete m_SkyboxPipelineState;
-    delete m_DebugLinesPipelineState;
 }
 
 void Renderer::Render(double time) {
@@ -78,15 +84,16 @@ void Renderer::Render(double time) {
                 m_Queue->SetIndexBuffer(mesh.Index);
 
                 Transform transform{};
-                transform.ModelViewProjection = m_Camera->GetProjectionMatrix() * m_Camera->GetViewMatrix() * model->GetWorldMatrix() * SYSTEM_FIX_MATRIX;
-                transform.TransInvModelView = glm::transpose(glm::inverse(m_Camera->GetViewMatrix() * model->GetWorldMatrix() * SYSTEM_FIX_MATRIX));
-                transform.Model = model->GetWorldMatrix() * SYSTEM_FIX_MATRIX;
+                transform.World = model->GetWorldMatrix() * SYSTEM_FIX_MATRIX;
+                transform.View = m_Camera->GetViewMatrix();
+                transform.Projection = m_Camera->GetProjectionMatrix();
+                transform.TransInvWorldView = glm::transpose(glm::inverse(m_Camera->GetViewMatrix() * SYSTEM_FIX_MATRIX));
 
                 void* transformCBufferPtr = m_TransformCBuffer->Map();
                 memcpy(transformCBufferPtr, &transform, sizeof(Transform));
 
                 Light light{};
-                light.Directional = glm::mat3(transform.TransInvModelView) * glm::vec3(cos(time), 0.0f, sin(time));
+                light.Directional = transform.TransInvWorldView * glm::vec4(cos(time), 0.0f, sin(time), 1.0f);
                 void* lightCBufferPtr = m_LightCBuffer->Map();
                 memcpy(lightCBufferPtr, &light, sizeof(Light));
 
@@ -103,25 +110,30 @@ void Renderer::Render(double time) {
         }
     }, {}, {});
 
-    rg.AddPass("Debug", [&](RenderGraph* rg) {
-        m_Queue->SetGraphicsPipelineState(m_DebugLinesPipelineState);
+    rg.AddPass("MeshDebugNormalMap", [&](RenderGraph* rg) {
+        m_Queue->SetGraphicsPipelineState(m_MeshDebugNormalMapPipelineState);
 
         for (auto* model : m_Models) {
             for (int i = 0; i < model->GetNumMeshes(); i++) {
-                Mesh mesh = model->GetDebugMesh();
+                Mesh mesh = model->GetMesh(i);
 
                 m_Queue->SetVertexBuffer(mesh.Vertex);
                 m_Queue->SetIndexBuffer(mesh.Index);
 
                 Transform transform{};
-                transform.ModelViewProjection = m_Camera->GetProjectionMatrix() * m_Camera->GetViewMatrix() * model->GetWorldMatrix() * SYSTEM_FIX_MATRIX;
-                transform.TransInvModelView = glm::transpose(glm::inverse(m_Camera->GetViewMatrix() * model->GetWorldMatrix() * SYSTEM_FIX_MATRIX));
-                transform.Model = model->GetWorldMatrix() * SYSTEM_FIX_MATRIX;
+                transform.World = model->GetWorldMatrix() * SYSTEM_FIX_MATRIX;
+                transform.View = m_Camera->GetViewMatrix();
+                transform.Projection = m_Camera->GetProjectionMatrix();
+                transform.TransInvWorldView = glm::transpose(glm::inverse(m_Camera->GetViewMatrix() * SYSTEM_FIX_MATRIX));
 
                 void* transformCBufferPtr = m_TransformCBuffer->Map();
                 memcpy(transformCBufferPtr, &transform, sizeof(Transform));
 
                 m_Queue->SetConstantBuffer("TransformBuffer", m_TransformCBuffer);
+
+                Material material = model->GetMaterial(mesh.MaterialIndex);
+                m_Queue->SetTexture("Normal", material.Normal ? material.Normal->GetSRV() : m_FallbackTexture->GetSRV());
+                m_Queue->SetSampler("Sampler", m_Sampler);
 
                 m_Queue->DrawIndexedInstanced(mesh.NumIndices);
             }
@@ -135,15 +147,16 @@ void Renderer::Render(double time) {
         m_Queue->SetIndexBuffer(m_Terrain.Index);
 
         Transform transform{};
-        transform.ModelViewProjection = m_Camera->GetProjectionMatrix() * m_Camera->GetViewMatrix() * SYSTEM_FIX_MATRIX;
-        transform.TransInvModelView = glm::transpose(glm::inverse(m_Camera->GetViewMatrix() * SYSTEM_FIX_MATRIX));
-        transform.Model = glm::mat4(1);
+        transform.World = SYSTEM_FIX_MATRIX;
+        transform.View = m_Camera->GetViewMatrix();
+        transform.Projection = m_Camera->GetProjectionMatrix();
+        transform.TransInvWorldView = glm::transpose(glm::inverse(m_Camera->GetViewMatrix() * SYSTEM_FIX_MATRIX));
 
         void* transformCBufferPtr = m_TransformCBuffer->Map();
         memcpy(transformCBufferPtr, &transform, sizeof(Transform));
 
         Light light{};
-        light.Directional = glm::mat3(transform.TransInvModelView) * glm::vec3(cos(time), 1.0f, sin(time));
+        light.Directional = transform.TransInvWorldView * glm::vec4(cos(time), 0.0f, sin(time), 1.0f);
         void* lightCBufferPtr = m_LightCBuffer->Map();
         memcpy(lightCBufferPtr, &light, sizeof(Light));
 
@@ -156,6 +169,26 @@ void Renderer::Render(double time) {
         m_Queue->DrawIndexedInstanced(m_Terrain.NumIndices);
     }, {}, {});
 
+    rg.AddPass("TerrainDebugNormal", [&](RenderGraph* rg) {
+        m_Queue->SetGraphicsPipelineState(m_TerrainDebugNormalPipelineState);
+
+        m_Queue->SetVertexBuffer(m_Terrain.Vertex);
+        m_Queue->SetIndexBuffer(m_Terrain.Index);
+
+        Transform transform{};
+        transform.World = SYSTEM_FIX_MATRIX;
+        transform.View = m_Camera->GetViewMatrix();
+        transform.Projection = m_Camera->GetProjectionMatrix();
+        transform.TransInvWorldView = glm::transpose(glm::inverse(m_Camera->GetViewMatrix() * SYSTEM_FIX_MATRIX));
+
+        void* transformCBufferPtr = m_TransformCBuffer->Map();
+        memcpy(transformCBufferPtr, &transform, sizeof(Transform));
+
+        m_Queue->SetConstantBuffer("TransformBuffer", m_TransformCBuffer);
+
+        m_Queue->DrawIndexedInstanced(m_Terrain.NumIndices);
+    }, {}, {});
+
     rg.AddPass("Skybox", [&](RenderGraph* rg) {
         m_Queue->SetGraphicsPipelineState(m_SkyboxPipelineState);
 
@@ -163,9 +196,10 @@ void Renderer::Render(double time) {
         m_Queue->SetIndexBuffer(m_Cube.Index);
 
         Transform transform{};
-        transform.ModelViewProjection = m_Camera->GetProjectionMatrix() * glm::mat4(glm::mat3(m_Camera->GetViewMatrix())) * SYSTEM_FIX_MATRIX;
-        transform.TransInvModelView = m_Camera->GetViewMatrix() * SYSTEM_FIX_MATRIX;
-        transform.Model = glm::mat4(1) * SYSTEM_FIX_MATRIX;
+        transform.World = SYSTEM_FIX_MATRIX;
+        transform.View = glm::mat4(glm::mat3(m_Camera->GetViewMatrix()));
+        transform.Projection = m_Camera->GetProjectionMatrix();
+        transform.TransInvWorldView = glm::transpose(glm::inverse(m_Camera->GetViewMatrix() * SYSTEM_FIX_MATRIX));
 
         void* transformCBufferPtr = m_TransformCBuffer->Map();
         memcpy(transformCBufferPtr, &transform, sizeof(transform));
@@ -449,12 +483,12 @@ void Renderer::CreateDepthStencil() {
 }
 
 void Renderer::CreateMeshPipelineState() {
-    auto vertexSource = ShaderCompiler::CompileShader("MeshV.slang");
+    auto vertexSource = ShaderCompiler::CompileShader("Mesh/MeshV.slang");
     Shader vertexShader{
         .Data = vertexSource.data(),
         .Size = vertexSource.size()
     };
-    auto fragmentSource = ShaderCompiler::CompileShader("MeshF.slang");
+    auto fragmentSource = ShaderCompiler::CompileShader("Mesh/MeshF.slang");
     Shader fragmentShader{
         .Data = fragmentSource.data(),
         .Size = fragmentSource.size()
@@ -493,13 +527,64 @@ void Renderer::CreateMeshPipelineState() {
     m_MeshPipelineState = m_Device->CreateGraphicsPipelineState(pipelineDesc);
 }
 
-void Renderer::CreateTerrainPipelineState() {
-    auto vertexSource = ShaderCompiler::CompileShader("TerrainV.slang");
+void Renderer::CreateMeshDebugNormalMapPipelineState() {
+    auto vertexSource = ShaderCompiler::CompileShader("Mesh/DebugNormalMap/DebugNormalMapV.slang");
     Shader vertexShader{
         .Data = vertexSource.data(),
         .Size = vertexSource.size()
     };
-    auto fragmentSource = ShaderCompiler::CompileShader("TerrainF.slang");
+    auto geometrySource = ShaderCompiler::CompileShader("Mesh/DebugNormalMap/DebugNormalMapG.slang");
+    Shader geometryShader{
+        .Data = geometrySource.data(),
+        .Size = geometrySource.size()
+    };
+    auto fragmentSource = ShaderCompiler::CompileShader("Mesh/DebugNormalMap/DebugNormalMapF.slang");
+    Shader fragmentShader{
+        .Data = fragmentSource.data(),
+        .Size = fragmentSource.size()
+    };
+
+    VertexInputDesc inputDesc = {
+        {
+            { "POSITION", ValueType::Float3 },
+            { "TEXCOORD", ValueType::Float2 },
+            { "NORMAL", ValueType::Float3 },
+            { "TANGENT", ValueType::Float3 },
+            { "BITANGENT", ValueType::Float3 },
+        }
+    };
+
+    BlendDesc blendDesc = {
+        .ColorAttachments = { {} }
+    };
+
+    DepthStencilDesc depthStencilStateDesc = {
+        .DepthEnable = true,
+        .DepthWriteEnable = true,
+        .DepthCompare = CompareOp::Less
+    };
+
+    GraphicsPipelineDesc pipelineDesc = {
+        .VertexShader = vertexShader,
+        .GeometryShader = geometryShader,
+        .FragmentShader = fragmentShader,
+        .VertexInput = inputDesc,
+        .DepthStencil = depthStencilStateDesc,
+        .Blend = blendDesc,
+        .ColorFormats = { m_Swapchain->GetCurrentBackBuffer()->GetDesc().Format },
+        .DepthStencilFormat = m_DepthStencil->GetDesc().Format,
+        .PrimitiveTopology = Topology::TriangleList
+    };
+    m_MeshDebugNormalMapPipelineState = m_Device->CreateGraphicsPipelineState(pipelineDesc);
+}
+
+void Renderer::CreateTerrainPipelineState() {
+    auto vertexSource = ShaderCompiler::CompileShader("Terrain/TerrainV.slang");
+    Shader vertexShader{
+        .Data = vertexSource.data(),
+        .Size = vertexSource.size()
+    };
+    auto fragmentSource = ShaderCompiler::CompileShader("Terrain/TerrainF.slang");
     Shader fragmentShader{
         .Data = fragmentSource.data(),
         .Size = fragmentSource.size()
@@ -536,13 +621,62 @@ void Renderer::CreateTerrainPipelineState() {
     m_TerrainPipelineState = m_Device->CreateGraphicsPipelineState(pipelineDesc);
 }
 
-void Renderer::CreateSkyboxPipelineState() {
-    auto vertexSource = ShaderCompiler::CompileShader("SkyboxV.slang");
+void Renderer::CreateTerrainDebugNormalPipelineState() {
+    auto vertexSource = ShaderCompiler::CompileShader("Terrain/DebugNormal/DebugNormalV.slang");
     Shader vertexShader{
         .Data = vertexSource.data(),
         .Size = vertexSource.size()
     };
-    auto fragmentSource = ShaderCompiler::CompileShader("SkyboxF.slang");
+    auto geometrySource = ShaderCompiler::CompileShader("Terrain/DebugNormal/DebugNormalG.slang");
+    Shader geometryShader{
+        .Data = geometrySource.data(),
+        .Size = geometrySource.size()
+    };
+    auto fragmentSource = ShaderCompiler::CompileShader("Terrain/DebugNormal/DebugNormalF.slang");
+    Shader fragmentShader{
+        .Data = fragmentSource.data(),
+        .Size = fragmentSource.size()
+    };
+
+    VertexInputDesc inputDesc = {
+        {
+            { "POSITION", ValueType::Float3 },
+            { "TEXCOORD", ValueType::Float2 },
+            { "NORMAL", ValueType::Float3 }
+        }
+    };
+
+    BlendDesc blendDesc = {
+        .ColorAttachments = { {} }
+    };
+
+    DepthStencilDesc depthStencilStateDesc = {
+        .DepthEnable = true,
+        .DepthWriteEnable = true,
+        .DepthCompare = CompareOp::Less
+    };
+
+    GraphicsPipelineDesc pipelineDesc = {
+        .VertexShader = vertexShader,
+        .GeometryShader = geometryShader,
+        .FragmentShader = fragmentShader,
+        .VertexInput = inputDesc,
+        .DepthStencil = depthStencilStateDesc,
+        .Blend = blendDesc,
+        .ColorFormats = { m_Swapchain->GetCurrentBackBuffer()->GetDesc().Format },
+        .DepthStencilFormat = m_DepthStencil->GetDesc().Format,
+        .PrimitiveTopology = Topology::TriangleList
+    };
+    m_TerrainDebugNormalPipelineState = m_Device->CreateGraphicsPipelineState(pipelineDesc);
+}
+
+void Renderer::CreateSkyboxPipelineState() {
+    auto vertexSource = ShaderCompiler::CompileShader("Skybox/SkyboxV.slang");
+    Shader vertexShader{
+        .Data = vertexSource.data(),
+        .Size = vertexSource.size()
+    };
+    auto fragmentSource = ShaderCompiler::CompileShader("Skybox/SkyboxF.slang");
     Shader fragmentShader{
         .Data = fragmentSource.data(),
         .Size = fragmentSource.size()
@@ -576,46 +710,4 @@ void Renderer::CreateSkyboxPipelineState() {
         .PrimitiveTopology = Topology::TriangleList
     };
     m_SkyboxPipelineState = m_Device->CreateGraphicsPipelineState(pipelineDesc);
-}
-
-void Renderer::CreateDebugLinesPipelineState() {
-    auto vertexSource = ShaderCompiler::CompileShader("Debug/LineV.slang");
-    Shader vertexShader{
-        .Data = vertexSource.data(),
-        .Size = vertexSource.size()
-    };
-    auto fragmentSource = ShaderCompiler::CompileShader("Debug/LineF.slang");
-    Shader fragmentShader{
-        .Data = fragmentSource.data(),
-        .Size = fragmentSource.size()
-    };
-
-    VertexInputDesc inputDesc = {
-        {
-            { "POSITION", ValueType::Float3 },
-            { "COLOR", ValueType::Float3 },
-        }
-    };
-
-    BlendDesc blendDesc = {
-        .ColorAttachments = { {} }
-    };
-
-    DepthStencilDesc depthStencilStateDesc = {
-        .DepthEnable = true,
-        .DepthWriteEnable = true,
-        .DepthCompare = CompareOp::LessOrEqual
-    };
-
-    GraphicsPipelineDesc pipelineDesc = {
-        .VertexShader = vertexShader,
-        .FragmentShader = fragmentShader,
-        .VertexInput = inputDesc,
-        .DepthStencil = depthStencilStateDesc,
-        .Blend = blendDesc,
-        .ColorFormats = { m_Swapchain->GetCurrentBackBuffer()->GetDesc().Format },
-        .DepthStencilFormat = m_DepthStencil->GetDesc().Format,
-        .PrimitiveTopology = Topology::LineList
-    };
-    m_DebugLinesPipelineState = m_Device->CreateGraphicsPipelineState(pipelineDesc);
 }

@@ -28,8 +28,6 @@ Model::~Model() {
         if (mesh.Index) delete mesh.Index;
     }
     m_Meshes.clear();
-    if (m_DebugMesh.Vertex) delete m_DebugMesh.Vertex;
-    if (m_DebugMesh.Index) delete m_DebugMesh.Index;
 }
 
 glm::mat4 Model::GetWorldMatrix() {
@@ -132,49 +130,6 @@ void Model::LoadModel(const char* path) {
             }
         }
 
-        std::vector<VertexPositionColor> debugVertices;
-        std::vector<uint32_t> debugIndices;
-        uint32_t vertexIndex = 0;
-        for (uint32_t i = 0; i < indices.size(); ++i) {
-            uint32_t index = indices[i];
-            VertexPositionTexture vertex = vertices[index];
-
-            VertexPositionColor vert1n = { vertex.Position, { 1.0f, 1.0f, 1.0f } };
-            VertexPositionColor vert2n = { vertex.Position + glm::normalize(vertex.Normal) * 0.1f, { 1.0f, 1.0f, 1.0f } };
-
-            debugVertices.push_back(vert1n);
-            debugVertices.push_back(vert2n);
-            debugIndices.push_back(vertexIndex++);
-            debugIndices.push_back(vertexIndex++);
-
-            VertexPositionColor vert1t = { vertex.Position, { 1.0f, 0.0f, 0.0f } };
-            VertexPositionColor vert2t = { vertex.Position + glm::normalize(vertex.Tangent) * 0.1f, { 1.0f, 0.0f, 0.0f } };
-
-            debugVertices.push_back(vert1t);
-            debugVertices.push_back(vert2t);
-            debugIndices.push_back(vertexIndex++);
-            debugIndices.push_back(vertexIndex++);
-
-            VertexPositionColor vert1b = { vertex.Position, { 0.0f, 0.0f, 1.0f } };
-            VertexPositionColor vert2b = { vertex.Position + glm::normalize(vertex.Bitangent) * 0.1f, { 0.0f, 0.0f, 1.0f } };;
-
-            debugVertices.push_back(vert1b);
-            debugVertices.push_back(vert2b);
-            debugIndices.push_back(vertexIndex++);
-            debugIndices.push_back(vertexIndex++);
-        }
-
-        BufferDesc debugVertexDesc = {
-            .Size = debugVertices.size() * sizeof(VertexPositionColor),
-            .BindFlags = BUFFER_BIND_VERTEX | BUFFER_BIND_TRANSFER_DST,
-            .Stride = sizeof(VertexPositionColor),
-        };
-
-        BufferDesc debugIndexDesc = {
-            .Size = debugIndices.size() * sizeof(uint32_t),
-            .BindFlags = BUFFER_BIND_INDEX | BUFFER_BIND_TRANSFER_DST,
-        };
-
         BufferDesc vertexDesc = {
             .Size = vertices.size() * sizeof(VertexPositionTexture),
             .BindFlags = BUFFER_BIND_VERTEX | BUFFER_BIND_TRANSFER_DST,
@@ -192,25 +147,13 @@ void Model::LoadModel(const char* path) {
         mesh.MaterialIndex = 0;
         mesh.NumIndices = indices.size();
 
-        m_DebugMesh.Vertex = m_Device->CreateBuffer(debugVertexDesc);
-        m_DebugMesh.Index = m_Device->CreateBuffer(debugIndexDesc);
-        m_DebugMesh.NumIndices = debugIndices.size();
-
         m_Queue->CopyToBuffer(mesh.Vertex, vertices.size() * sizeof(VertexPositionTexture), vertices.data());
         m_Queue->CopyToBuffer(mesh.Index, indices.size() * sizeof(uint32_t), indices.data());
-
-        m_Queue->CopyToBuffer(m_DebugMesh.Vertex, debugVertices.size() * sizeof(VertexPositionColor), debugVertices.data());
-        m_Queue->CopyToBuffer(m_DebugMesh.Index, debugIndices.size() * sizeof(uint32_t), debugIndices.data());
 
         m_Queue->Barrier(PIPELINE_STAGE_TRANSFER, PIPELINE_STAGE_VERTEX_INPUT,
         { { mesh.Vertex, ACCESS_TRANSFER_WRITE, ACCESS_VERTEX_READ } }, {});
         m_Queue->Barrier(PIPELINE_STAGE_TRANSFER, PIPELINE_STAGE_INDEX_INPUT,
         { { mesh.Index, ACCESS_TRANSFER_WRITE, ACCESS_INDEX_READ } }, {});
-
-        m_Queue->Barrier(PIPELINE_STAGE_TRANSFER, PIPELINE_STAGE_VERTEX_INPUT,
-        { { m_DebugMesh.Vertex, ACCESS_TRANSFER_WRITE, ACCESS_VERTEX_READ } }, {});
-        m_Queue->Barrier(PIPELINE_STAGE_TRANSFER, PIPELINE_STAGE_INDEX_INPUT,
-        { { m_DebugMesh.Index, ACCESS_TRANSFER_WRITE, ACCESS_INDEX_READ } }, {});
 
         m_Meshes.push_back(mesh);
     }

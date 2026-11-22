@@ -1,7 +1,9 @@
 struct Transform {
-    float4x4 ModelViewProjection;
-    float4x4 TransInvModelView;
-    float4x4 Model;
+    float4x4 World;
+    float4x4 View;
+    float4x4 Projection;
+
+    float4x4 TransInvWorldView;
 }
 
 struct Light {

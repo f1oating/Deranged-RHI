@@ -154,6 +154,7 @@ struct BlendDesc {
 
 struct GraphicsPipelineDesc {
     Shader VertexShader;
+    Shader GeometryShader;
     Shader FragmentShader;
     VertexInputDesc VertexInput;
     RasterizationDesc Rasterization;
