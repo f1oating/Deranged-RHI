@@ -105,6 +105,7 @@ std::vector<uint8_t> ShaderCompiler::CompileShader(const char* path) {
         slang::IBlob* diagnosticBlob = nullptr;
         linkedProgram->getEntryPointCode(0, 0, &spirv, &diagnosticBlob);
         if (diagnosticBlob) {
+            const char* d = (const char*)diagnosticBlob->getBufferPointer();
             printf("%s\n", (const char*)diagnosticBlob->getBufferPointer());
             diagnosticBlob->release();
         }

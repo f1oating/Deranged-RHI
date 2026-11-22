@@ -92,6 +92,7 @@ void DX12GraphicsPipelineState::CreateRootSignature() {
     std::vector<D3D12_DESCRIPTOR_RANGE> samplerDescriptorRanges;
 
     if (m_Desc.VertexShader.Data) ReflexShader(m_Desc.VertexShader, descriptorRanges, samplerDescriptorRanges, offset, samplerOffset);
+    if (m_Desc.GeometryShader.Data) ReflexShader(m_Desc.GeometryShader, descriptorRanges, samplerDescriptorRanges, offset, samplerOffset);
     if (m_Desc.FragmentShader.Data) ReflexShader(m_Desc.FragmentShader, descriptorRanges, samplerDescriptorRanges, offset, samplerOffset);
 
     std::vector<D3D12_ROOT_PARAMETER> rootParameters;
@@ -233,6 +234,7 @@ void DX12GraphicsPipelineState::CreatePipeline() {
         .pRootSignature = m_RootSignature,
         .VS = { m_Desc.VertexShader.Data, m_Desc.VertexShader.Size },
         .PS = { m_Desc.FragmentShader.Data, m_Desc.FragmentShader.Size },
+        .GS = { m_Desc.GeometryShader.Data, m_Desc.GeometryShader.Size },
         .BlendState = blendDesc,
         .SampleMask = 0xffffffff,
         .RasterizerState = rasterizerDesc,

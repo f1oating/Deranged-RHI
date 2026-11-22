@@ -23,7 +23,7 @@ Texture2D<float4> Normal : register(t0);
 SamplerState Sampler : register(s0);
 
 void ProccessVertex(InputVertex vertex, inout LineStream<OutputVertex> output) {
-    float3 normal = Normal.Sample(Sampler, vertex.UV).xyz;
+    float3 normal = Normal.SampleLevel(Sampler, vertex.UV, 0).xyz;
     normal = 2.0 * normal - 1.0;
 
     vertex.Normal = normalize(vertex.Normal);
