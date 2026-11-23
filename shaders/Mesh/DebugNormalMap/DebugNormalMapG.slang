@@ -30,7 +30,8 @@ void ProccessVertex(InputVertex vertex, inout LineStream<OutputVertex> output) {
     vertex.Tangent = normalize(vertex.Tangent);
     vertex.Bitangent = normalize(vertex.Bitangent);
 
-    normal = normalize(mul(float3x3(vertex.Tangent, vertex.Bitangent, vertex.Normal), normal));
+    normal = normalize(mul(transpose(float3x3(vertex.Tangent, vertex.Bitangent, vertex.Normal)), normal));
+    normal = normalize(mul(float3x3(TransformBuffer.TransInvWorldView), normal));
 
     output.Append({ mul(TransformBuffer.Projection, vertex.Position), { 0.0f, 1.0f, 0.0f }});
     output.Append({ mul(TransformBuffer.Projection, float4(vertex.Position.xyz + normal * 0.1f, 1.0)), { 0.0f, 1.0f, 0.0f }});

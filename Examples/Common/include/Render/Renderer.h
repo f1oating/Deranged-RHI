@@ -41,6 +41,7 @@ private:
     void CreateDepthStencil();
 
     void CreateMeshPipelineState();
+    void CreateMeshDebugNTBPipelineState();
     void CreateMeshDebugNormalMapPipelineState();
 
     void CreateTerrainPipelineState();
@@ -65,6 +66,7 @@ private:
     Texture* m_DepthStencil = nullptr;
 
     GraphicsPipelineState* m_MeshPipelineState = nullptr;
+    GraphicsPipelineState* m_MeshDebugNTBPipelineState = nullptr;
     GraphicsPipelineState* m_MeshDebugNormalMapPipelineState = nullptr;
 
     GraphicsPipelineState* m_TerrainPipelineState = nullptr;

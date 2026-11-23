@@ -28,9 +28,9 @@ Output main(Input input) {
     output.Position = mul(worldView, float4(input.Position, 1.0));
     output.UV = input.UV;
 
-    output.Normal = mul(float3x3(TransformBuffer.TransInvWorldView), input.Normal);
-    output.Tangent = mul(float3x3(TransformBuffer.TransInvWorldView), input.Tangent);
-    output.Bitangent = mul(float3x3(TransformBuffer.TransInvWorldView), input.Bitangent);
+    output.Normal = input.Normal;
+    output.Tangent = input.Tangent;
+    output.Bitangent = input.Bitangent;
 
     return output;
 }

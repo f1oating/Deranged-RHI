@@ -23,6 +23,7 @@ Renderer::Renderer(Device* device, CommandQueue* queue, Swapchain* swapchain) {
     CreateDepthStencil();
 
     CreateMeshPipelineState();
+    CreateMeshDebugNTBPipelineState();
     CreateMeshDebugNormalMapPipelineState();
 
     CreateTerrainPipelineState();
@@ -48,6 +49,7 @@ Renderer::~Renderer() {
     delete m_DepthStencil;
 
     delete m_MeshPipelineState;
+    delete m_MeshDebugNTBPipelineState;
     delete m_MeshDebugNormalMapPipelineState;
 
     delete m_TerrainPipelineState;
@@ -136,6 +138,32 @@ void Renderer::Render(double time) {
                 m_Queue->SetSampler("Sampler", m_Sampler);
 
                 m_Queue->DrawIndexedInstanced(mesh.NumIndices);
+            }
+        }
+    }, {}, {});
+
+    rg.AddPass("MeshDebugNTB", [&](RenderGraph* rg) {
+        m_Queue->SetGraphicsPipelineState(m_MeshDebugNTBPipelineState);
+
+        for (auto* model : m_Models) {
+            for (int i = 0; i < model->GetNumMeshes(); i++) {
+                Mesh mesh = model->GetMesh(i);
+
+                m_Queue->SetVertexBuffer(mesh.Vertex);
+                m_Queue->SetIndexBuffer(mesh.Index);
+
+                Transform transform{};
+                transform.World = model->GetWorldMatrix() * SYSTEM_FIX_MATRIX;
+                transform.View = m_Camera->GetViewMatrix();
+                transform.Projection = m_Camera->GetProjectionMatrix();
+                transform.TransInvWorldView = glm::transpose(glm::inverse(m_Camera->GetViewMatrix() * SYSTEM_FIX_MATRIX));
+
+                void* transformCBufferPtr = m_TransformCBuffer->Map();
+                memcpy(transformCBufferPtr, &transform, sizeof(Transform));
+
+                m_Queue->SetConstantBuffer("TransformBuffer", m_TransformCBuffer);
+
+                //m_Queue->DrawIndexedInstanced(mesh.NumIndices);
             }
         }
     }, {}, {});
@@ -525,6 +553,57 @@ void Renderer::CreateMeshPipelineState() {
         .PrimitiveTopology = Topology::TriangleList
     };
     m_MeshPipelineState = m_Device->CreateGraphicsPipelineState(pipelineDesc);
+}
+
+void Renderer::CreateMeshDebugNTBPipelineState() {
+    auto vertexSource = ShaderCompiler::CompileShader("Mesh/DebugNTB/DebugNTBV.slang");
+    Shader vertexShader{
+        .Data = vertexSource.data(),
+        .Size = vertexSource.size()
+    };
+    auto geometrySource = ShaderCompiler::CompileShader("Mesh/DebugNTB/DebugNTBG.slang");
+    Shader geometryShader{
+        .Data = geometrySource.data(),
+        .Size = geometrySource.size()
+    };
+    auto fragmentSource = ShaderCompiler::CompileShader("Mesh/DebugNTB/DebugNTBF.slang");
+    Shader fragmentShader{
+        .Data = fragmentSource.data(),
+        .Size = fragmentSource.size()
+    };
+
+    VertexInputDesc inputDesc = {
+        {
+            { "POSITION", ValueType::Float3 },
+            { "TEXCOORD", ValueType::Float2 },
+            { "NORMAL", ValueType::Float3 },
+            { "TANGENT", ValueType::Float3 },
+            { "BITANGENT", ValueType::Float3 },
+        }
+    };
+
+    BlendDesc blendDesc = {
+        .ColorAttachments = { {} }
+    };
+
+    DepthStencilDesc depthStencilStateDesc = {
+        .DepthEnable = true,
+        .DepthWriteEnable = true,
+        .DepthCompare = CompareOp::Less
+    };
+
+    GraphicsPipelineDesc pipelineDesc = {
+        .VertexShader = vertexShader,
+        .GeometryShader = geometryShader,
+        .FragmentShader = fragmentShader,
+        .VertexInput = inputDesc,
+        .DepthStencil = depthStencilStateDesc,
+        .Blend = blendDesc,
+        .ColorFormats = { m_Swapchain->GetCurrentBackBuffer()->GetDesc().Format },
+        .DepthStencilFormat = m_DepthStencil->GetDesc().Format,
+        .PrimitiveTopology = Topology::TriangleList
+    };
+    m_MeshDebugNTBPipelineState = m_Device->CreateGraphicsPipelineState(pipelineDesc);
 }
 
 void Renderer::CreateMeshDebugNormalMapPipelineState() {

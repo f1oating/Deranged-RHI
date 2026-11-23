@@ -30,11 +30,12 @@ float4 main(Input input) : SV_Target {
     float3 normal = Normal.Sample(Sampler, input.UV).xyz;
     normal = 2.0 * normal - 1.0;
 
-    float3 nor = normalize(input.Normal);
-    float3 tan = normalize(input.Tangent);
-    float3 bit = normalize(input.Bitangent);
+    input.Normal = normalize(input.Normal);
+    input.Tangent = normalize(input.Tangent);
+    input.Bitangent = normalize(input.Bitangent);
 
-    normal = normalize(mul(float3x3(tan, bit, nor), normal));
+    normal = normalize(mul(transpose(float3x3(input.Tangent, input.Bitangent, input.Normal)), normal));
+    normal = normalize(mul(float3x3(TransformBuffer.TransInvWorldView), normal));
 
     float3 diffuse = Diffuse.Sample(Sampler, input.UV).xyz;
 
