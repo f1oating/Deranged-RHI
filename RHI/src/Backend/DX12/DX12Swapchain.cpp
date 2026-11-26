@@ -53,7 +53,7 @@ DX12Swapchain::DX12Swapchain(WindowInfo window, DX12Device* device, DX12CommandQ
             .MipLevels = 1,
             .ArrayLayers = 1,
             .Samples = 1,
-            .Format = TextureFormat::B8G8R8A8_UNORM,
+            .Format = TextureFormat::B8G8R8A8_SRGB,
             .BindFlags = TEXTURE_BIND_RENDER_TARGET
         };
         m_Textures[i] = new DX12Texture(desc, resource, m_Device);
