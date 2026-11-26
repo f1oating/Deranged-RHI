@@ -86,7 +86,7 @@ void Renderer::Render(double time) {
                 m_Queue->SetIndexBuffer(mesh.Index);
 
                 Transform transform{};
-                transform.World = model->GetWorldMatrix() * SYSTEM_FIX_MATRIX;
+                transform.World = SYSTEM_FIX_MATRIX * model->GetWorldMatrix();
                 transform.View = m_Camera->GetViewMatrix();
                 transform.Projection = m_Camera->GetProjectionMatrix();
                 transform.TransInvWorldView = glm::transpose(glm::inverse(m_Camera->GetViewMatrix() * SYSTEM_FIX_MATRIX));
@@ -123,7 +123,7 @@ void Renderer::Render(double time) {
                 m_Queue->SetIndexBuffer(mesh.Index);
 
                 Transform transform{};
-                transform.World = model->GetWorldMatrix() * SYSTEM_FIX_MATRIX;
+                transform.World = SYSTEM_FIX_MATRIX * model->GetWorldMatrix();
                 transform.View = m_Camera->GetViewMatrix();
                 transform.Projection = m_Camera->GetProjectionMatrix();
                 transform.TransInvWorldView = glm::transpose(glm::inverse(m_Camera->GetViewMatrix() * SYSTEM_FIX_MATRIX));
@@ -137,7 +137,7 @@ void Renderer::Render(double time) {
                 m_Queue->SetTexture("Normal", material.Normal ? material.Normal->GetSRV() : m_FallbackTexture->GetSRV());
                 m_Queue->SetSampler("Sampler", m_Sampler);
 
-                m_Queue->DrawIndexedInstanced(mesh.NumIndices);
+                //m_Queue->DrawIndexedInstanced(mesh.NumIndices);
             }
         }
     }, {}, {});
@@ -153,7 +153,7 @@ void Renderer::Render(double time) {
                 m_Queue->SetIndexBuffer(mesh.Index);
 
                 Transform transform{};
-                transform.World = model->GetWorldMatrix() * SYSTEM_FIX_MATRIX;
+                transform.World = SYSTEM_FIX_MATRIX * model->GetWorldMatrix();
                 transform.View = m_Camera->GetViewMatrix();
                 transform.Projection = m_Camera->GetProjectionMatrix();
                 transform.TransInvWorldView = glm::transpose(glm::inverse(m_Camera->GetViewMatrix() * SYSTEM_FIX_MATRIX));
@@ -214,7 +214,7 @@ void Renderer::Render(double time) {
 
         m_Queue->SetConstantBuffer("TransformBuffer", m_TransformCBuffer);
 
-        m_Queue->DrawIndexedInstanced(m_Terrain.NumIndices);
+        //m_Queue->DrawIndexedInstanced(m_Terrain.NumIndices);
     }, {}, {});
 
     rg.AddPass("Skybox", [&](RenderGraph* rg) {

@@ -177,6 +177,9 @@ inline VkFormat ToVkFormat(TextureFormat format) {
     switch (format) {
         case TextureFormat::Unknown: return VK_FORMAT_UNDEFINED;
 
+        case TextureFormat::R8G8B8A8_SRGB: return VK_FORMAT_R8G8B8A8_SRGB;
+        case TextureFormat::B8G8R8A8_SRGB: return VK_FORMAT_B8G8R8A8_SRGB;
+
         case TextureFormat::R8_UNORM: return VK_FORMAT_R8_UNORM;
         case TextureFormat::R8G8_UNORM: return VK_FORMAT_R8G8_UNORM;
         case TextureFormat::R8G8B8A8_UNORM: return VK_FORMAT_R8G8B8A8_UNORM;

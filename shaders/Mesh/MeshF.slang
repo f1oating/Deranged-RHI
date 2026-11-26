@@ -1,6 +1,6 @@
 import "Structures.slang";
 
-static const float3 AMBIENT = float3(0.3, 0.3, 0.3);
+static const float3 AMBIENT = float3(0.1, 0.1, 0.1);
 
 struct Input {
     float4 Position : SV_Position;
@@ -40,7 +40,7 @@ float4 main(Input input) : SV_Target {
     float3 diffuse = Diffuse.Sample(Sampler, input.UV).xyz;
 
     float angle = max(0.0, dot(normalize(normal), normalize(LightBuffer.Directional)));
-    float3 lightColor = float3(0.2, 0.2, 0.2) * angle;
+    float3 lightColor = float3(0.1, 0.1, 0.1) * angle;
 
     return float4(diffuse * AMBIENT + lightColor, 1.0);
 }

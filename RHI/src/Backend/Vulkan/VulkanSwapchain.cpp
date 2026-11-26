@@ -4,6 +4,7 @@
 
 #include "Backend/Vulkan/VulkanSwapchain.h"
 #include "Backend/Vulkan/VulkanDevice.h"
+#include "Debug.h"
 #include <vector>
 
 namespace vk {
@@ -135,18 +136,27 @@ void VulkanSwapchain::CheckQueueSupport() {
 void VulkanSwapchain::CreateSwapchain() {
     VkSurfaceCapabilitiesKHR surfaceCapabilities;
     vkGetPhysicalDeviceSurfaceCapabilitiesKHR(m_Device->GetVkPhysicalDevice(), m_Surface, &surfaceCapabilities);
+
     uint32_t surfaceFormatCount;
     std::vector<VkSurfaceFormatKHR> surfaceFormats;
     vkGetPhysicalDeviceSurfaceFormatsKHR(m_Device->GetVkPhysicalDevice(), m_Surface, &surfaceFormatCount, nullptr);
     surfaceFormats.resize(surfaceFormatCount);
     vkGetPhysicalDeviceSurfaceFormatsKHR(m_Device->GetVkPhysicalDevice(), m_Surface, &surfaceFormatCount, surfaceFormats.data());
 
+    int surfaceFormatIndex = -1;
+    for (int i = 0; i < surfaceFormatCount; i++) {
+        if (surfaceFormats[i].format == VK_FORMAT_B8G8R8A8_SRGB) {
+            surfaceFormatIndex = i;
+        }
+    }
+    Debug::Assert(surfaceFormatIndex >= 0, "No suitable Swapchain surface format found");
+
     VkSwapchainCreateInfoKHR swapchainCreateInfo = {
         .sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR,
         .surface = m_Surface,
         .minImageCount = surfaceCapabilities.minImageCount,
-        .imageFormat = surfaceFormats[0].format,
-        .imageColorSpace = surfaceFormats[0].colorSpace,
+        .imageFormat = surfaceFormats[surfaceFormatIndex].format,
+        .imageColorSpace = surfaceFormats[surfaceFormatIndex].colorSpace,
         .imageExtent = surfaceCapabilities.currentExtent,
         .imageArrayLayers = 1,
         .imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT,
@@ -173,7 +183,7 @@ void VulkanSwapchain::CreateSwapchain() {
             .MipLevels = 1,
             .ArrayLayers = 1,
             .Samples = 1,
-            .Format = TextureFormat::B8G8R8A8_UNORM,
+            .Format = TextureFormat::B8G8R8A8_SRGB,
             .BindFlags = TEXTURE_BIND_RENDER_TARGET
         };
         m_Textures[i] = new VulkanTexture(desc, m_Device, swapchainImages[i]);
